@@ -9,6 +9,12 @@
 <link rel="icon" href="apple-icon.png">
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
+
+<!-- ===== 📊 NUEVO: Librerías de Firebase ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{color-scheme:dark;--bg:#171820;--card:#22232b;--secondary:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--primary:#ff8a24;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
@@ -203,12 +209,14 @@ async function startPlayback(){
     log("ok", "Audio reproduciéndose");
   }catch(e){isLoading=false;setPlaying(false);log("err","No se pudo reproducir: "+e.message)}
 }
-function stopPlayback(){audio.pause();setPlaying(false);isLoading=false}
+// 📊 MODIFICADO: ahora registra el fin de escucha al detener
+function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false}
 
 play.onclick=()=>isPlaying?stopPlayback():startPlayback();
 audio.onplaying=()=>{isLoading=false;setPlaying(true)};
 audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner()};
-audio.onpause=()=>{if(!audio.ended){isLoading=false;setPlaying(false)}};
+// 📊 MODIFICADO: ahora registra el fin de escucha al pausar
+audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false)}};
 audio.onerror=()=>{isLoading=false;setPlaying(false);log("err","Error en el stream de audio")};
 
 volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false};
@@ -294,6 +302,15 @@ function setTrack(t){
   
   // 3. Agregar al historial
   agregarAlHistorial(t);
+  
+  // ===== 📊 NUEVO: Registrar en Firebase (solo si está escuchando) =====
+  if (isPlaying) {
+    registrarFinEscucha();
+    registrarEscucha(t);
+    inicioEscucha = Date.now();
+    temaActual = t;
+  }
+  // =====================================================================
   
   // 4. Disparar notificación inteligente
   setTimeout(() => {
@@ -827,6 +844,73 @@ pedirPermisoNotificaciones();
 conectarMetadata();
 
 console.log("🧠 Sikodark Radio v6 — Media Session + Debug activado");
+</script>
+
+<!-- ===== 📊 NUEVO: SEGUIMIENTO DE OYENTES — Firebase ===== -->
+<script>
+/* =========================================================
+   📊 SEGUIMIENTO DE OYENTES — sikodark radio
+   ⚠️ REEMPLAZA los valores de abajo por los de TU proyecto
+   (Firebase Console → engranaje ⚙️ → Configuración del proyecto
+    → desplázate hasta "Tus apps" → configuración de la app web)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
+  authDomain: "sikodarkradio-26a07.firebaseapp.com",
+  projectId: "sikodarkradio-26a07",
+  storageBucket: "sikodarkradio-26a07.firebasestorage.app",
+  messagingSenderId: "941041207378",
+  appId: "1:941041207378:web:994e34372109d30acf778b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const dbFB = firebase.firestore();
+let usuarioUID = null;
+let inicioEscucha = null;
+let temaActual = null;
+
+firebase.auth().signInAnonymously()
+  .then(cred => {
+    usuarioUID = cred.user.uid;
+    log("ok", "📊 Oyente identificado: " + usuarioUID.slice(0, 8));
+    // Registra la visita
+    return dbFB.collection("visitas").add({
+      uid: usuarioUID,
+      fecha: new Date().toISOString(),
+      dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC"
+    });
+  })
+  .catch(e => log("err", "📊 Firebase: " + e.message));
+
+// Guarda cada tema que el oyente escucha
+function registrarEscucha(track) {
+  if (!usuarioUID || !track) return;
+  dbFB.collection("escuchas").add({
+    uid: usuarioUID,
+    artista: track.artist || "Desconocido",
+    tema: track.title,
+    fecha: new Date().toISOString()
+  }).catch(e => log("warn", "📊 Registro escucha: " + e.message));
+}
+
+// Guarda cuántos segundos duró escuchando el tema
+function registrarFinEscucha() {
+  if (!usuarioUID || !inicioEscucha || !temaActual) return;
+  const segundos = Math.round((Date.now() - inicioEscucha) / 1000);
+  dbFB.collection("escuchas").add({
+    uid: usuarioUID,
+    tipo: "fin",
+    artista: temaActual.artist || "Desconocido",
+    tema: temaActual.title,
+    segundosEscuchados: segundos,
+    fecha: new Date().toISOString()
+  }).catch(() => {});
+  inicioEscucha = null;
+  temaActual = null;
+}
+
+window.addEventListener("beforeunload", registrarFinEscucha);
+window.addEventListener("pagehide", registrarFinEscucha);
 </script>
 </body>
 </html>
