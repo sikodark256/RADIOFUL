@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
 
-<!-- ===== 📊 NUEVO: Librerías de Firebase ===== -->
+<!-- ===== 📊 Librerías de Firebase ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -31,6 +31,12 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 .btn-reset:hover{color:var(--error);border-color:var(--error)}
 .history{margin-top:24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.history h2{font-size:18px;margin:0;font-weight:800}.history p.sub{font-size:11px;color:var(--muted);margin:5px 0 0}.count{padding:6px 11px;border-radius:999px;background:var(--secondary);color:var(--muted);font:11px monospace;white-space:nowrap}.history-grid{margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}.track{overflow:hidden;border-radius:12px;background:var(--secondary)}.track-art{position:relative;aspect-ratio:1}.track-art img{width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(23,24,32,.92);padding:4px 7px;font:11px monospace;font-weight:700}.track-info{padding:10px}.track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-title{font-size:13px;font-weight:700}.track-artist{font-size:11px;color:var(--muted);margin-top:3px}footer{color:var(--muted);text-align:center;font:11px monospace}
 .hidden{display:none}
+
+/* ===== ❤️ NUEVO: BOTÓN ME GUSTA ===== */
+.like-row{text-align:center;margin-top:14px}
+.like-btn{border:1px solid var(--border);background:var(--secondary);border-radius:999px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:transform .15s,background .2s}
+.like-btn:active{transform:scale(.94)}
+.like-btn.liked{color:var(--error);border-color:rgba(255,59,48,.5);background:rgba(255,59,48,.12)}
 
 /* ===== PANEL DE DIAGNÓSTICO MEJORADO ===== */
 #diagnostico{
@@ -96,6 +102,9 @@ body::after{
   <div id="eq" class="eq"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
+
+<!-- ===== ❤️ NUEVO: BOTÓN ME GUSTA ===== -->
+<div class="like-row"><button id="btnLike" class="like-btn" aria-label="Me gusta este tema">🤍 <span>Me gusta</span></button></div>
 
 <!-- ===== PANEL DE DIAGNÓSTICO ===== -->
 <div id="diagnostico">
@@ -209,13 +218,13 @@ async function startPlayback(){
     log("ok", "Audio reproduciéndose");
   }catch(e){isLoading=false;setPlaying(false);log("err","No se pudo reproducir: "+e.message)}
 }
-// 📊 MODIFICADO: ahora registra el fin de escucha al detener
+// 📊 Registra el fin de escucha al detener
 function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false}
 
 play.onclick=()=>isPlaying?stopPlayback():startPlayback();
 audio.onplaying=()=>{isLoading=false;setPlaying(true)};
 audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner()};
-// 📊 MODIFICADO: ahora registra el fin de escucha al pausar
+// 📊 Registra el fin de escucha al pausar
 audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false)}};
 audio.onerror=()=>{isLoading=false;setPlaying(false);log("err","Error en el stream de audio")};
 
@@ -303,7 +312,7 @@ function setTrack(t){
   // 3. Agregar al historial
   agregarAlHistorial(t);
   
-  // ===== 📊 NUEVO: Registrar en Firebase (solo si está escuchando) =====
+  // ===== 📊 Registrar en Firebase (solo si está escuchando) =====
   if (isPlaying) {
     registrarFinEscucha();
     registrarEscucha(t);
@@ -459,7 +468,7 @@ async function fetchCover(t) {
   
   const estrategias = [cover_iTunes_cancion, cover_Deezer_cancion, cover_iTunes_soloTitulo, cover_imagenArtista];
   
-  for (const estrategia of estrategias) {
+  for (const estrategia de estrategias) {
     try {
       const r = await estrategia(t);
       if (r && r.url) {
@@ -846,13 +855,10 @@ conectarMetadata();
 console.log("🧠 Sikodark Radio v6 — Media Session + Debug activado");
 </script>
 
-<!-- ===== 📊 NUEVO: SEGUIMIENTO DE OYENTES — Firebase ===== -->
+<!-- ===== 📊 SEGUIMIENTO DE OYENTES — Firebase ===== -->
 <script>
 /* =========================================================
    📊 SEGUIMIENTO DE OYENTES — sikodark radio
-   ⚠️ REEMPLAZA los valores de abajo por los de TU proyecto
-   (Firebase Console → engranaje ⚙️ → Configuración del proyecto
-    → desplázate hasta "Tus apps" → configuración de la app web)
    ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
@@ -911,6 +917,63 @@ function registrarFinEscucha() {
 
 window.addEventListener("beforeunload", registrarFinEscucha);
 window.addEventListener("pagehide", registrarFinEscucha);
+
+/* =========================================================
+   ❤️ NUEVO: BOTÓN ME GUSTA
+   ========================================================= */
+const btnLike = document.getElementById("btnLike");
+let likesDelUsuario = {};
+try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}"); } catch(e) {}
+
+function temaEnPantallaAhora() {
+  const t = document.getElementById("title").textContent;
+  const a = document.getElementById("artist").textContent;
+  if (!t || t === "Conectando…" || t === "En vivo") return null;
+  return { title: t, artist: a || null };
+}
+
+function claveLike(track) {
+  return `${(track.artist||"").toLowerCase().trim()}||${track.title.toLowerCase().trim()}`;
+}
+
+function actualizarEstadoLike() {
+  const track = temaEnPantallaAhora();
+  if (!track || !btnLike) return;
+  if (likesDelUsuario[claveLike(track)]) {
+    btnLike.classList.add("liked");
+    btnLike.innerHTML = "❤️ <span>Te gusta</span>";
+  } else {
+    btnLike.classList.remove("liked");
+    btnLike.innerHTML = "🤍 <span>Me gusta</span>";
+  }
+}
+
+if (btnLike) {
+  btnLike.addEventListener("click", () => {
+    if (!usuarioUID) { log("warn", "❤️ Conectando con Firebase, probá en unos segundos"); return; }
+    const track = temaEnPantallaAhora();
+    if (!track) { log("warn", "❤️ Esperá a que cargue un tema"); return; }
+    const clave = claveLike(track);
+    if (likesDelUsuario[clave]) { log("info", "❤️ Ya marcaste este tema"); return; }
+
+    likesDelUsuario[clave] = Date.now();
+    try { localStorage.setItem("sikodark-likes", JSON.stringify(likesDelUsuario)); } catch(e) {}
+    actualizarEstadoLike();
+
+    dbFB.collection("megustas").add({
+      uid: usuarioUID,
+      artista: track.artist || "Desconocido",
+      tema: track.title,
+      fecha: new Date().toISOString()
+    }).then(() => log("ok", "❤️ Me gusta guardado: " + track.title))
+      .catch(e => log("err", "❤️ Me gusta error: " + e.message));
+  });
+
+  // Refresca el corazón cuando cambia la canción en pantalla
+  const tituloObs = new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
+  tituloObs.observe(document.getElementById("title"), { childList: true, characterData: true, subtree: true });
+  actualizarEstadoLike();
+}
 </script>
 </body>
 </html>
