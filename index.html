@@ -917,7 +917,29 @@ function registrarFinEscucha() {
 
 window.addEventListener("beforeunload", registrarFinEscucha);
 window.addEventListener("pagehide", registrarFinEscucha);
-
+/* ===== 🔔 NOTIFICACIONES PUSH ===== */
+async function iniciarPush() {
+  try {
+    if (!("Notification" in window)) return;
+    const permiso = await Notification.requestPermission();
+    if (permiso !== "granted") { log("warn", "🔔 Permiso: " + permiso); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const token = await firebase.messaging().getToken({
+      vapidKey: "BJKwpC2B3i-nswoRDKX-WKb2M10zhTdXy19XcZeAsKAqI_2R1ltSjsQVzoK_VVaeDhNlToob4-snEfBQfKF7bOI",
+      serviceWorkerRegistration: reg
+    });
+    if (!token) { log("warn", "🔔 Sin token"); return; }
+    await dbFB.collection("tokens").doc(token).set({
+      uid: usuarioUID || "desconocido",
+      dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC",
+      fecha: new Date().toISOString()
+    });
+    log("ok", "🔔 Notificaciones activadas");
+  } catch(e) {
+    log("err", "🔔 Push: " + e.message);
+  }
+}
+iniciarPush();
 /* =========================================================
    ❤️ BOTÓN ME GUSTA
    ========================================================= */
