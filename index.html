@@ -707,7 +707,7 @@ function cambiarFondo(urlImagen) {
   if (!urlImagen) return;
   try {
     for (let hoja of document.styleSheets) {
-      for (let regla of hoja.cssRules) {
+      for (let regla de hoja.cssRules) {
         if (regla.selectorText === "body::before") {
           regla.style.backgroundImage = `url('${urlImagen}')`;
           return;
@@ -740,7 +740,11 @@ function mostrarNotificacionInteligente(info) {
       if (notifyTimeout) clearTimeout(notifyTimeout);
     };
     
-    
+  } catch(e) {
+    log("err", "Notificación ERROR: " + e.message);
+  }
+}
+
 async function procesarCancionInteligente(track) {
   if (!track || !track.artist || !track.title) {
     log("warn", "Notificación: falta artista o título");
