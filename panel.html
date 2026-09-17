@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel DJ — sikodark radio</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#171820;--card:#22232b;--sec:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--pri:#ff8a24;--bor:rgba(255,255,255,.1);--ok:#34c759}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 16px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:14px;padding:14px}
+.card .n{font-size:24px;font-weight:800;color:var(--pri)}
+.card .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+h2{font-size:15px;margin:20px 0 8px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--bor)}
+th,td{padding:9px 10px;text-align:left;font-size:13px;border-bottom:1px solid var(--bor)}
+th{background:var(--sec);font-size:11px;text-transform:uppercase;color:var(--muted)}
+td.num{font-weight:800;color:var(--pri)}
+.pos{color:var(--muted);font-family:monospace;font-size:12px}
+button{background:var(--pri);color:#191919;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--sec);color:var(--muted);font-size:11px;margin:2px}
+.vacio{color:var(--muted);font-size:13px;padding:12px;background:var(--card);border:1px dashed var(--bor);border-radius:12px}
+.estado{font-size:12px;color:var(--muted);margin:8px 0}
+</style>
+</head>
+<body>
+<h1>🎛️ Panel DJ — sikodark radio</h1>
+<p class="sub">Datos en vivo desde Firebase · solo para ti</p>
+<div class="estado" id="estado">Conectando…</div>
+
+<div class="cards">
+  <div class="card"><div class="n" id="cOyentes">—</div><div class="l">Oyentes únicos</div></div>
+  <div class="card"><div class="n" id="cVisitas">—</div><div class="l">Visitas totales</div></div>
+  <div class="card"><div class="n" id="cEscuchas">—</div><div class="l">Temas escuchados</div></div>
+  <div class="card"><div class="n" id="cLikes">—</div><div class="l">Me gusta ❤️</div></div>
+</div>
+
+<h2>🏆 Artistas más queridos (me gusta)</h2>
+<div id="tArtistas"></div>
+
+<h2>🎵 Temas más escuchados</h2>
+<div id="tTemas"></div>
+
+<h2>⏱️ Retención (segundos promedio escuchados)</h2>
+<div id="tRetencion"></div>
+
+<h2>📱 Dispositivos</h2>
+<div id="tDispositivos"></div>
+
+<h2>❤️ Últimos me gusta</h2>
+<div id="tUltimos"></div>
+
+<button onclick="location.reload()">🔄 Actualizar datos</button>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
+  authDomain: "sikodarkradio-26a07.firebaseapp.com",
+  projectId: "sikodarkradio-26a07",
+  storageBucket: "sikodarkradio-26a07.firebasestorage.app",
+  messagingSenderId: "941041207378",
+  appId: "1:941041207378:web:994e34372109d30acf778b"
+};
+
+function esc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+firebase.auth().signInAnonymously()
+  .then(() => cargarTodo())
+  .catch(e => { document.getElementById("estado").textContent = "❌ Error: " + e.message; });
+
+async function cargarTodo(){
+  try{
+    const [likes, escu, visits] = await Promise.all([
+      db.collection("megustas").get(),
+      db.collection("escuchas").get(),
+      db.collection("visitas").get()
+    ]);
+    document.getElementById("estado").textContent = "✅ Datos actualizados: " + new Date().toLocaleTimeString();
+
+    // ===== ME GUSTAS =====
+    const docLikes = [];
+    likes.forEach(d => docLikes.push(d.data()));
+    document.getElementById("cLikes").textContent = docLikes.length;
+
+    const porArtista = {}, porTemaLike = {};
+    docLikes.forEach(x => {
+      const a = x.artista || "Desconocido";
+      porArtista[a] = (porArtista[a]||0)+1;
+      const k = (x.artista||"?") + " — " + (x.tema||"?");
+      porTemaLike[k] = (porTemaLike[k]||0)+1;
+    });
+
+    const rankArt = Object.entries(porArtista).sort((a,b)=>b[1]-a[1]);
+    document.getElementById("tArtistas").innerHTML = rankArt.length
+      ? '<table><tr><th>#</th><th>Artista</th><th>❤️</th></tr>' + rankArt.map((r,i)=>`<tr><td class="pos">#${i+1}</td><td>${esc(r[0])}</td><td class="num">${r[1]}</td></tr>`).join("") + '</table>'
+      : '<div class="vacio">Todavía no hay me gusta.</div>';
+
+    // ===== ESCUCHAS =====
+    let plays = 0, fins = {};
+    const porTema = {};
+    const uids = new Set();
+    escu.forEach(d => {
+      const x = d.data();
+      if (x.uid) uids.add(x.uid);
+      if (x.tipo === "fin"){
+        plays++;
+        const k = (x.artista||"?") + " — " + (x.tema||"?");
+        if(!fins[k]) fins[k] = {suma:0,n:0};
+        fins[k].suma += (x.segundosEscuchados||0);
+        fins[k].n++;
+      } else {
+        const k = (x.artista||"?") + " — " + (x.tema||"?");
+        porTema[k] = (porTema[k]||0)+1;
+      }
+    });
+    document.getElementById("cEscuchas").textContent = plays;
+
+    const rankTemas = Object.entries(porTema).sort((a,b)=>b[1]-a[1]).slice(0,15);
+    document.getElementById("tTemas").innerHTML = rankTemas.length
+      ? '<table><tr><th>#</th><th>Tema</th><th>Reproducciones</th></tr>' + rankTemas.map((r,i)=>`<tr><td class="pos">#${i+1}</td><td>${esc(r[0])}</td><td class="num">${r[1]}</td></tr>`).join("") + '</table>'
+      : '<div class="vacio">Aún sin escuchas. Dale play a la radio y espera a que cambie de canción.</div>';
+
+    const rankRet = Object.entries(fins).map(([k,v])=>[k, Math.round(v.suma/v.n), v.n]).sort((a,b)=>b[1]-a[1]).slice(0,15);
+    document.getElementById("tRetencion").innerHTML = rankRet.length
+      ? '<table><tr><th>#</th><th>Tema</th><th>Promedio</th><th>Sesiones</th></tr>' + rankRet.map((r,i)=>`<tr><td class="pos">#${i+1}</td><td>${esc(r[0])}</td><td class="num">${r[1]}s</td><td>${r[2]}</td></tr>`).join("") + '</table>'
+      : '<div class="vacio">Sin datos de retención aún (aparecen cuando alguien pausa o cierra).</div>';
+
+    // ===== VISITAS =====
+    const disp = {};
+    visits.forEach(d => { const x = d.data(); disp[x.dispositivo||"?"] = (disp[x.dispositivo||"?"]||0)+1; });
+    document.getElementById("cOyentes").textContent = uids.size || "—";
+    document.getElementById("cVisitas").textContent = visits.size;
+
+    document.getElementById("tDispositivos").innerHTML = Object.keys(disp).length
+      ? Object.entries(disp).map(r=>`<span class="tag">${esc(r[0])}: <b>${r[1]}</b></span>`).join(" ")
+      : '<div class="vacio">Sin visitas aún.</div>';
+
+    // ===== ÚLTIMOS LIKES =====
+    const ult = docLikes.sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))).slice(0,10);
+    document.getElementById("tUltimos").innerHTML = ult.length
+      ? '<table><tr><th>Tema</th><th>Fecha</th></tr>' + ult.map(x=>{
+          let f="?"; try{ f=new Date(x.fecha).toLocaleString(); }catch(e){}
+          return `<tr><td>❤️ ${esc(x.artista)} — ${esc(x.tema)}</td><td>${f}</td></tr>`;
+        }).join("") + '</table>'
+      : '<div class="vacio">Todavía no hay me gusta.</div>';
+
+  }catch(e){
+    document.getElementById("estado").textContent = "❌ Error cargando: " + e.message;
+  }
+}
+</script>
+</body>
+</html>
