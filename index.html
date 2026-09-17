@@ -707,7 +707,7 @@ function cambiarFondo(urlImagen) {
   if (!urlImagen) return;
   try {
     for (let hoja of document.styleSheets) {
-      for (let regla de hoja.cssRules) {
+      for (let regla of hoja.cssRules) {
         if (regla.selectorText === "body::before") {
           regla.style.backgroundImage = `url('${urlImagen}')`;
           return;
@@ -982,7 +982,7 @@ if (btnLike) {
   });
 
   // Refresca el corazón cuando cambia la canción en pantalla
-  const tituloObs =h new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
+  const tituloObs = new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
   tituloObs.observe(document.getElementById("title"), { childList: true, characterData: true, subtree: true });
   actualizarEstadoLike();
 }
