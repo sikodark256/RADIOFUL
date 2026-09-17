@@ -982,7 +982,7 @@ if (btnLike) {
   });
 
   // Refresca el corazón cuando cambia la canción en pantalla
-  const tituloObs = new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
+  const tituloObs =h new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
   tituloObs.observe(document.getElementById("title"), { childList: true, characterData: true, subtree: true });
   actualizarEstadoLike();
 }
