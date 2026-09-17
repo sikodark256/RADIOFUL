@@ -67,3 +67,32 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow("/RADIOFUL/"));
 });
+/* ===== 🔔 NOTIFICACIONES PUSH ===== */
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
+  authDomain: "sikodarkradio-26a07.firebaseapp.com",
+  projectId: "sikodarkradio-26a07",
+  storageBucket: "sikodarkradio-26a07.firebasestorage.app",
+  messagingSenderId: "941041207378",
+  appId: "1:941041207378:web:994e34372109d30acf778b"
+});
+
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage((payload) => {
+  const n = payload.notification || {};
+  self.registration.showNotification(n.title || "sikodark radio", {
+    body: n.body || "",
+    icon: "apple-icon.png",
+    badge: "icon-192.png",
+    image: n.image || undefined,
+    data: { url: "/RADIOFUL/" }
+  });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/RADIOFUL/"));
+});
