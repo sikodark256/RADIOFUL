@@ -1173,6 +1173,31 @@ if (btnLike) {
     }
   });
 })();
+</script><!-- ===== 🚫 POLICIA DE BLOQUEO ===== -->
+<script>
+(function(){
+  function verificarBloqueo(){
+    try{
+      var user = firebase.auth().currentUser;
+      if (!user) return;
+      dbFB.collection("usuarios").doc(user.uid).get().then(function(doc){
+        if (doc.exists && doc.data().bloqueado){
+          if (!document.getElementById("pantallaBloqueo")){
+            var d = document.createElement("div");
+            d.id = "pantallaBloqueo";
+            d.style.cssText = "position:fixed;inset:0;background:#171820;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center";
+            d.innerHTML = '<div style="font-size:46px">🚫</div><b style="color:#f5f5f7;font-size:18px">Acceso suspendido</b><p style="color:#a5a6ad;font-size:13px;max-width:300px;margin:0">Tu acceso a sikodark radio fue suspendido. Si crees que es un error, contáctanos.</p>';
+            document.body.appendChild(d);
+            try{ audio.pause(); }catch(e){}
+            log("warn", "🚫 Cuenta bloqueada");
+          }
+        }
+      }).catch(function(){});
+    }catch(e){}
+  }
+  firebase.auth().onAuthStateChanged(function(user){ if (user) setTimeout(verificarBloqueo, 2000); });
+  setInterval(verificarBloqueo, 120000);
+})();
 </script>
 </body>
 </html>
