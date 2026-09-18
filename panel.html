@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+<head><link rel="manifest" href="panel-manifest.json">
+<meta name="theme-color" content="#171820">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Panel DJ — sikodark radio</title>
@@ -232,6 +233,22 @@ async function cargarTodo(){
 
 // Auto-refresco cada 60 segundos para ver el movimiento en vivo
 setInterval(() => cargarTodo(), 60000);
+</script><!-- ===== ⇩ INSTALAR PANEL COMO APP ===== -->
+<button id="btnInstalarPanel" style="display:none;position:fixed;bottom:18px;right:18px;z-index:100000;background:var(--pri);color:#191919;border:0;border-radius:999px;padding:12px 20px;font-weight:700;box-shadow:0 8px 25px rgba(0,0,0,.4)">⇩ Instalar panel</button>
+<script>
+(function(){
+  let dpPanel = null;
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    dpPanel = e;
+    var b = document.getElementById("btnInstalarPanel");
+    if (b) b.style.display = "block";
+  });
+  var b = document.getElementById("btnInstalarPanel");
+  if (b) b.onclick = function(){
+    if (dpPanel){ dpPanel.prompt(); b.style.display = "none"; }
+  };
+})();
 </script>
 </body>
 </html>
