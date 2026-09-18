@@ -986,6 +986,193 @@ if (btnLike) {
   tituloObs.observe(document.getElementById("title"), { childList: true, characterData: true, subtree: true });
   actualizarEstadoLike();
 }
+</script><!-- ===== 🔄 AUTO-RECUPERACION DEL STREAM + AUDIFONOS ===== -->
+<script>
+(function(){
+  // ---- 1. VIGIA: detecta stream congelado y reconecta solo ----
+  var ultimaPos = 0, fallos = 0, vigia = null;
+
+  function reconectar(){
+    try{
+      log("warn", "🔄 Señal perdida — reconectando al vivo...");
+      audio.pause();
+      setTimeout(function(){
+        audio.src = STREAM_URL;
+        audio.load();
+        audio.play().then(function(){
+          fallos = 0;
+          log("ok", "🔄 ¡De vuelta al aire! Sincronizado con el tema actual");
+        }).catch(function(){
+          fallos++;
+          if (fallos <= 6) setTimeout(reconectar, 4000);
+          else log("warn", "🔄 Sin señal — reintento automático cuando vuelva internet");
+        });
+      }, 300);
+    }catch(e){}
+  }
+
+  function iniciarVigia(){
+    if (vigia) clearInterval(vigia);
+    vigia = setInterval(function(){
+      if (!isPlaying) return;
+      var pos = audio.currentTime;
+      if (Math.abs(pos - ultimaPos) < 0.05){
+        fallos++;
+        if (fallos === 3) log("warn", "🔄 Stream lento o congelado...");
+        if (fallos >= 4) reconectar();
+      } else {
+        fallos = 0;
+      }
+      ultimaPos = pos;
+    }, 4000);
+  }
+  iniciarVigia();
+
+  // ---- 2. RED: cuando vuelva internet, reconecta solo ----
+  window.addEventListener("offline", function(){
+    log("warn", "📴 Sin conexión — esperando señal...");
+  });
+  window.addEventListener("online", function(){
+    log("ok", "📶 ¡Internet volvió! Reconectando stream...");
+    if (isPlaying) reconectar();
+  });
+
+  // ---- 3. AL VOLVER A LA APP: sincroniza con el tema actual ----
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible" && isPlaying){
+      setTimeout(function(){
+        var pos = audio.currentTime;
+        if (Math.abs(pos - ultimaPos) < 0.05) reconectar();
+        ultimaPos = pos;
+      }, 1500);
+    }
+  });
+
+  // ---- 4. AUDIFONOS INALAMBRICOS: botones completos ----
+  if ("mediaSession" in navigator){
+    try{ navigator.mediaSession.setActionHandler("stop", function(){ stopPlayback(); }); }catch(e){}
+    try{
+      navigator.mediaSession.setActionHandler("nexttrack", function(){
+        if (isPlaying) reconectar(); // doble/toque siguiente = sincronizar con el tema actual
+      });
+    }catch(e){}
+    try{
+      navigator.mediaSession.setActionHandler("previoustrack", function(){
+        if (isPlaying) reconectar();
+      });
+    }catch(e){}
+    log("ok", "🎧 Botones de audífonos activados (play, pausa, stop, sincronizar)");
+  }
+})();
+</script><!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
+<div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(23,24,32,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+  <div style="font-size:42px">🎧</div>
+  <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
+  <p style="color:#a5a6ad;font-size:13px;margin:0;max-width:300px">¿Cómo te llamas? Solo tu nombre o alias.</p>
+  <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center">
+  <button id="btnGuardarNombre" style="background:#ff8a24;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:700;font-size:15px">Entrar a la radio</button>
+  <button id="btnSaltarNombre" style="background:none;border:0;color:#a5a6ad;font-size:12px;cursor:pointer;text-decoration:underline">Continuar sin nombre</button>
+</div>
+<script>
+(function(){
+  const LS_NOMBRE = "sikodark-nombre";
+  const modal = document.getElementById("modalNombre");
+  const input = document.getElementById("inputNombre");
+  const btn = document.getElementById("btnGuardarNombre");
+  const btnSaltar = document.getElementById("btnSaltarNombre");
+
+  // Huella unica del dispositivo (sobrevive si desinstalan o borran datos)
+  async function calcularHuella(){
+    try{
+      const datos = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + "x" + screen.height,
+        String(screen.colorDepth),
+        String(new Date().getTimezoneOffset()),
+        String(navigator.hardwareConcurrency || 0),
+        String(navigator.deviceMemory || 0)
+      ].join("|");
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(datos));
+      const arr = Array.from(new Uint8Array(buf));
+      let hex = "";
+      arr.forEach(function(b){ hex += b.toString(16).padStart(2,"0"); });
+      return hex.slice(0,16).toUpperCase();
+    }catch(e){
+      return "HUELLA-ERROR";
+    }
+  }
+
+  btnSaltar.onclick = function(){
+    modal.style.display = "none";
+    log("info", "🎧 Oyente prefirio continuar sin nombre");
+  };
+
+  firebase.auth().onAuthStateChanged(async function(user){
+    if (!user) return;
+    try{
+      const huella = await calcularHuella();
+      const nombreLocal = localStorage.getItem(LS_NOMBRE);
+
+      // Caso 1: ya tiene nombre en este navegador
+      if (nombreLocal){
+        await dbFB.collection("usuarios").doc(user.uid).set({
+          nombre: nombreLocal,
+          huella: huella,
+          ultimaConexion: new Date().toISOString()
+        }, { merge:true });
+        log("ok", "🎧 ¡Hola de nuevo, " + nombreLocal + "!");
+        return;
+      }
+
+      // Caso 2: desinstalo o borro datos, pero la huella ya existe
+      const q = await dbFB.collection("usuarios").where("huella","==",huella).limit(5).get();
+      if (!q.empty){
+        let nombre = "";
+        const borrar = [];
+        q.forEach(function(doc){
+          if (!nombre) nombre = doc.data().nombre || "";
+          if (doc.id !== user.uid) borrar.push(doc);
+        });
+        // Limpia el registro viejo para que quede uno solo
+        borrar.forEach(function(doc){ doc.ref.delete().catch(function(){}); });
+        if (nombre){
+          localStorage.setItem(LS_NOMBRE, nombre);
+          await dbFB.collection("usuarios").doc(user.uid).set({
+            nombre: nombre,
+            huella: huella,
+            ultimaConexion: new Date().toISOString()
+          }, { merge:true });
+          log("ok", "🎧 ¡Hola de nuevo, " + nombre + "! (dispositivo reconocido)");
+          return;
+        }
+      }
+
+      // Caso 3: usuario totalmente nuevo -> pedir su nombre
+      modal.style.display = "flex";
+      btn.onclick = async function(){
+        const nombre = (input.value || "").trim().slice(0, 20);
+        if (nombre.length < 2){ input.focus(); return; }
+        localStorage.setItem(LS_NOMBRE, nombre);
+        try{
+          await dbFB.collection("usuarios").doc(user.uid).set({
+            nombre: nombre,
+            huella: huella,
+            bloqueado: false,
+            fechaRegistro: new Date().toISOString(),
+            ultimaConexion: new Date().toISOString()
+          });
+        }catch(e){
+          log("warn", "🎧 Nombre guardado en el celular (Firebase no respondio)");
+        }
+        modal.style.display = "none";
+        log("ok", "🎧 ¡Bienvenido a bordo, " + nombre + "!");
+      };
+    }catch(e){
+      log("warn", "🎧 Registro diferido: " + e.message);
+    }
+  });
+})();
 </script>
 </body>
 </html>
