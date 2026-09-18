@@ -8,12 +8,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--bg:#171820;--card:#22232b;--sec:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--pri:#ff8a24;--bor:rgba(255,255,255,.1);--ok:#34c759}
+:root{--bg:#171820;--card:#22232b;--sec:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--pri:#ff8a24;--bor:rgba(255,255,255,.1);--ok:#34c759;--err:#ff3b30}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:16px}
 h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 16px}
 .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
 .card{background:var(--card);border:1px solid var(--bor);border-radius:14px;padding:14px}
 .card .n{font-size:24px;font-weight:800;color:var(--pri)}
+.card .n.vivo{color:var(--ok)}
 .card .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
 h2{font-size:15px;margin:20px 0 8px}
 table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--bor)}
@@ -22,40 +23,30 @@ th{background:var(--sec);font-size:11px;text-transform:uppercase;color:var(--mut
 td.num{font-weight:800;color:var(--pri)}
 .pos{color:var(--muted);font-family:monospace;font-size:12px}
 button{background:var(--pri);color:#191919;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;margin-top:6px}
+.mini{padding:5px 10px;margin:0 2px;font-size:12px;background:var(--sec);color:var(--text)}
+.mini.peligro{background:rgba(255,59,48,.15);color:var(--err)}
+.mini.ok{background:rgba(52,199,89,.15);color:var(--ok)}
 .tag{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--sec);color:var(--muted);font-size:11px;margin:2px}
 .vacio{color:var(--muted);font-size:13px;padding:12px;background:var(--card);border:1px dashed var(--bor);border-radius:12px}
 .estado{font-size:12px;color:var(--muted);margin:8px 0}
+.nombreUser{font-weight:700}
+.bloqueadoTxt{color:var(--err);font-size:11px}
 </style>
 </head>
 <body>
-  <div id="candado" style="position:fixed;inset:0;background:#171820;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
-  <div style="font-size:40px">🔐</div>
-  <b>Panel DJ — solo personal</b>
-  <input id="clavePanel" type="password" placeholder="Contraseña" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px">
-  <button onclick="entrarPanel()" style="margin-top:0">Entrar</button>
-  <div id="claveErr" style="color:#ff3b30;font-size:12px;display:none">Contraseña incorrecta</div>
-</div>
-<script>
-const CLAVE_PANEL = "197433";
-function entrarPanel(){
-  if(document.getElementById("clavePanel").value === CLAVE_PANEL){
-    document.getElementById("candado").remove();
-  } else {
-    document.getElementById("claveErr").style.display = "block";
-  }
-}
-document.getElementById("clavePanel").addEventListener("keydown", e => { if(e.key === "Enter") entrarPanel(); });
-</script>
 <h1>🎛️ Panel DJ — sikodark radio</h1>
 <p class="sub">Datos en vivo desde Firebase · solo para ti</p>
 <div class="estado" id="estado">Conectando…</div>
 
 <div class="cards">
   <div class="card"><div class="n" id="cOyentes">—</div><div class="l">Oyentes únicos</div></div>
-  <div class="card"><div class="n" id="cVisitas">—</div><div class="l">Visitas totales</div></div>
+  <div class="card"><div class="n vivo" id="cVivos">—</div><div class="l">🟢 En vivo ahora</div></div>
   <div class="card"><div class="n" id="cEscuchas">—</div><div class="l">Temas escuchados</div></div>
   <div class="card"><div class="n" id="cLikes">—</div><div class="l">Me gusta ❤️</div></div>
 </div>
+
+<h2>👥 Oyentes registrados</h2>
+<div id="tUsuarios"></div>
 
 <h2>🏆 Artistas más queridos (me gusta)</h2>
 <div id="tArtistas"></div>
@@ -72,7 +63,7 @@ document.getElementById("clavePanel").addEventListener("keydown", e => { if(e.ke
 <h2>❤️ Últimos me gusta</h2>
 <div id="tUltimos"></div>
 
-<button onclick="location.reload()">🔄 Actualizar datos</button>
+<button onclick="location.reload()">🔄 Actualizar ahora</button>
 
 <script>
 const firebaseConfig = {
@@ -86,6 +77,39 @@ const firebaseConfig = {
 
 function esc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
 
+function haceCuanto(f){
+  try{
+    const ms = Date.now() - new Date(f).getTime();
+    if (isNaN(ms) || ms < 0) return "?";
+    if (ms < 120000) return "ahora";
+    if (ms < 3600000) return "hace " + Math.floor(ms/60000) + " min";
+    if (ms < 86400000) return "hace " + Math.floor(ms/3600000) + " h";
+    return "hace " + Math.floor(ms/86400000) + " días";
+  }catch(e){ return "?"; }
+}
+
+window.bloquearUsuario = async function(id, estaBloqueado){
+  try{
+    if (estaBloqueado){
+      await db.collection("usuarios").doc(id).set({ bloqueado: false }, { merge:true });
+      cargarTodo();
+      return;
+    }
+    if (confirm("¿Bloquear a este oyente? No podrá usar la radio.")){
+      await db.collection("usuarios").doc(id).set({ bloqueado: true }, { merge:true });
+      cargarTodo();
+    }
+  }catch(e){ alert("Error: " + e.message); }
+};
+
+window.renombrarUsuario = async function(id, actual){
+  const nuevo = prompt("Nombre del oyente:", actual);
+  if (nuevo && nuevo.trim().length >= 2){
+    await db.collection("usuarios").doc(id).set({ nombre: nuevo.trim().slice(0,20) }, { merge:true });
+    cargarTodo();
+  }
+};
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -95,24 +119,57 @@ firebase.auth().signInAnonymously()
 
 async function cargarTodo(){
   try{
-    const [likes, escu, visits] = await Promise.all([
+    const [likes, escu, visits, usuariosSnap] = await Promise.all([
       db.collection("megustas").get(),
       db.collection("escuchas").get(),
-      db.collection("visitas").get()
+      db.collection("visitas").get(),
+      db.collection("usuarios").get()
     ]);
     document.getElementById("estado").textContent = "✅ Datos actualizados: " + new Date().toLocaleTimeString();
+
+    // ===== USUARIOS REGISTRADOS =====
+    const ahora = Date.now();
+    const usuarios = [];
+    usuariosSnap.forEach(d => {
+      const x = d.data();
+      usuarios.push({
+        id: d.id,
+        nombre: x.nombre || "Anónimo",
+        huella: x.huella || "",
+        bloqueado: !!x.bloqueado,
+        ultima: x.ultimaConexion || x.fechaRegistro || ""
+      });
+    });
+    usuarios.sort((a,b) => String(b.ultima).localeCompare(String(a.ultima)));
+
+    const enVivo = usuarios.filter(u => u.ultima && (ahora - new Date(u.ultima).getTime()) < 120000).length;
+    document.getElementById("cVivos").textContent = enVivo;
+
+    document.getElementById("tUsuarios").innerHTML = usuarios.length
+      ? '<table><tr><th>Estado</th><th>Oyente</th><th>Conexión</th><th>Control</th></tr>' +
+        usuarios.map(u => {
+          const vivo = u.ultima && (ahora - new Date(u.ultima).getTime()) < 120000;
+          return '<tr>' +
+            '<td>' + (vivo ? "🟢" : "⚪") + '</td>' +
+            '<td><span class="nombreUser">' + esc(u.nombre) + '</span>' + (u.bloqueado ? ' <span class="bloqueadoTxt">🚫 bloqueado</span>' : '') + '</td>' +
+            '<td class="pos">' + haceCuanto(u.ultima) + '</td>' +
+            '<td>' +
+              '<button class="mini ' + (u.bloqueado ? "ok" : "peligro") + '" onclick="bloquearUsuario(\'' + u.id + '\', ' + u.bloqueado + ')">' + (u.bloqueado ? "✅" : "🚫") + '</button>' +
+              '<button class="mini" onclick="renombrarUsuario(\'' + u.id + '\', \'' + esc(u.nombre).replace(/'/g, "\\'") + '\')">✏️</button>' +
+            '</td>' +
+          '</tr>';
+        }).join("") + '</table>'
+      : '<div class="vacio">Aún no hay oyentes registrados (aparecen cuando ponen su nombre).</div>';
 
     // ===== ME GUSTAS =====
     const docLikes = [];
     likes.forEach(d => docLikes.push(d.data()));
     document.getElementById("cLikes").textContent = docLikes.length;
 
-    const porArtista = {}, porTemaLike = {};
+    const porArtista = {};
     docLikes.forEach(x => {
       const a = x.artista || "Desconocido";
       porArtista[a] = (porArtista[a]||0)+1;
-      const k = (x.artista||"?") + " — " + (x.tema||"?");
-      porTemaLike[k] = (porTemaLike[k]||0)+1;
     });
 
     const rankArt = Object.entries(porArtista).sort((a,b)=>b[1]-a[1]);
@@ -139,22 +196,21 @@ async function cargarTodo(){
       }
     });
     document.getElementById("cEscuchas").textContent = plays;
+    document.getElementById("cOyentes").textContent = uids.size || "—";
 
     const rankTemas = Object.entries(porTema).sort((a,b)=>b[1]-a[1]).slice(0,15);
     document.getElementById("tTemas").innerHTML = rankTemas.length
       ? '<table><tr><th>#</th><th>Tema</th><th>Reproducciones</th></tr>' + rankTemas.map((r,i)=>`<tr><td class="pos">#${i+1}</td><td>${esc(r[0])}</td><td class="num">${r[1]}</td></tr>`).join("") + '</table>'
-      : '<div class="vacio">Aún sin escuchas. Dale play a la radio y espera a que cambie de canción.</div>';
+      : '<div class="vacio">Aún sin escuchas.</div>';
 
     const rankRet = Object.entries(fins).map(([k,v])=>[k, Math.round(v.suma/v.n), v.n]).sort((a,b)=>b[1]-a[1]).slice(0,15);
     document.getElementById("tRetencion").innerHTML = rankRet.length
       ? '<table><tr><th>#</th><th>Tema</th><th>Promedio</th><th>Sesiones</th></tr>' + rankRet.map((r,i)=>`<tr><td class="pos">#${i+1}</td><td>${esc(r[0])}</td><td class="num">${r[1]}s</td><td>${r[2]}</td></tr>`).join("") + '</table>'
-      : '<div class="vacio">Sin datos de retención aún (aparecen cuando alguien pausa o cierra).</div>';
+      : '<div class="vacio">Sin datos de retención aún.</div>';
 
     // ===== VISITAS =====
     const disp = {};
     visits.forEach(d => { const x = d.data(); disp[x.dispositivo||"?"] = (disp[x.dispositivo||"?"]||0)+1; });
-    document.getElementById("cOyentes").textContent = uids.size || "—";
-    document.getElementById("cVisitas").textContent = visits.size;
 
     document.getElementById("tDispositivos").innerHTML = Object.keys(disp).length
       ? Object.entries(disp).map(r=>`<span class="tag">${esc(r[0])}: <b>${r[1]}</b></span>`).join(" ")
@@ -173,6 +229,9 @@ async function cargarTodo(){
     document.getElementById("estado").textContent = "❌ Error cargando: " + e.message;
   }
 }
+
+// Auto-refresco cada 60 segundos para ver el movimiento en vivo
+setInterval(() => cargarTodo(), 60000);
 </script>
 </body>
 </html>
