@@ -1,7 +1,7 @@
 {
   "name": "Panel DJ — sikodark radio",
   "short_name": "Panel DJ",
-  "start_url": "./Panel.html",
+  "start_url": "./panel.html",
   "display": "standalone",
   "background_color": "#171820",
   "theme_color": "#171820",
