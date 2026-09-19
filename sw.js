@@ -1,6 +1,26 @@
 /* Sikodark Radio v6 — Service Worker */
 const CACHE_VERSION = "sikodark-radio-v9";
-const ASSETS = ["./","./index.html","./manifest.json","./apple-icon.png","./icon-192.png","./icon-512.png"];
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./favicon.ico",
+  "./icons/favicon.ico",
+  "./icons/favicon-16x16.png",
+  "./icons/favicon-32x32.png",
+  "./icons/apple-touch-icon.png",
+  "./icons/icon-72x72.png",
+  "./icons/icon-96x96.png",
+  "./icons/icon-128x128.png",
+  "./icons/icon-144x144.png",
+  "./icons/icon-152x152.png",
+  "./icons/icon-192x192.png",
+  "./icons/icon-192x192-maskable.png",
+  "./icons/icon-256x256.png",
+  "./icons/icon-384x384.png",
+  "./icons/icon-512x512.png",
+  "./icons/icon-512x512-maskable.png"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(
@@ -58,8 +78,8 @@ messaging.onBackgroundMessage((payload) => {
   const n = payload.notification || {};
   self.registration.showNotification(n.title || "sikodark radio", {
     body: n.body || "",
-    icon: "apple-icon.png",
-    badge: "icon-192.png",
+    icon: "icons/icon-192x192.png",
+    badge: "icons/icon-192x192.png",
     image: n.image || undefined,
     data: { url: "/RADIOFUL/" }
   });

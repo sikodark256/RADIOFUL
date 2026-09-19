@@ -6,8 +6,16 @@
 <meta name="theme-color" content="#171820">
 <meta name="description" content="Escuchá sikodark radio en directo y descubrí la música que ya sonó.">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="apple-icon.png">
-<link rel="apple-touch-icon" href="apple-icon.png">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="sikodark">
+<meta name="mobile-web-app-capable" content="yes">
 <title>sikodark radio</title>
 
 <!-- ===== 📊 Librerías de Firebase ===== -->
@@ -95,11 +103,11 @@ body::after{
 <section class="card" aria-label="Reproductor de radio">
 <audio id="audio" preload="none"></audio>
 <div class="top">
-  <div class="brand"><img id="brandLogo" src="apple-icon.png" alt="sikodark"><div><div class="eyebrow">Radio online</div><div class="brand-name">sikodark</div></div></div>
+  <div class="brand"><img id="brandLogo" src="icons/icon-192x192.png" alt="sikodark"><div><div class="eyebrow">Radio online</div><div class="brand-name">sikodark</div></div></div>
   <div id="status" class="status"><span class="dot"></span><span id="statusText">Detenido</span></div>
 </div>
 <div id="coverBox" class="cover">
-  <img id="cover" src="apple-icon.png" alt="Logo de sikodark">
+  <img id="cover" src="icons/icon-512x512.png" alt="Logo de sikodark">
   <div id="eq" class="eq"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
@@ -131,7 +139,7 @@ body::after{
 <footer>sikodark radio · música en directo</footer>
 
 <div id="smartNotify" role="alert" aria-live="polite">
-  <div class="notify-art"><img id="notifyArt" src="apple-icon.png" alt=""></div>
+  <div class="notify-art"><img id="notifyArt" src="icons/icon-192x192.png" alt=""></div>
   <div class="notify-body">
     <div class="notify-tag" id="notifyTag">Información del artista</div>
     <div class="notify-phrase" id="notifyPhrase">Cargando…</div>
@@ -146,7 +154,7 @@ body::after{
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
-const LOGO = "apple-icon.png";
+const LOGO = "icons/icon-192x192.png";
 const MAX_HISTORY = 10;
 
 const ZENO_SSE_URL = `https://api.zeno.fm/mounts/metadata/subscribe/${MOUNT_ID}`;
@@ -259,13 +267,28 @@ function actualizarMediaSession(track, urlCaratula) {
   }
   
   try {
+    // 🎨 Artwork: enviar múltiples tamaños para que Android elija el mejor
+    // Esto ayuda a que aparezca TU LOGO y nombre, no "Chrome"
     const artwork = [];
+    
+    // Si hay carátula de la canción, la usamos en varios tamaños
     if (urlCaratula && urlCaratula !== LOGO) {
+      artwork.push({ src: urlCaratula, sizes: "96x96",   type: "image/png" });
+      artwork.push({ src: urlCaratula, sizes: "128x128", type: "image/png" });
+      artwork.push({ src: urlCaratula, sizes: "192x192", type: "image/png" });
+      artwork.push({ src: urlCaratula, sizes: "256x256", type: "image/png" });
+      artwork.push({ src: urlCaratula, sizes: "384x384", type: "image/png" });
       artwork.push({ src: urlCaratula, sizes: "512x512", type: "image/png" });
-      artwork.push({ src: urlCaratula, sizes: "96x96", type: "image/png" });
-    } else {
-      artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     }
+    
+    // ✅ SIEMPRE agregar los iconos OFICIALES de la app como fallback
+    // Esto es CLAVE para que Android reconozca tu PWA y muestre "sikodark" en vez de "Chrome"
+    artwork.push({ src: "icons/icon-96x96.png",   sizes: "96x96",   type: "image/png" });
+    artwork.push({ src: "icons/icon-128x128.png", sizes: "128x128", type: "image/png" });
+    artwork.push({ src: "icons/icon-192x192.png", sizes: "192x192", type: "image/png" });
+    artwork.push({ src: "icons/icon-256x256.png", sizes: "256x256", type: "image/png" });
+    artwork.push({ src: "icons/icon-384x384.png", sizes: "384x384", type: "image/png" });
+    artwork.push({ src: "icons/icon-512x512.png", sizes: "512x512", type: "image/png" });
     
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
@@ -274,9 +297,9 @@ function actualizarMediaSession(track, urlCaratula) {
       artwork: artwork
     });
     
-    log("ok", `MediaSession actualizado: ${track.artist||""} - ${track.title}`);
+    log("ok", `🎧 MediaSession actualizado: ${track.artist||""} - ${track.title}`);
     
-    // Controles en la pantalla de bloqueo
+    // Controles en la pantalla de bloqueo / audífonos
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
     
