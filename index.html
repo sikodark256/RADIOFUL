@@ -33,13 +33,16 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 .history{margin-top:24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.history h2{font-size:18px;margin:0;font-weight:800}.history p.sub{font-size:11px;color:var(--muted);margin:5px 0 0}.count{padding:6px 11px;border-radius:999px;background:var(--secondary);color:var(--muted);font:11px monospace;white-space:nowrap}.history-grid{margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}.track{overflow:hidden;border-radius:12px;background:var(--secondary)}.track-art{position:relative;aspect-ratio:1}.track-art img{width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(23,24,32,.92);padding:4px 7px;font:11px monospace;font-weight:700}.track-info{padding:10px}.track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-title{font-size:13px;font-weight:700}.track-artist{font-size:11px;color:var(--muted);margin-top:3px}footer{color:var(--muted);text-align:center;font:11px monospace}
 .hidden{display:none}
 
-/* ===== ❤️ BOTÓN ME GUSTA ===== */
-.like-row{text-align:center;margin-top:14px}
-.like-btn{border:1px solid var(--border);background:var(--secondary);border-radius:999px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:transform .15s,background .2s}
+/* ===== ❤️ BOTÓN ME GUSTA (sobre la carátula) ===== */
+.like-row{position:absolute;right:12px;bottom:12px;margin:0;z-index:3}
+.like-btn{border:1px solid rgba(255,255,255,.18);background:rgba(23,24,32,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:transform .15s,background .2s}
 .like-btn:active{transform:scale(.94)}
 .like-btn.liked{color:var(--error);border-color:rgba(255,59,48,.5);background:rgba(255,59,48,.12)}
 
-/* ===== PANEL DE DIAGNÓSTICO ===== */
+/* ===== 🚫 OCULTOS: notificación Wikipedia, EQ y diagnóstico ===== */
+#smartNotify,#diagnostico,.eq{display:none!important}
+
+/* ===== PANEL DE DIAGNÓSTICO (oculto, sigue funcionando por dentro) ===== */
 #diagnostico{
   margin-top:16px;padding:12px 14px;border-radius:14px;
   background:var(--secondary);border:1px solid var(--border);
@@ -66,7 +69,7 @@ body::after{
   background:linear-gradient(135deg,rgba(23,24,32,.85),rgba(23,24,32,.6));
   pointer-events:none;
 }
-/* ===== NOTIFICACIÓN INTELIGENTE ===== */
+/* ===== NOTIFICACIÓN INTELIGENTE (oculta) ===== */
 #smartNotify{
   position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
   z-index:9999;max-width:460px;width:calc(100% - 32px);
@@ -100,14 +103,12 @@ body::after{
 </div>
 <div id="coverBox" class="cover">
   <img id="cover" src="apple-icon.png" alt="Logo de sikodark">
+  <div class="like-row"><button id="btnLike" class="like-btn" aria-label="Me gusta este tema">🤍 <span>Me gusta</span></button></div>
   <div id="eq" class="eq"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
 
-<!-- ===== ❤️ BOTÓN ME GUSTA ===== -->
-<div class="like-row"><button id="btnLike" class="like-btn" aria-label="Me gusta este tema">🤍 <span>Me gusta</span></button></div>
-
-<!-- ===== PANEL DE DIAGNÓSTICO ===== -->
+<!-- ===== PANEL DE DIAGNÓSTICO (oculto) ===== -->
 <div id="diagnostico">
   <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v6...</span></div>
 </div>
@@ -190,7 +191,7 @@ try {
 } catch(e) { history = []; }
 
 /* =========================================================
-   FUNCIONES DE DEBUG VISIBLES
+   FUNCIONES DE DEBUG (internas, no visibles)
    ========================================================= */
 function log(tipo, mensaje) {
   const iconos = { ok: "✅", err: "❌", info: "ℹ️", warn: "⚠️" };
@@ -198,7 +199,6 @@ function log(tipo, mensaje) {
   linea.className = `diag-line ${tipo}`;
   linea.innerHTML = `<span class="prefix">${iconos[tipo]||"→"}</span><span class="msg">${mensaje}</span>`;
   diagnostico.appendChild(linea);
-  // Mantener solo las últimas 15 líneas
   while (diagnostico.children.length > 15) diagnostico.removeChild(diagnostico.firstChild);
   console.log(`[${tipo}] ${mensaje}`);
 }
@@ -219,13 +219,11 @@ async function startPlayback(){
     log("ok", "Audio reproduciéndose");
   }catch(e){isLoading=false;setPlaying(false);log("err","No se pudo reproducir: "+e.message)}
 }
-// 📊 Registra el fin de escucha al detener
 function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false}
 
 play.onclick=()=>isPlaying?stopPlayback():startPlayback();
 audio.onplaying=()=>{isLoading=false;setPlaying(true)};
 audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner()};
-// 📊 Registra el fin de escucha al pausar
 audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false)}};
 audio.onerror=()=>{isLoading=false;setPlaying(false);log("err","Error en el stream de audio")};
 
@@ -250,14 +248,13 @@ btnReset.onclick = () => {
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
 /* =========================================================
-   🎵 MEDIA SESSION API — Carátula en SEGUNDO PLANO / Pantalla bloqueo
+   🎵 MEDIA SESSION API
    ========================================================= */
 function actualizarMediaSession(track, urlCaratula) {
   if (!("mediaSession" in navigator)) {
     log("warn", "Media Session no soportado en este navegador");
     return;
   }
-  
   try {
     const artwork = [];
     if (urlCaratula && urlCaratula !== LOGO) {
@@ -266,20 +263,15 @@ function actualizarMediaSession(track, urlCaratula) {
     } else {
       artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     }
-    
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
       artist: track.artist || "En vivo",
       album: "sikodark radio",
       artwork: artwork
     });
-    
     log("ok", `MediaSession actualizado: ${track.artist||""} - ${track.title}`);
-    
-    // Controles en la pantalla de bloqueo
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
-    
   } catch(e) {
     log("err", "MediaSession error: " + e.message);
   }
@@ -290,39 +282,25 @@ function actualizarMediaSession(track, urlCaratula) {
    ========================================================= */
 function setTrack(t){
   if (!t || !t.title) return;
-  
   const trackKey = `${t.artist||""}||${t.title}`;
   if (trackKey === ultimoTitulo && t.title !== "En vivo") {
     log("info", `Misma canción: ${t.title} — ignorando`);
     return;
   }
   ultimoTitulo = trackKey;
-  
   log("ok", `🎵 Nueva canción: ${t.artist || "?"} - ${t.title}`);
-  
   titleEl.textContent = t.title || "En vivo";
   artistEl.textContent = t.artist || "";
   imagenArtistaGlobal = null;
-  
-  // 1. Actualizar Media Session (primero con logo, luego con carátula cuando llegue)
   actualizarMediaSession(t, LOGO);
-  
-  // 2. Buscar carátula
   fetchCover(t);
-  
-  // 3. Agregar al historial
   agregarAlHistorial(t);
-  
-  // ===== 📊 Registrar en Firebase (solo si está escuchando) =====
   if (isPlaying) {
     registrarFinEscucha();
     registrarEscucha(t);
     inicioEscucha = Date.now();
     temaActual = t;
   }
-  // =====================================================================
-  
-  // 4. Disparar notificación inteligente
   setTimeout(() => {
     log("info", "Disparando notificación inteligente...");
     procesarCancionInteligente(t);
@@ -330,7 +308,7 @@ function setTrack(t){
 }
 
 /* =========================================================
-   HISTORIAL — Versión ROBUSTA
+   HISTORIAL
    ========================================================= */
 function agregarAlHistorial(track) {
   try {
@@ -338,41 +316,25 @@ function agregarAlHistorial(track) {
       log("warn", "Historial: título inválido, saltando");
       return;
     }
-    
     const item = {
       title: track.title,
       artist: track.artist || null,
       cover: cover || null
     };
-    
-    log("info", `Historial: intentando agregar "${item.title}"`);
-    
     const mismo = (x) => x && x.title === item.title && x.artist === item.artist;
-    
-    // Si el último elemento es el mismo, solo actualizar carátula
     if (history.length > 0 && mismo(history[0])) {
       if (item.cover && history[0].cover !== item.cover) {
         history[0].cover = item.cover;
-        log("info", "Historial: actualizando carátula del último");
-      } else {
-        log("info", "Historial: ya está en la primera posición");
       }
     } else {
-      // Quitar duplicados y agregar al principio
       history = history.filter(x => !mismo(x));
       history.unshift(item);
       history = history.slice(0, MAX_HISTORY);
-      log("ok", `Historial: agregado. Total: ${history.length} temas`);
     }
-    
-    // Guardar en localStorage
     localStorage.setItem("sikodark-history", JSON.stringify(history));
-    log("info", "Historial: guardado en localStorage");
-    
     renderHistory();
-    
   } catch(e) {
-    log("err", "Historial ERROR: " + e.message + " — " + e.stack);
+    log("err", "Historial ERROR: " + e.message);
   }
 }
 
@@ -401,7 +363,6 @@ async function fetchConProxy(url, opciones = {}) {
     const r = await fetch(url, opciones);
     if (r.ok) return r;
   } catch(e) {}
-  
   for (let i = 0; i < PROXIES.length; i++) {
     try {
       const urlProxy = PROXIES[i](url);
@@ -464,11 +425,8 @@ async function cover_imagenArtista() {
 
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
-  
   log("info", `Buscando carátula para: ${t.artist||"?"} - ${t.title}`);
-  
   const estrategias = [cover_iTunes_cancion, cover_Deezer_cancion, cover_iTunes_soloTitulo, cover_imagenArtista];
-  
   for (const estrategia of estrategias) {
     try {
       const r = await estrategia(t);
@@ -476,11 +434,7 @@ async function fetchCover(t) {
         log("ok", `Carátula: ${r.fuente}`);
         cover = r.url;
         coverEl.src = cover;
-        
-        // Actualizar Media Session con la carátula REAL
         actualizarMediaSession(t, cover);
-        
-        // Actualizar historial con la carátula
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
           localStorage.setItem("sikodark-history", JSON.stringify(history));
@@ -490,7 +444,6 @@ async function fetchCover(t) {
       }
     } catch(e) {}
   }
-  
   log("warn", "Sin carátula, usando logo");
   cover = null;
   coverEl.src = LOGO;
@@ -513,7 +466,6 @@ function intentarSSE() {
       log("info", "Intentando SSE directo...");
       const source = new EventSource(ZENO_SSE_URL);
       let recibioAlgo = false;
-      
       source.onmessage = e => {
         try {
           const d = JSON.parse(e.data);
@@ -523,30 +475,25 @@ function intentarSSE() {
           }
         } catch(_) {}
       };
-      
       source.onerror = () => {
         source.close();
         if (recibioAlgo) resolve(true);
         else reject(new Error("SSE bloqueado"));
       };
-      
       setTimeout(() => {
         if (!recibioAlgo) { source.close(); reject(new Error("SSE timeout")); }
         else resolve(true);
       }, 5000);
-      
     } catch(e) { reject(e); }
   });
 }
 
 async function iniciarPolling() {
   log("warn", "SSE falló — activando Polling con proxy CORS");
-  
   async function consultar() {
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
       const d = await r.json();
-      
       let streamTitle = null;
       if (d.streamTitle) streamTitle = d.streamTitle;
       else if (d.mount && d.mount.streamTitle) streamTitle = d.mount.streamTitle;
@@ -554,7 +501,6 @@ async function iniciarPolling() {
         const np = d.now_playing.song;
         streamTitle = `${np.artist || ""} - ${np.title || ""}`.trim();
       }
-      
       if (streamTitle) {
         procesarMetadataRaw(streamTitle);
       }
@@ -562,7 +508,6 @@ async function iniciarPolling() {
       log("err", "Polling error: " + e.message);
     }
   }
-  
   consultar();
   if (pollingInterval) clearInterval(pollingInterval);
   pollingInterval = setInterval(consultar, 10000);
@@ -581,7 +526,7 @@ async function conectarMetadata() {
 }
 
 /* =========================================================
-   NOTIFICACIONES INTELIGENTES
+   INFO DE ARTISTA (para el fondo dinámico)
    ========================================================= */
 const SMART_CACHE = JSON.parse(localStorage.getItem("sikodark-smart-cache") || "{}");
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
@@ -601,12 +546,9 @@ async function buscarEnWikipedia(artista) {
     const searchUrl = `${WIKIPEDIA_SEARCH_URL}?action=query&list=search&srsearch=${nombre}&format=json&origin=*&srlimit=3`;
     const r = await fetch(searchUrl);
     const d = await r.json();
-    
     if (!d.query || !d.query.search || !d.query.search.length) return null;
-
     let pagina = null;
     const palabrasClave = ["música", "musical", "banda", "grupo", "artista", "cantante", "solista", "rock", "pop", "metal"];
-    
     for (const res of d.query.search) {
       const snippet = (res.snippet || "").toLowerCase();
       const titulo = (res.title || "").toLowerCase();
@@ -616,39 +558,32 @@ async function buscarEnWikipedia(artista) {
       }
     }
     if (!pagina) pagina = d.query.search[0].title;
-
     const paginaEncoded = encodeURIComponent(pagina.replace(/ /g, "_"));
     const summaryUrl = `${WIKIPEDIA_SUMMARY_URL}${paginaEncoded}`;
     const r2 = await fetch(summaryUrl);
     if (!r2.ok) return null;
     const d2 = await r2.json();
     if (!d2.extract) return null;
-
     let extracto = d2.extract.trim();
     let frase = "", oraciones = 0, posicion = 0, maxCaracteres = 320;
-    
     while (oraciones < 3 && posicion < extracto.length && posicion < maxCaracteres) {
       const punto = extracto.substring(posicion).search(/[.!?]/);
       if (punto === -1) break;
       posicion += punto + 1;
       oraciones++;
     }
-    
     if (posicion > 30) frase = extracto.substring(0, posicion).trim();
     else {
       frase = extracto.substring(0, 300);
       const espacio = frase.lastIndexOf(" ");
       if (espacio > 30) frase = frase.substring(0, espacio) + "…";
     }
-
     let imagenArtista = null;
     if (d2.thumbnail && d2.thumbnail.source) imagenArtista = d2.thumbnail.source;
     else if (d2.originalimage && d2.originalimage.source) imagenArtista = d2.originalimage.source;
-
     if (imagenArtista) imagenArtistaGlobal = imagenArtista;
-
     return { frase, imagenArtista, genero: null, fuente: "Wikipedia" };
-  } catch(e) { log("err", "Wikipedia: " + e.message); return null; }
+  } catch(e) { return null; }
 }
 
 async function buscarEnAudioDB(artista) {
@@ -662,13 +597,10 @@ async function buscarEnAudioDB(artista) {
     const genero = art.strGenre || null;
     const biografia = (art.strBiographyES || "").trim();
     const imagenArtista = art.strArtistFanart || art.strArtistThumb || null;
-    
     if (imagenArtista) imagenArtistaGlobal = imagenArtista;
-    
     if (!biografia && genero) {
       return { frase: `${artista} — referente del género ${genero.toLowerCase()}.`, imagenArtista, genero, fuente: "TheAudioDB" };
     }
-    
     if (biografia) {
       let frase = "", oraciones = 0, posicion = 0, maxCaracteres = 320;
       while (oraciones < 3 && posicion < biografia.length && posicion < maxCaracteres) {
@@ -717,81 +649,42 @@ function cambiarFondo(urlImagen) {
   } catch(e) {}
 }
 
+/* La ventana ya no se muestra (oculta por CSS) pero el fondo sí cambia */
 function mostrarNotificacionInteligente(info) {
-  try {
-    const notify = document.getElementById("smartNotify");
-    const notifyArt = document.getElementById("notifyArt");
-    const notifyTag = document.getElementById("notifyTag");
-    const notifyPhrase = document.getElementById("notifyPhrase");
-    const notifyClose = document.getElementById("notifyClose");
-    
-    notifyArt.src = info.caratula || LOGO;
-    notifyTag.textContent = info.genero || info.fuente || "Información";
-    notifyPhrase.textContent = info.frase;
-    notify.classList.add("show");
-    
-    log("ok", `🔔 Notificación mostrada (${info.fuente||"respaldo"})`);
-    
-    if (notifyTimeout) clearTimeout(notifyTimeout);
-    notifyTimeout = setTimeout(() => notify.classList.remove("show"), 12000);
-    
-    notifyClose.onclick = () => {
-      notify.classList.remove("show");
-      if (notifyTimeout) clearTimeout(notifyTimeout);
-    };
-    
-  } catch(e) {
-    log("err", "Notificación ERROR: " + e.message);
-  }
+  if (info.caratula && info.caratula !== LOGO) cambiarFondo(info.caratula);
 }
 
 async function procesarCancionInteligente(track) {
-  if (!track || !track.artist || !track.title) {
-    log("warn", "Notificación: falta artista o título");
-    return;
-  }
-  
+  if (!track || !track.artist || !track.title) return;
   const trackId = `${track.artist.toLowerCase().trim()}||${track.title.toLowerCase().trim()}`;
-  if (trackId === lastSmartTrack) {
-    log("info", "Notificación: misma canción, saltando");
-    return;
-  }
+  if (trackId === lastSmartTrack) return;
   lastSmartTrack = trackId;
-  
   const cacheClave = track.artist.toLowerCase().trim();
   const cacheado = obtenerCache(cacheClave);
   let infoArtista;
-  
   if (cacheado) {
-    log("info", `Notificación: caché para "${track.artist}"`);
     infoArtista = cacheado;
     if (infoArtista.imagenArtista) imagenArtistaGlobal = infoArtista.imagenArtista;
   } else {
-    log("info", `Notificación: buscando info de "${track.artist}"...`);
     infoArtista = await buscarInfoArtistaCompleta(track.artist);
     if (infoArtista) {
       guardarCache(cacheClave, infoArtista);
-      log("ok", `Notificación: info encontrada en ${infoArtista.fuente}`);
     } else {
-      log("warn", "Notificación: sin info, usando frase de respaldo");
       infoArtista = { frase: FRASES_RESPALDO[Math.floor(Math.random() * FRASES_RESPALDO.length)] };
       guardarCache(cacheClave, infoArtista);
     }
   }
-  
   const infoFinal = {
     frase: infoArtista.frase,
     caratula: cover || infoArtista.imagenArtista || LOGO,
     genero: infoArtista.genero || null,
     fuente: infoArtista.fuente || null
   };
-  
   if (infoFinal.caratula && infoFinal.caratula !== LOGO) cambiarFondo(infoFinal.caratula);
-  mostrarNotificacionInteligente(infoFinal);
 }
 
 /* =========================================================
-   PERMISO NOTIFICACIONES
+   PERMISO NOTIFICACIONES (push)
    ========================================================= */
 function pedirPermisoNotificaciones() {
   if ("Notification" in window && Notification.permission === "default") {
@@ -802,8 +695,6 @@ function pedirPermisoNotificaciones() {
       document.removeEventListener("click", pedir);
     };
     document.addEventListener("click", pedir, { once: true });
-  } else if ("Notification" in window) {
-    log("info", `Permiso notificaciones: ${Notification.permission}`);
   }
 }
 
@@ -822,7 +713,6 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
         const nuevoSW = reg.installing;
         nuevoSW.addEventListener("statechange", () => {
           if (nuevoSW.state === "installed" && navigator.serviceWorker.controller) {
-            log("info", "🔄 Nueva versión detectada — recargando...");
             window.location.reload();
           }
         });
@@ -840,14 +730,11 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v6 — Media Session + Debug activado");
+console.log("🧠 Sikodark Radio v7 — diseño limpio");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + ❤️ ME GUSTA + 🔔 PUSH — Firebase ===== -->
 <script>
-/* =========================================================
-   📊 SEGUIMIENTO DE OYENTES — sikodark radio
-   ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
   authDomain: "sikodarkradio-26a07.firebaseapp.com",
@@ -867,7 +754,6 @@ firebase.auth().signInAnonymously()
   .then(cred => {
     usuarioUID = cred.user.uid;
     log("ok", "📊 Oyente identificado: " + usuarioUID.slice(0, 8));
-    // Registra la visita
     return dbFB.collection("visitas").add({
       uid: usuarioUID,
       fecha: new Date().toISOString(),
@@ -876,7 +762,6 @@ firebase.auth().signInAnonymously()
   })
   .catch(e => log("err", "📊 Firebase: " + e.message));
 
-// Guarda cada tema que el oyente escucha
 function registrarEscucha(track) {
   if (!usuarioUID || !track) return;
   dbFB.collection("escuchas").add({
@@ -887,7 +772,6 @@ function registrarEscucha(track) {
   }).catch(e => log("warn", "📊 Registro escucha: " + e.message));
 }
 
-// Guarda cuántos segundos duró escuchando el tema
 function registrarFinEscucha() {
   if (!usuarioUID || !inicioEscucha || !temaActual) return;
   const segundos = Math.round((Date.now() - inicioEscucha) / 1000);
@@ -981,15 +865,15 @@ if (btnLike) {
       .catch(e => log("err", "❤️ Me gusta error: " + e.message));
   });
 
-  // Refresca el corazón cuando cambia la canción en pantalla
   const tituloObs = new MutationObserver(() => setTimeout(actualizarEstadoLike, 100));
   tituloObs.observe(document.getElementById("title"), { childList: true, characterData: true, subtree: true });
   actualizarEstadoLike();
 }
-</script><!-- ===== 🔄 AUTO-RECUPERACION DEL STREAM + AUDIFONOS ===== -->
+</script>
+
+<!-- ===== 🔄 AUTO-RECUPERACION DEL STREAM + AUDIFONOS ===== -->
 <script>
 (function(){
-  // ---- 1. VIGIA: detecta stream congelado y reconecta solo ----
   var ultimaPos = 0, fallos = 0, vigia = null;
 
   function reconectar(){
@@ -1028,7 +912,6 @@ if (btnLike) {
   }
   iniciarVigia();
 
-  // ---- 2. RED: cuando vuelva internet, reconecta solo ----
   window.addEventListener("offline", function(){
     log("warn", "📴 Sin conexión — esperando señal...");
   });
@@ -1037,7 +920,6 @@ if (btnLike) {
     if (isPlaying) reconectar();
   });
 
-  // ---- 3. AL VOLVER A LA APP: sincroniza con el tema actual ----
   document.addEventListener("visibilitychange", function(){
     if (document.visibilityState === "visible" && isPlaying){
       setTimeout(function(){
@@ -1048,12 +930,11 @@ if (btnLike) {
     }
   });
 
-  // ---- 4. AUDIFONOS INALAMBRICOS: botones completos ----
   if ("mediaSession" in navigator){
     try{ navigator.mediaSession.setActionHandler("stop", function(){ stopPlayback(); }); }catch(e){}
     try{
       navigator.mediaSession.setActionHandler("nexttrack", function(){
-        if (isPlaying) reconectar(); // doble/toque siguiente = sincronizar con el tema actual
+        if (isPlaying) reconectar();
       });
     }catch(e){}
     try{
@@ -1064,7 +945,9 @@ if (btnLike) {
     log("ok", "🎧 Botones de audífonos activados (play, pausa, stop, sincronizar)");
   }
 })();
-</script><!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
+</script>
+
+<!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
 <div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(23,24,32,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
@@ -1081,7 +964,6 @@ if (btnLike) {
   const btn = document.getElementById("btnGuardarNombre");
   const btnSaltar = document.getElementById("btnSaltarNombre");
 
-  // Huella unica del dispositivo (sobrevive si desinstalan o borran datos)
   async function calcularHuella(){
     try{
       const datos = [
@@ -1134,7 +1016,6 @@ if (btnLike) {
           if (!nombre) nombre = doc.data().nombre || "";
           if (doc.id !== user.uid) borrar.push(doc);
         });
-        // Limpia el registro viejo para que quede uno solo
         borrar.forEach(function(doc){ doc.ref.delete().catch(function(){}); });
         if (nombre){
           localStorage.setItem(LS_NOMBRE, nombre);
@@ -1151,53 +1032,35 @@ if (btnLike) {
       // Caso 3: usuario totalmente nuevo -> pedir su nombre
       modal.style.display = "flex";
       btn.onclick = async function(){
-        const nombre = (input.value || "").trim().slice(0, 20);
-        if (nombre.length < 2){ input.focus(); return; }
-        localStorage.setItem(LS_NOMBRE, nombre);
+        const nombre = (input.value || "").trim();
+        if (!nombre){
+          input.style.borderColor = "#ff3b30";
+          setTimeout(function(){ input.style.borderColor = "rgba(255,255,255,.2)"; }, 1500);
+          return;
+        }
+        btn.disabled = true;
         try{
+          localStorage.setItem(LS_NOMBRE, nombre);
           await dbFB.collection("usuarios").doc(user.uid).set({
             nombre: nombre,
             huella: huella,
-            bloqueado: false,
-            fechaRegistro: new Date().toISOString(),
             ultimaConexion: new Date().toISOString()
-          });
+          }, { merge:true });
+          modal.style.display = "none";
+          log("ok", "🎧 ¡Bienvenido a sikodark, " + nombre + "!");
         }catch(e){
-          log("warn", "🎧 Nombre guardado en el celular (Firebase no respondio)");
+          log("err", "🎧 No se pudo guardar el nombre: " + e.message);
         }
-        modal.style.display = "none";
-        log("ok", "🎧 ¡Bienvenido a bordo, " + nombre + "!");
+        btn.disabled = false;
       };
     }catch(e){
-      log("warn", "🎧 Registro diferido: " + e.message);
+      log("err", "🎧 Registro: " + e.message);
     }
   });
 })();
-</script><!-- ===== 🚫 POLICIA DE BLOQUEO ===== -->
-<script>
-(function(){
-  function verificarBloqueo(){
-    try{
-      var user = firebase.auth().currentUser;
-      if (!user) return;
-      dbFB.collection("usuarios").doc(user.uid).get().then(function(doc){
-        if (doc.exists && doc.data().bloqueado){
-          if (!document.getElementById("pantallaBloqueo")){
-            var d = document.createElement("div");
-            d.id = "pantallaBloqueo";
-            d.style.cssText = "position:fixed;inset:0;background:#171820;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center";
-            d.innerHTML = '<div style="font-size:46px">🚫</div><b style="color:#f5f5f7;font-size:18px">Acceso suspendido</b><p style="color:#a5a6ad;font-size:13px;max-width:300px;margin:0">Tu acceso a sikodark radio fue suspendido. Si crees que es un error, contáctanos.</p>';
-            document.body.appendChild(d);
-            try{ audio.pause(); }catch(e){}
-            log("warn", "🚫 Cuenta bloqueada");
-          }
-        }
-      }).catch(function(){});
-    }catch(e){}
-  }
-  firebase.auth().onAuthStateChanged(function(user){ if (user) setTimeout(verificarBloqueo, 2000); });
-  setInterval(verificarBloqueo, 120000);
-})();
 </script>
+
+<!-- ⚙️ CARGADOR DE CONFIG (panel de diseño) — no hace nada si el archivo no existe -->
+<script src="config-loader.js"></script>
 </body>
 </html>
