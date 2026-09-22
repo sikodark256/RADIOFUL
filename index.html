@@ -1060,9 +1060,7 @@ if (btnLike) {
 })();
 </script>
 
-<!-- ⚙️ CARGADOR DE CONFIG (panel de diseño) — no hace nada si el archivo no existe -->
-<script 
-  <!-- ===== 📤 COMPARTIR: carátula + tema + link de la radio ===== -->
+<!-- ===== 📤 COMPARTIR: carátula + tema + link de la radio ===== -->
 <style>
 .like-row{display:flex;align-items:center;gap:8px}
 .share-btn{border:1px solid rgba(255,255,255,.18);background:rgba(23,24,32,.72);
@@ -1081,6 +1079,25 @@ if (btnLike) {
   btn.textContent = "📤";
   row.insertBefore(btn, row.firstChild);
 
+  function desdeCanvas(src){
+    return new Promise(function(res){
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onload = function(){
+        try{
+          const c = document.createElement("canvas");
+          c.width = 512; c.height = 512;
+          c.getContext("2d").drawImage(im, 0, 0, 512, 512);
+          c.toBlob(function(b){
+            res(b ? new File([b], "portada.jpg", { type: "image/jpeg" }) : null);
+          }, "image/jpeg", .9);
+        }catch(e){ res(null); }
+      };
+      im.onerror = function(){ res(null); };
+      im.src = src;
+    });
+  }
+
   btn.onclick = async function(){
     const t = (document.getElementById("title").textContent || "").trim();
     const a = (document.getElementById("artist").textContent || "").trim();
@@ -1089,7 +1106,6 @@ if (btnLike) {
     const texto = (esTema ? "🎵 " + (a ? a + " — " : "") + t + "\n" : "") +
       "📻 Escuchá sikodark radio en vivo\n" + url;
 
-    /* Buscamos la imagen de la carátula (si hay bloqueo de CORS, probamos con proxy) */
     let file = null;
     const src = document.getElementById("cover").src;
     if (src && !src.endsWith("apple-icon.png")){
@@ -1104,6 +1120,7 @@ if (btnLike) {
           }
         }catch(e){}
       }
+      if (!file) file = await desdeCanvas(src);
     }
 
     try{
@@ -1114,10 +1131,12 @@ if (btnLike) {
       } else {
         window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
       }
-    }catch(e){ /* el usuario canceló — nada que hacer */ }
+    }catch(e){}
   };
 })();
+</script>
 
-  src="config-loader.js"></script>
+<!-- ⚙️ CARGADOR DE CONFIG (panel de diseño) — no hace nada si el archivo no existe -->
+<script src="config-loader.js"></script>
 </body>
 </html>
