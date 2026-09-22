@@ -114,14 +114,7 @@ function nombreDe(uid){
 db.collection("usuarios").onSnapshot(s => { s.forEach(d => usuarios[d.id] = d.data()); render(); });
 db.collection("presencia").onSnapshot(s => { s.forEach(d => presencia[d.id] = d.data()); render(); });
 db.collection("megustas").onSnapshot(s => { megustas = s.docs.map(d => d.data()); render(); });
-db.collection("visitas").onSnapshot(s => {
-  s.forEach(d => {
-    const v = d.data(); if (!v.uid) return;
-    const prev = ultimaVisita[v.uid];
-    if (!prev || String(v.fecha || "") > String(prev.fecha || "")) ultimaVisita[v.uid] = v;
-  });
-  render();
-});
+
 
 /* Refuerzo: apaga el 🟢 cuando la señal envejece */
 setInterval(render, 15000);
