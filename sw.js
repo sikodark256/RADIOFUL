@@ -1,5 +1,5 @@
 /* Sikodark Radio v6 — Service Worker */
-const CACHE_VERSION = "sikodark-radio-v9";
+const CACHE_VERSION = "sikodark-radio-v10";
 const ASSETS = ["./","./index.html","./manifest.json","./apple-icon.png","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install", e => {
