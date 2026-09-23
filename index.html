@@ -1060,83 +1060,62 @@ if (btnLike) {
 })();
 </script>
 
-<!-- ===== 📤 COMPARTIR: carátula + tema + link ===== -->
+<!-- ===== 🎨 BOTONES ICONO: like, compartir y limpiar caché ===== -->
 <style>
-.like-row{display:flex;align-items:center;gap:8px}
-.share-btn{border:1px solid rgba(255,255,255,.22);background:rgba(23,24,32,.72);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:50%;
-  width:42px;height:42px;cursor:pointer;display:grid;place-items:center;
-  transition:transform .15s,background .2s;padding:0}
-.share-btn:active{transform:scale(.9)}
-.share-btn svg{width:19px;height:19px;fill:#fff}
+/* ❤️ Me gusta → icono circular plano */
+.like-btn{width:42px;height:42px;padding:0!important;border-radius:50%!important;
+  justify-content:center;gap:0!important;background:rgba(23,24,32,.72)!important;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.like-btn svg{width:20px;height:20px}
+.like-btn.liked{background:rgba(255,59,48,.18)!important;border-color:rgba(255,59,48,.55)!important}
+
+/* 🧹 Limpiar caché → icono chiquito */
+.btn-reset{width:42px;height:42px;padding:0!important;margin:12px auto 0!important;
+  display:grid;place-items:center;border-radius:50%!important}
+.btn-reset svg{width:18px;height:18px;color:var(--muted)}
+.btn-reset:hover svg{color:var(--error)}
+
+/* 📤 Compartir → flashea naranja al usarlo */
+.share-btn.usado{border-color:var(--pri)!important}
+.share-btn.usado svg{fill:var(--pri)!important}
 </style>
 <script>
 (function(){
-  const row = document.querySelector(".like-row");
-  if (!row) return;
-  const btn = document.createElement("button");
-  btn.className = "share-btn";
-  btn.setAttribute("aria-label", "Compartir la radio");
-  /* Icono compartir — Material Design, plano */
-  btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>';
-  row.insertBefore(btn, row.firstChild);
+  /* ❤️ Corazón plano: gris = no, rojo sólido = sí */
+  function corazon(color, lleno){
+    return '<svg viewBox="0 0 24 24" fill="' + (lleno ? color : 'none') +
+      '" stroke="' + color + '" stroke-width="2" stroke-linejoin="round">' +
+      '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  }
+  /* Sobrescribe el estado del like con el icono nuevo */
+  window.actualizarEstadoLike = function(){
+    const track = temaEnPantallaAhora();
+    if (!track || !btnLike) return;
+    if (likesDelUsuario[claveLike(track)]){
+      btnLike.classList.add("liked");
+      btnLike.innerHTML = corazon("#ff3b30", true);
+      btnLike.setAttribute("aria-label", "Te gusta este tema");
+    } else {
+      btnLike.classList.remove("liked");
+      btnLike.innerHTML = corazon("#f5f5f7", false);
+      btnLike.setAttribute("aria-label", "Marcar me gusta");
+    }
+  };
+  actualizarEstadoLike();
 
-  function desdeCanvas(src){
-    return new Promise(function(res){
-      const im = new Image();
-      im.crossOrigin = "anonymous";
-      im.onload = function(){
-        try{
-          const c = document.createElement("canvas");
-          c.width = 512; c.height = 512;
-          c.getContext("2d").drawImage(im, 0, 0, 512, 512);
-          c.toBlob(function(b){
-            res(b ? new File([b], "portada.jpg", { type: "image/jpeg" }) : null);
-          }, "image/jpeg", .9);
-        }catch(e){ res(null); }
-      };
-      im.onerror = function(){ res(null); };
-      im.src = src;
-    });
+  /* 🧹 Texto largo → icono de recargar */
+  const rb = document.getElementById("btnReset");
+  if (rb){
+    rb.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
+    rb.title = "Limpiar caché y recargar";
+    rb.setAttribute("aria-label", "Limpiar caché y recargar");
   }
 
-  btn.onclick = async function(){
-    const t = (document.getElementById("title").textContent || "").trim();
-    const a = (document.getElementById("artist").textContent || "").trim();
-    const esTema = t && t !== "Conectando…" && t !== "En vivo";
-    const url = location.href.split("?")[0];
-
-    /* Texto pensado para WhatsApp: link clickeable al final */
-    const texto = "🔴 EN VIVO AHORA en sikodark radio\n\n" +
-      (esTema ? "🎵 Sonando: " + (a ? a + " — " : "") + t + "\n\n" : "") +
-      "👉 Escuchala acá: " + url;
-
-    let file = null;
-    const src = document.getElementById("cover").src;
-    if (src && !src.endsWith("apple-icon.png")){
-      for (const u of [src, "https://api.allorigins.win/raw?url=" + encodeURIComponent(src)]){
-        try{
-          const r = await fetch(u);
-          if (!r.ok) continue;
-          const blob = await r.blob();
-          if (blob.size && blob.size < 5*1024*1024){
-            file = new File([blob], "portada.jpg", { type: blob.type || "image/jpeg" });
-            break;
-          }
-        }catch(e){}
-      }
-      if (!file) file = await desdeCanvas(src);
-    }
-
-    try{
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })){
-        await navigator.share({ files: [file], text: texto, title: "sikodark radio" });
-      } else if (navigator.share){
-        await navigator.share({ text: texto, title: "sikodark radio" });
-      } else {
-        window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
-      }
-    }catch(e){}
-  };
+  /* 📤 Feedback visual al compartir */
+  const sb = document.querySelector(".share-btn");
+  if (sb) sb.addEventListener("click", function(){
+    sb.classList.add("usado");
+    setTimeout(function(){ sb.classList.remove("usado"); }, 1500);
+  });
 })();
 </script>
