@@ -1060,14 +1060,15 @@ if (btnLike) {
 })();
 </script>
 
-<!-- ===== 📤 COMPARTIR: carátula + tema + link de la radio ===== -->
+<!-- ===== 📤 COMPARTIR: carátula + tema + link ===== -->
 <style>
 .like-row{display:flex;align-items:center;gap:8px}
-.share-btn{border:1px solid rgba(255,255,255,.18);background:rgba(23,24,32,.72);
+.share-btn{border:1px solid rgba(255,255,255,.22);background:rgba(23,24,32,.72);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:50%;
-  width:42px;height:42px;font-size:18px;cursor:pointer;display:grid;place-items:center;
-  color:#fff;transition:transform .15s}
-.share-btn:active{transform:scale(.92)}
+  width:42px;height:42px;cursor:pointer;display:grid;place-items:center;
+  transition:transform .15s,background .2s;padding:0}
+.share-btn:active{transform:scale(.9)}
+.share-btn svg{width:19px;height:19px;fill:#fff}
 </style>
 <script>
 (function(){
@@ -1076,7 +1077,8 @@ if (btnLike) {
   const btn = document.createElement("button");
   btn.className = "share-btn";
   btn.setAttribute("aria-label", "Compartir la radio");
-  btn.textContent = "📤";
+  /* Icono compartir — Material Design, plano */
+  btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>';
   row.insertBefore(btn, row.firstChild);
 
   function desdeCanvas(src){
@@ -1103,8 +1105,11 @@ if (btnLike) {
     const a = (document.getElementById("artist").textContent || "").trim();
     const esTema = t && t !== "Conectando…" && t !== "En vivo";
     const url = location.href.split("?")[0];
-    const texto = (esTema ? "🎵 " + (a ? a + " — " : "") + t + "\n" : "") +
-      "📻 Escuchá sikodark radio en vivo\n" + url;
+
+    /* Texto pensado para WhatsApp: link clickeable al final */
+    const texto = "🔴 EN VIVO AHORA en sikodark radio\n\n" +
+      (esTema ? "🎵 Sonando: " + (a ? a + " — " : "") + t + "\n\n" : "") +
+      "👉 Escuchala acá: " + url;
 
     let file = null;
     const src = document.getElementById("cover").src;
@@ -1135,8 +1140,3 @@ if (btnLike) {
   };
 })();
 </script>
-
-<!-- ⚙️ CARGADOR DE CONFIG (panel de diseño) — no hace nada si el archivo no existe -->
-<script src="config-loader.js"></script>
-</body>
-</html>
