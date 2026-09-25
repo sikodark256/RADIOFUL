@@ -51,7 +51,7 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 
 <div class="caja hidden" id="vPanel">
   <h1>📣 Avisos sikodark</h1>
-  <p class="sub">Se muestran flotando cuando alguien abre la radio</p>
+  <p class="sub">Publicás acá → aparece en la radio de todos, al instante</p>
 
   <div class="vigente no" id="estadoActual">—</div>
 
@@ -70,14 +70,15 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 
   <div class="card">
     <div class="seccion">⚙️ Cuándo se muestra</div>
-    <label>Frecuencia</label>
+    <label>Frecuencia (para quienes abran la app después)</label>
     <select id="anFreq">
       <option value="sesion">1 vez por apertura (recomendado)</option>
       <option value="siempre">Cada vez que abren la app</option>
     </select>
   </div>
 
-  <button class="btn" id="btnPublicar">🚀 Publicar aviso</button>
+  <button class="btn" id="btnPublicar">🚀 Publicar aviso (aparece YA en quienes escuchan)</button>
+  <button class="btn gris" id="btnReenviar">🔔 Reenviar el aviso actual en vivo</button>
   <button class="btn rojo" id="btnQuitar">🗑️ Quitar el aviso actual</button>
   <button class="btn gris" id="btnSalir">🚪 Salir</button>
 </div>
@@ -85,7 +86,7 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 <div id="estado">Listo.</div>
 
 <script>
-const ADMIN_EMAIL = "sikoradio@hotmail.com";  /* ⚠️ CAMBIÁ ESTE EMAIL por el tuyo de Firebase */
+const ADMIN_EMAIL = "sikoradio@hotmail.com";  /* tu email admin */
 firebase.initializeApp({
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
   authDomain: "sikodarkradio-26a07.firebaseapp.com",
@@ -93,7 +94,7 @@ firebase.initializeApp({
 });
 const db = firebase.firestore(), $ = id => document.getElementById(id);
 
-let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion" } };
+let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion", publicadoEn:0 } };
 let imagenBase64 = null;
 
 function estado(m, t){ $("estado").textContent = m; $("estado").className = t || ""; }
@@ -124,6 +125,7 @@ async function cargar(){
     if (doc.exists && doc.data().anuncio){
       cfg = doc.data();
       if (!cfg.anuncio.texto) cfg.anuncio.texto = "";
+      if (!cfg.anuncio.publicadoEn) cfg.anuncio.publicadoEn = 0;
     }
   } catch(e) { estado("⚠️ No pude leer el aviso actual"); }
   pintarEstado();
@@ -140,7 +142,7 @@ function pintarEstado(){
   const e = $("estadoActual");
   if (cfg.anuncio.activo && cfg.anuncio.imagen){
     e.className = "vigente";
-    e.textContent = "🟢 AVISO ACTIVO — visible al abrir la radio";
+    e.textContent = "🟢 AVISO ACTIVO — en la radio ahora";
   } else {
     e.className = "vigente no";
     e.textContent = "⚪ Sin aviso activo";
@@ -171,7 +173,7 @@ function pintarEstado(){
  $("anEnlace").addEventListener("input", () => cfg.anuncio.enlace = $("anEnlace").value.trim());
  $("anFreq").addEventListener("change", () => cfg.anuncio.frecuencia = $("anFreq").value);
 
-/* 🚀 Publicar */
+/* 🚀 Publicar (guarda + envío en vivo automático) */
 const btnPub = $("btnPublicar");
  $("btnPublicar").onclick = async () => {
   if (imagenBase64) cfg.anuncio.imagen = imagenBase64;
@@ -179,16 +181,30 @@ const btnPub = $("btnPublicar");
     estado("⚠️ Falta la imagen del aviso", "err"); return;
   }
   cfg.anuncio.activo = true;
+  cfg.anuncio.publicadoEn = Date.now();
   btnPub.disabled = true;
   try {
     estado("💾 Publicando…");
     await db.collection("config").doc("avisos").set(cfg);
-    estado("✅ ¡Publicado! Se ve al abrir la radio", "ok");
+    estado("✅ ¡Publicado! Ya aparece en quienes están escuchando", "ok");
     pintarEstado();
     imagenBase64 = null;
     $("anImg").value = "";
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
   btnPub.disabled = false;
+};
+
+/* 🔔 Reenviar el mismo aviso en vivo */
+ $("btnReenviar").onclick = async () => {
+  if (!cfg.anuncio.activo || !cfg.anuncio.imagen){
+    estado("⚠️ No hay aviso activo para reenviar", "err"); return;
+  }
+  try {
+    cfg.anuncio.publicadoEn = Date.now();
+    estado("🔔 Enviando en vivo…");
+    await db.collection("config").doc("avisos").set(cfg);
+    estado("✅ Enviado — salta en todas las pantallas", "ok");
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
 };
 
 /* 🗑️ Quitar */
