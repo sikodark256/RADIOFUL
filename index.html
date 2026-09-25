@@ -1075,7 +1075,7 @@ if (btnLike) {
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
 .btn-reset:hover svg{color:var(--error)}
 
-/* 📤 Compartir → flashea naranja al usarlo (corregido: --primary) */
+/* 📤 Compartir → flashea naranja al usarlo */
 .share-btn.usado{border-color:var(--primary)!important}
 .share-btn.usado svg{fill:var(--primary)!important}
 </style>
@@ -1087,7 +1087,6 @@ if (btnLike) {
       '" stroke="' + color + '" stroke-width="2" stroke-linejoin="round">' +
       '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
   }
-  /* Sobrescribe el estado del like con el icono nuevo */
   window.actualizarEstadoLike = function(){
     const track = temaEnPantallaAhora();
     if (!track || !btnLike) return;
@@ -1120,53 +1119,66 @@ if (btnLike) {
 })();
 </script>
 
-<!-- ===== 📣 AVISOS: muestra el aviso publicado desde avisos.html ===== -->
+<!-- ===== 📣 AVISOS: al abrir + EN VIVO cuando publicás desde avisos.html ===== -->
 <script>
 (function(){
+  var tsEnPantalla = null;
+
   function mostrar(a){
+    tsEnPantalla = String(a.publicadoEn || "");
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.82);' +
+      'display:flex;align-items:center;justify-content:center;padding:16px';
+    var caja = document.createElement('div');
+    caja.style.cssText = 'position:relative;background:#22232b;border:1px solid rgba(255,255,255,.15);' +
+      'border-radius:20px;overflow:hidden;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+    caja.innerHTML =
+      '<img src="' + a.imagen + '" style="display:block;width:100%" alt="Aviso">' +
+      (a.texto ? '<div style="padding:14px 16px;color:#f5f5f7;font-size:14px;line-height:1.5;white-space:pre-line">' + a.texto + '</div>' : '') +
+      (a.textoBoton ? '<a href="' + (a.enlace || '#') + '" target="_blank" rel="noopener" ' +
+        'style="display:block;background:#ff8a24;color:#191919;text-align:center;padding:14px;' +
+        'text-decoration:none;font-weight:700;font-size:15px">' + a.textoBoton + '</a>' : '') +
+      '<button aria-label="Cerrar" style="position:absolute;top:10px;right:10px;width:32px;height:32px;' +
+      'border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:15px;cursor:pointer">✕</button>';
+    caja.querySelector('button').onclick = function(){ ov.remove(); };
+    ov.onclick = function(e){ if (e.target === ov) ov.remove(); };
+    ov.appendChild(caja);
+    document.body.appendChild(ov);
+  }
+
+  function procesar(a){
+    if (!a || !a.activo || !a.imagen) return;
+    var ts = String(a.publicadoEn || "");
+    if (ts === tsEnPantalla) return; /* ya está en pantalla */
+    try { localStorage.setItem('sikodark-aviso', JSON.stringify(a)); } catch(e){}
+
+    var yaVisto = localStorage.getItem('sikodark-aviso-ts') || "";
+    if (ts && ts !== yaVisto){
+      /* 🟢 aviso NUEVO o reenviado → aparece YA, esté quien esté escuchando */
+      try { localStorage.setItem('sikodark-aviso-ts', ts); } catch(e){}
+      mostrar(a);
+      return;
+    }
+    /* aviso viejo de antes → frecuencia solo al abrir la app */
     if (a.frecuencia === 'sesion'){
       if (sessionStorage.getItem('aviso_visto')) return;
       sessionStorage.setItem('aviso_visto', '1');
     }
-    setTimeout(function(){
-      var ov = document.createElement('div');
-      ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.82);' +
-        'display:flex;align-items:center;justify-content:center;padding:16px';
-      var caja = document.createElement('div');
-      caja.style.cssText = 'position:relative;background:#22232b;border:1px solid rgba(255,255,255,.15);' +
-        'border-radius:20px;overflow:hidden;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6)';
-      caja.innerHTML =
-        '<img src="' + a.imagen + '" style="display:block;width:100%" alt="Aviso">' +
-        (a.texto ? '<div style="padding:14px 16px;color:#f5f5f7;font-size:14px;line-height:1.5;white-space:pre-line">' + a.texto + '</div>' : '') +
-        (a.textoBoton ? '<a href="' + (a.enlace || '#') + '" target="_blank" rel="noopener" ' +
-          'style="display:block;background:#ff8a24;color:#191919;text-align:center;padding:14px;' +
-          'text-decoration:none;font-weight:700;font-size:15px">' + a.textoBoton + '</a>' : '') +
-        '<button aria-label="Cerrar" style="position:absolute;top:10px;right:10px;width:32px;height:32px;' +
-        'border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:15px;cursor:pointer">✕</button>';
-      caja.querySelector('button').onclick = function(){ ov.remove(); };
-      ov.onclick = function(e){ if (e.target === ov) ov.remove(); };
-      ov.appendChild(caja);
-      document.body.appendChild(ov);
-    }, 900);
+    mostrar(a);
   }
 
-  /* 1) Mostrar al instante el último aviso conocido */
+  /* último conocido, al instante */
   try {
     var c = localStorage.getItem('sikodark-aviso');
-    if (c){ var a = JSON.parse(c); if (a && a.activo && a.imagen) mostrar(a); }
+    if (c) procesar(JSON.parse(c));
   } catch(e){}
 
-  /* 2) Buscar el aviso fresco en Firebase */
+  /* 🔴 EN VIVO: cuando publicás en el panel, salta en todas las pantallas */
   if (typeof firebase !== 'undefined'){
-    firebase.firestore().collection('config').doc('avisos').get({ source: 'server' })
-      .then(function(d){
-        if (!d.exists) return;
-        var a = d.data().anuncio;
-        if (!a) return;
-        try { localStorage.setItem('sikodark-aviso', JSON.stringify(a)); } catch(e){}
-        if (a.activo && a.imagen) mostrar(a);
-      })
-      .catch(function(){});
+    firebase.firestore().collection('config').doc('avisos').onSnapshot(function(d){
+      if (!d.exists) return;
+      procesar(d.data().anuncio);
+    }, function(){});
   }
 })();
 </script>
