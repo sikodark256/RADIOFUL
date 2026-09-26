@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#171820">
+<meta name="theme-color" content="#000000">
 <meta name="description" content="Escuchá sikodark radio en directo y descubrí la música que ya sonó.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="apple-icon.png">
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
+
+<!-- ⭐ Fuentes como la imagen de muestra -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,700;0,800;1,600;1,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <!-- ===== 📊 Librerías de Firebase ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -17,45 +20,63 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <style>
-:root{color-scheme:dark;--bg:#171820;--card:#22232b;--secondary:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--primary:#ff8a24;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+/* ⭐ Paleta negra como la imagen: fondo #000, tarjetas #24242b */
+:root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',Arial,Helvetica,sans-serif}
 main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px 16px}
-.wrap{width:100%;max-width:448px}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.35)}
+.wrap{width:100%;max-width:448px}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.55)}
 @media(min-width:640px){.card{padding:32px}}
-.top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow,.mono{font-family:monospace}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}.brand-name{font-size:14px;font-weight:700;margin-top:2px}
-.status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:6px 11px;font:11px monospace;text-transform:uppercase;letter-spacing:.08em;background:var(--secondary);color:var(--muted)}.status.live{background:rgba(255,138,36,.14);color:var(--primary)}.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}.live .dot{background:var(--primary);animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.35}}
-.cover{position:relative;margin-top:24px;aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--secondary)}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
-.now{margin-top:24px;min-height:64px;text-align:center}.now .eyebrow{margin-bottom:5px}.title{margin:0;font-size:19px;font-weight:800;line-height:1.2}.artist{margin:5px 0 0;color:var(--muted);font-size:14px}
-.controls{margin-top:24px;display:flex;align-items:center;gap:16px}.play{width:64px;height:64px;flex:0 0 64px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--primary);color:#191919;cursor:pointer;box-shadow:0 8px 25px rgba(255,138,36,.2);transition:transform .15s}.play:hover{transform:scale(1.05)}.play svg{width:28px;height:28px;fill:currentColor}.volume{display:flex;align-items:center;gap:12px;flex:1}.icon-btn{border:0;background:none;color:var(--muted);cursor:pointer;padding:3px;display:grid;place-items:center}.icon-btn:hover{color:var(--text)}input[type=range]{width:100%;accent-color:var(--primary)}
+.top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow,.mono{font-family:var(--mono)}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}.brand-name{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:2px}
+/* ⭐ Pastilla de estado estilo imagen: punto naranja siempre, texto claro */
+.status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font:11px var(--mono);text-transform:uppercase;letter-spacing:.14em;background:#141419;border:1px solid var(--border);color:#cfcfd6}.status.live{color:var(--primary)}.dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}.live .dot{animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.3}}
+/* ⭐ Carátula con esquinas más redondeadas como la imagen */
+.cover{position:relative;margin-top:24px;aspect-ratio:1;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
+/* ⭐ Título naranja + artista blanco en cursiva, como la imagen */
+.now{margin-top:24px;min-height:64px;text-align:center}.now .eyebrow{margin-bottom:6px}.title{margin:0;font-size:26px;font-weight:800;line-height:1.2;color:var(--primary)}.artist{margin:5px 0 0;color:#e9e9ee;font-size:17px;font-style:italic;font-weight:600}
+/* ⭐ Botón PLAY estilo imagen: cuadrado redondeado, borde blanco, fondo transparente */
+.controls{margin-top:24px;display:flex;align-items:center;gap:18px}
+.play{width:64px;height:64px;flex:0 0 64px;border:2.5px solid #fff;border-radius:20px;background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .2s,color .2s;box-shadow:none}
+.play:hover{transform:scale(1.05)}.play:active{transform:scale(.92)}
+.play.playing{background:#fff;color:#161616;border-color:#fff}
+.play svg{width:26px;height:26px;fill:currentColor}
+/* ⭐ Volumen estilo imagen: barra blanca de progreso (sin icono), es el control de volumen */
+.volume{display:flex;align-items:center;gap:12px;flex:1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;outline:none;cursor:pointer;background:linear-gradient(to right,#fff var(--vol,80%),#57575f var(--vol,80%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:transparent}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:transparent}
+/* ⭐ Spinner circular debajo de los controles, como la imagen */
+.load-ring{width:30px;height:30px;margin:18px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff;animation:spin 1s linear infinite;opacity:0;transition:opacity .2s}
+.load-ring.show{opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
 .install{margin-top:24px;width:100%;padding:12px;border:1px solid var(--border);border-radius:999px;background:var(--secondary);color:var(--text);font-weight:700;cursor:pointer}.install:hover{background:#34353d}
-.btn-reset{margin-top:10px;width:100%;padding:10px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:monospace}
+.btn-reset{margin-top:10px;width:100%;padding:10px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--mono)}
 .btn-reset:hover{color:var(--error);border-color:var(--error)}
-.history{margin-top:24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.history h2{font-size:18px;margin:0;font-weight:800}.history p.sub{font-size:11px;color:var(--muted);margin:5px 0 0}.count{padding:6px 11px;border-radius:999px;background:var(--secondary);color:var(--muted);font:11px monospace;white-space:nowrap}.history-grid{margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}.track{overflow:hidden;border-radius:12px;background:var(--secondary)}.track-art{position:relative;aspect-ratio:1}.track-art img{width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(23,24,32,.92);padding:4px 7px;font:11px monospace;font-weight:700}.track-info{padding:10px}.track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-title{font-size:13px;font-weight:700}.track-artist{font-size:11px;color:var(--muted);margin-top:3px}footer{color:var(--muted);text-align:center;font:11px monospace}
+/* ⭐ Subtítulo del historial naranja en cursiva, como la imagen */
+.history{margin-top:24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.history h2{font-size:18px;margin:0;font-weight:800}.history p.sub{font-size:13px;color:var(--primary);font-style:italic;font-weight:700;margin:5px 0 0}.count{padding:6px 11px;border-radius:999px;background:#141419;border:1px solid var(--border);color:#cfcfd6;font:11px var(--mono);white-space:nowrap}.history-grid{margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}.track{overflow:hidden;border-radius:14px;background:var(--secondary)}.track-art{position:relative;aspect-ratio:1}.track-art img{width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(0,0,0,.65);padding:4px 7px;font:11px var(--mono);font-weight:700}.track-info{padding:10px}.track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-title{font-size:13px;font-weight:700}.track-artist{font-size:11px;color:var(--muted);margin-top:3px}footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .hidden{display:none}
 
-/* ===== ⭐ ❤️🟠 BOTONES CIRCULARES sobre la carátula (compartir + corazón) ===== */
+/* ===== ❤️🟠 BOTONES CIRCULARES sobre la carátula (compartir + corazón) ===== */
 .cover-actions{position:absolute;right:12px;bottom:12px;z-index:3;display:flex;flex-direction:column;gap:10px;margin:0}
 .circle-btn{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.18);
-  background:rgba(23,24,32,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:grid;place-items:center;cursor:pointer;color:#f5f5f7;transition:transform .15s,background .2s,border-color .2s,color .2s}
 .circle-btn:active{transform:scale(.9)}
 .circle-btn svg{width:20px;height:20px;display:block}
 .circle-btn.liked{color:#ff3b30;border-color:rgba(255,59,48,.55);background:rgba(255,59,48,.16)}
 .circle-btn.flash{color:var(--primary);border-color:rgba(255,138,36,.65)}
 
-/* ===== ⭐ ♥ CORAZÓN SOLO VISUAL en las portadas del historial ===== */
+/* ===== ♥ CORAZÓN SOLO VISUAL en las portadas del historial ===== */
 .track-heart{position:absolute;right:6px;top:6px;z-index:2;width:34px;height:34px;
   display:grid;place-items:center;color:#fff;pointer-events:none;
   filter:drop-shadow(0 2px 5px rgba(0,0,0,.65))}
 .track-heart svg{width:19px;height:19px;display:block}
 
-/* ⭐ Animación pop al dar like */
 .pop{animation:popLike .45s cubic-bezier(.2,1.6,.4,1)}
 @keyframes popLike{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
 
-/* ===== ⭐ 🔔 TOAST (aviso flotante) ===== */
+/* ===== 🔔 TOAST (aviso flotante) ===== */
 #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:99990;
-  background:var(--secondary);border:1px solid var(--border);color:var(--text);
+  background:#141419;border:1px solid var(--border);color:var(--text);
   font-size:13px;padding:11px 18px;border-radius:999px;opacity:0;pointer-events:none;
   box-shadow:0 10px 30px rgba(0,0,0,.5);transition:.25s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -67,7 +88,7 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 #diagnostico{
   margin-top:16px;padding:12px 14px;border-radius:14px;
   background:var(--secondary);border:1px solid var(--border);
-  font-family:monospace;font-size:11px;line-height:1.6;
+  font-family:var(--mono);font-size:11px;line-height:1.6;
 }
 .diag-line{display:flex;align-items:flex-start;gap:6px;margin-top:2px}
 .diag-line .prefix{color:var(--primary);flex:0 0 auto;font-weight:700}
@@ -77,17 +98,17 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 .diag-line.info .msg{color:var(--info)}
 .diag-line.warn .msg{color:var(--warning)}
 
-/* ===== FONDO DINÁMICO ===== */
+/* ===== ⭐ FONDO DINÁMICO (más oscuro para que predomine el negro) ===== */
 body::before{
   content:"";position:fixed;inset:0;z-index:-2;
   background:var(--bg);background-size:cover;background-position:center;
   transition:background-image .8s ease,filter .8s ease;
-  filter:blur(40px) brightness(.35) saturate(1.2);
+  filter:blur(40px) brightness(.22) saturate(1.1);
   transform:scale(1.1);
 }
 body::after{
   content:"";position:fixed;inset:0;z-index:-1;
-  background:linear-gradient(135deg,rgba(23,24,32,.85),rgba(23,24,32,.6));
+  background:linear-gradient(135deg,rgba(0,0,0,.92),rgba(0,0,0,.82));
   pointer-events:none;
 }
 /* ===== NOTIFICACIÓN INTELIGENTE (oculta) ===== */
@@ -107,12 +128,12 @@ body::after{
 #smartNotify .notify-art{width:52px;height:52px;flex:0 0 52px;border-radius:10px;overflow:hidden;background:var(--secondary)}
 #smartNotify .notify-art img{width:100%;height:100%;object-fit:cover;display:block}
 #smartNotify .notify-body{flex:1;min-width:0}
-#smartNotify .notify-tag{font:10px monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:4px}
+#smartNotify .notify-tag{font:10px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:4px}
 #smartNotify .notify-phrase{font-size:13px;line-height:1.45;color:var(--text);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 #smartNotify .notify-close{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;font-size:16px;line-height:1;flex:0 0 auto}
 #smartNotify .notify-close:hover{color:var(--text)}
 
-/* ===== ⭐ 🧹 Limpiar caché → icono chiquito ===== */
+/* ===== 🧹 Limpiar caché → icono chiquito ===== */
 .btn-reset{width:42px;height:42px;padding:0!important;margin:12px auto 0!important;
   display:grid;place-items:center;border-radius:50%!important;border:1px dashed var(--border)}
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
@@ -130,7 +151,7 @@ body::after{
 </div>
 <div id="coverBox" class="cover">
   <img id="cover" src="apple-icon.png" alt="Logo de sikodark">
-  <!-- ⭐ Botones circulares: compartir arriba, corazón abajo -->
+  <!-- Botones circulares: compartir arriba, corazón abajo -->
   <div class="cover-actions">
     <button id="btnShare" class="circle-btn" aria-label="Compartir">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
@@ -149,16 +170,20 @@ body::after{
 <div class="controls">
   <button id="play" class="play" aria-label="Reproducir"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
   <div class="volume">
-    <button id="mute" class="icon-btn" aria-label="Silenciar"><svg id="volIcon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg></button>
-    <input id="volume" type="range" min="0" max="1" step=".01" value=".8" aria-label="Volumen">
+    <!-- ⭐ Icono de volumen oculto (sigue funcionando por dentro) -->
+    <button id="mute" class="icon-btn hidden" aria-label="Silenciar"><svg id="volIcon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg></button>
+    <!-- ⭐ Barra estilo imagen: blanca = volumen -->
+    <input id="volume" type="range" min="0" max="1" step=".01" value=".8" style="--vol:80%" aria-label="Volumen">
   </div>
 </div>
+<!-- ⭐ Spinner circular debajo de los controles, como la imagen -->
+<div id="loadRing" class="load-ring"></div>
 <button id="install" class="install hidden">⇩ &nbsp; Instalar app</button>
 <button id="btnReset" class="btn-reset">🧹 Limpiar caché y recargar</button>
 </section>
 
 <section class="card history" aria-labelledby="history-title">
-<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Últimas canciones reproducidas</p></div><span id="count" class="count">0/10 temas</span></div>
+<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 </div>
@@ -212,6 +237,9 @@ const artistEl=document.getElementById("artist"), coverEl=document.getElementByI
 const statusText=document.getElementById("statusText"), volume=document.getElementById("volume"), mute=document.getElementById("mute");
 const historyEl=document.getElementById("history"), countEl=document.getElementById("count"), install=document.getElementById("install"), eq=document.getElementById("eq");
 const diagnostico=document.getElementById("diagnostico"), btnReset=document.getElementById("btnReset");
+/* ⭐ Spinner circular */
+const loadRing=document.getElementById("loadRing");
+function ring(v){ if(loadRing) loadRing.classList.toggle("show", v); }
 
 let isPlaying=false,isLoading=false,muted=false,cover=null,history=[];
 let ultimoTitulo = "", pollingInterval = null;
@@ -239,31 +267,33 @@ function log(tipo, mensaje) {
 /* =========================================================
    FUNCIONES BÁSICAS
    ========================================================= */
-function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir")}
-function spinner(){return '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M20 12a8 8 0 0 1-8 8"/></svg>'}
+/* ⭐ Ahora también maneja el spinner circular y la clase .playing del botón */
+function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir");ring(isLoading)}
+function spinner(){return '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M20 12a8 8 0 0 1-8 8"/></svg>'}
 function playIcon(){return '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
 function pauseIcon(){return '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'}
 
 async function startPlayback(){
   try{
-    isLoading=true; play.innerHTML=spinner();
+    isLoading=true; play.innerHTML=spinner(); ring(true);
     if(!audio.src) audio.src=STREAM_URL;
     await audio.play();
     log("ok", "Audio reproduciéndose");
-  }catch(e){isLoading=false;setPlaying(false);log("err","No se pudo reproducir: "+e.message)}
+  }catch(e){isLoading=false;setPlaying(false);ring(false);log("err","No se pudo reproducir: "+e.message)}
 }
-function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false}
+function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false;ring(false)}
 
 play.onclick=()=>isPlaying?stopPlayback():startPlayback();
-audio.onplaying=()=>{isLoading=false;setPlaying(true)};
-audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner()};
-audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false)}};
-audio.onerror=()=>{isLoading=false;setPlaying(false);log("err","Error en el stream de audio")};
+audio.onplaying=()=>{isLoading=false;setPlaying(true);ring(false)};
+audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner();ring(true)};
+audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false);ring(false)}};
+audio.onerror=()=>{isLoading=false;setPlaying(false);ring(false);log("err","Error en el stream de audio")};
 
-volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false};
+/* ⭐ Volumen: además actualiza el relleno blanco de la barra */
+volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false;volume.style.setProperty("--vol",(volume.value*100)+"%")};
 mute.onclick=()=>{muted=!muted;audio.muted=muted;mute.innerHTML=muted?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></svg>':'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg>'};
 
-// Botón reset (⭐ ahora también borra los likes locales)
+// Botón reset (también borra los likes locales)
 btnReset.onclick = () => {
   localStorage.removeItem("sikodark-history");
   localStorage.removeItem("sikodark-smart-cache");
@@ -390,7 +420,7 @@ function renderHistory(){
     }
     historyEl.innerHTML = history.map((x,i) => {
       if (!x) return "";
-      // ⭐ Corazón blanco SOLO VISUAL en los temas que el usuario marcó con like
+      // Corazón blanco SOLO VISUAL en los temas que el usuario marcó con like
       const fav = esLikedSeguro(x) ? '<span class="track-heart">' + CORAZON_BLANCO + '</span>' : '';
       return `<article class="track"><div class="track-art"><img src="${esc(x.cover||LOGO)}" alt="Carátula" onerror="this.src='${LOGO}'"><span class="rank">#${i+1}</span>${fav}</div><div class="track-info"><p class="track-title">${esc(x.title)}</p><p class="track-artist">${esc(x.artist||"sikodark radio")}</p></div></article>`;
     }).join("");
@@ -775,7 +805,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v7 — diseño limpio");
+console.log("🧠 Sikodark Radio v8 — diseño negro");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
@@ -937,12 +967,12 @@ iniciarPush();
 </script>
 
 <!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
-<div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(23,24,32,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+<div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
   <p style="color:#a5a6ad;font-size:13px;margin:0;max-width:300px">¿Cómo te llamas? Solo tu nombre o alias.</p>
   <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center">
-  <button id="btnGuardarNombre" style="background:#ff8a24;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:700;font-size:15px">Entrar a la radio</button>
+  <button id="btnGuardarNombre" style="background:#f59d3d;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:700;font-size:15px">Entrar a la radio</button>
   <button id="btnSaltarNombre" style="background:none;border:0;color:#a5a6ad;font-size:12px;cursor:pointer;text-decoration:underline">Continuar sin nombre</button>
 </div>
 <script>
@@ -1049,7 +1079,7 @@ iniciarPush();
 })();
 </script>
 
-<!-- ===== ⭐ ❤️ LIKE (funciona como antes) + 🟠 COMPARTIR + ♥ corazones visuales en historial ===== -->
+<!-- ===== ❤️ LIKE (como antes) + 🟠 COMPARTIR + ♥ corazones visuales en historial ===== -->
 <script>
 var likesDelUsuario = {};
 try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}"); } catch(e){}
@@ -1120,7 +1150,7 @@ if (btnLike) btnLike.addEventListener("click", function(){
   btnLike.classList.add("pop");
   setTimeout(function(){ btnLike.classList.remove("pop"); }, 450);
 
-  renderHistory(); /* ⬅ el corazón blanco aparece en la tarjeta del historial */
+  renderHistory(); /* el corazón blanco aparece en la tarjeta del historial */
 });
 
 /* El corazón grande se resetea cuando cambia el tema */
