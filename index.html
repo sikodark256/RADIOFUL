@@ -157,6 +157,25 @@ body::after{
   display:grid;place-items:center;border-radius:50%!important;border:1px dashed var(--border)}
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
 .btn-reset:hover svg{color:var(--error)}
+
+/* ===== ⭐📢 CARTEL DE AVISOS (recibe los avisos del Panel de Avisos) ===== */
+#cartelAviso{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-24px);z-index:99995;
+ max-width:430px;width:calc(100% - 28px);background:#1c1d24;border:1px solid rgba(255,138,36,.4);border-radius:18px;
+ overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.35s}
+#cartelAviso.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#cartelAviso .c-img{display:none;width:100%;max-height:240px;overflow:hidden;background:#0e0f14}
+#cartelAviso .c-img img{width:100%;height:100%;object-fit:cover;display:block}
+#cartelAviso.con-img .c-img{display:block}
+#cartelAviso .c-body{padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+#cartelAviso .c-txt{flex:1;min-width:0;font-family:var(--sans);font-weight:700;font-size:13.5px;
+ line-height:1.45;color:#f5f5f7;word-wrap:break-word}
+#cartelAviso .c-tag{font:10px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:4px;display:block}
+#cartelAviso .c-btn{display:inline-block;margin:0 14px 13px;padding:9px 18px;border-radius:999px;
+ background:var(--primary);color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;
+ text-transform:uppercase;text-decoration:none;text-align:center}
+#cartelAviso .c-close{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+ border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#f5f5f7;font-size:16px;
+ line-height:1;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(6px)}
 </style>
 </head>
 <body>
@@ -223,7 +242,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v13
+   CONFIGURACIÓN v15
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -478,7 +497,7 @@ function registrarFallo(nombre){
   const s = SALUD_FUENTES[nombre] || (SALUD_FUENTES[nombre] = {fallos:0, bloqueadaHasta:0});
   s.fallos++;
   if (s.fallos >= 3){
-    s.bloqueadaHasta = Date.now() + 10*60*1000; /* 10 min de descanso */
+    s.bloqueadaHasta = Date.now() + 10*60*1000;
     log("warn", "🛡️ " + nombre + ": 3 fallos seguidos — pausa 10 minutos");
   }
 }
@@ -487,14 +506,13 @@ function registrarExito(nombre){
 }
 
 /* =========================================================
-   🔍 VERIFICACIÓN v13: la carátula debe coincidir en título
-   Y artista. Si el artista del resultado no pinta → descartada.
+   🔍 VERIFICACIÓN: la carátula debe coincidir en título Y artista
    ========================================================= */
 function normalizar(s){
   return (s||"").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") /* sin acentos */
-    .replace(/\(.*?\)|\[.*?\]/g,"")                 /* sin (paréntesis) */
-    .replace(/\b(feat|ft|featuring|con)\b.*$/,"")   /* sin "feat. X" */
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/\(.*?\)|\[.*?\]/g,"")
+    .replace(/\b(feat|ft|featuring|con)\b.*$/,"")
     .replace(/[^a-z0-9 ]/g," ")
     .replace(/\s+/g," ").trim();
 }
@@ -502,14 +520,13 @@ function parecido(a,b){
   a=normalizar(a); b=normalizar(b);
   if(!a||!b) return 0;
   if(a===b) return 1;
-  if(a.includes(b)||b.includes(a)) return 0.95;   /* uno contiene al otro */
+  if(a.includes(b)||b.includes(a)) return 0.95;
   const wa=a.split(" ").filter(w=>w.length>2), wb=b.split(" ").filter(w=>w.length>2);
   if(!wa.length||!wb.length) return 0;
   let c=0; wa.forEach(function(w){ if(wb.includes(w)) c++; });
   return c/Math.max(wa.length,wb.length);
 }
 function palabras(s){ return normalizar(s).split(" ").filter(w=>w.length>2); }
-/* ¿El artista del resultado es el mismo que el que suena? */
 function artistaCoincide(a1,a2){
   const w1=palabras(a1), w2=palabras(a2);
   if(!w1.length||!w2.length) return false;
@@ -520,7 +537,7 @@ function artistaCoincide(a1,a2){
   });
 }
 
-/* ===== 1️⃣ DEEZER (verificado: título + artista) ===== */
+/* ===== 1️⃣ DEEZER (verificado) ===== */
 async function cover_Deezer_cancion(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -533,8 +550,8 @@ async function cover_Deezer_cancion(t) {
         const nombreArtista = (tr.artist&&tr.artist.name)||"";
         const pt = parecido(t.title, tr.title||"");
         const pa = parecido(t.artist, nombreArtista);
-        if (pt < 0.6) continue;                                  /* título no coincide */
-        if (!artistaCoincide(t.artist, nombreArtista)) continue; /* OTRO artista 🚫 */
+        if (pt < 0.6) continue;
+        if (!artistaCoincide(t.artist, nombreArtista)) continue;
         const p = Math.min(pt, pa);
         if (p > mejorP){ mejorP=p; mejor=tr; }
       }
@@ -548,7 +565,7 @@ async function cover_Deezer_cancion(t) {
   return null;
 }
 
-/* ===== 2️⃣ ITUNES (verificado: título + artista) ===== */
+/* ===== 2️⃣ ITUNES (verificado) ===== */
 async function cover_iTunes_cancion(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -560,8 +577,8 @@ async function cover_iTunes_cancion(t) {
       for (const res of d.results) {
         const pt = parecido(t.title, res.trackName||"");
         const pa = parecido(t.artist, res.artistName||"");
-        if (pt < 0.6) continue;                                  /* título no coincide */
-        if (!artistaCoincide(t.artist, res.artistName||"")) continue; /* OTRO artista 🚫 */
+        if (pt < 0.6) continue;
+        if (!artistaCoincide(t.artist, res.artistName||"")) continue;
         if (pa < 0.5) continue;
         const p = Math.min(pt, pa);
         if (p > mejorP){ mejorP=p; mejor=res; }
@@ -576,7 +593,7 @@ async function cover_iTunes_cancion(t) {
   return null;
 }
 
-/* ===== 3️⃣ LAST.FM (verifica también el artista devuelto) ===== */
+/* ===== 3️⃣ LAST.FM (verifica el artista devuelto) ===== */
 async function cover_LastFM(t) {
   if (!t.artist || !t.title || !LASTFM_KEY) return null;
   try {
@@ -585,7 +602,6 @@ async function cover_LastFM(t) {
     const r = await fetchConProxy(url);
     const d = await r.json();
     if (!(d && d.track && d.track.album)) return null;
-    /* Verificar que el artista que devuelve Last.fm sea el mismo que suena */
     const artNombre = (d.track.artist && d.track.artist.name) || "";
     if (artNombre && !artistaCoincide(t.artist, artNombre)) {
       log("info", "Last.fm: artista devuelto no coincide, descartado");
@@ -603,7 +619,7 @@ async function cover_LastFM(t) {
   return null;
 }
 
-/* ===== 4️⃣ COVER ART ARCHIVE (MusicBrainz, gratis y sin key) ===== */
+/* ===== 4️⃣ COVER ART ARCHIVE (MusicBrainz) ===== */
 async function cover_CoverArtArchive(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -624,9 +640,7 @@ async function cover_CoverArtArchive(t) {
   return null;
 }
 
-/* ===== 5️⃣ ITUNES SOLO TÍTULO — MUY ESTRICTO 🚫 =====
-   Acá fue donde coló Don Omar: si el artista del resultado
-   no pinta con el que suena, se descarta SIEMPRE. */
+/* ===== 5️⃣ ITUNES SOLO TÍTULO — MUY ESTRICTO ===== */
 async function cover_iTunes_soloTitulo(t) {
   if (!t.title) return null;
   try {
@@ -637,8 +651,8 @@ async function cover_iTunes_soloTitulo(t) {
       let mejor=null, mejorP=0;
       for (const res of d.results) {
         const pt = parecido(t.title, res.trackName||"");
-        if (pt < 0.85) continue;                                 /* título casi exacto */
-        if (t.artist && !artistaCoincide(t.artist, res.artistName||"")) continue; /* 🚫 OTRO artista */
+        if (pt < 0.85) continue;
+        if (t.artist && !artistaCoincide(t.artist, res.artistName||"")) continue;
         if (pt > mejorP){ mejorP=pt; mejor=res; }
       }
       if (mejor) {
@@ -651,7 +665,7 @@ async function cover_iTunes_soloTitulo(t) {
   return null;
 }
 
-/* ===== 6️⃣ FOTO DEL ARTISTA (Wikipedia / TheAudioDB) ===== */
+/* ===== 6️⃣ FOTO DEL ARTISTA ===== */
 async function cover_imagenArtista() {
   if (imagenArtistaGlobal) return { url: imagenArtistaGlobal, fuente: "Foto artista" };
   return null;
@@ -659,7 +673,6 @@ async function cover_imagenArtista() {
 
 /* =========================================================
    FETCH COVER — cadena de respaldos con salud por fuente
-   Deezer → iTunes → Last.fm → Cover Art Archive → iTunes solo título → Foto artista → Logo
    ========================================================= */
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
@@ -980,7 +993,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v13 — verificación estricta de carátulas + 6 respaldos");
+console.log("🧠 Sikodark Radio v15 — avisos en tiempo real + presencia + 6 respaldos");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
@@ -1141,7 +1154,7 @@ iniciarPush();
 })();
 </script>
 
-<!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
+<!-- ===== 🎧 REGISTRO + PRESENCIA EN TIEMPO REAL ===== -->
 <div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
@@ -1157,6 +1170,10 @@ iniciarPush();
   const input = document.getElementById("inputNombre");
   const btn = document.getElementById("btnGuardarNombre");
   const btnSaltar = document.getElementById("btnSaltarNombre");
+
+  let huellaActual = null;
+  let heartbeatTimer = null;
+  let avisoErrorDado = false;
 
   async function calcularHuella(){
     try{
@@ -1179,53 +1196,119 @@ iniciarPush();
     }
   }
 
+  /* ===== PRESENCIA: 1 doc por dispositivo (ID = huella) ===== */
+  function marcarOnline(nombre){
+    if (!huellaActual) return Promise.resolve();
+    const ref = dbFB.collection("usuarios").doc(huellaActual);
+    return ref.get().then(function(doc){
+      const base = {
+        online: true,
+        uid: usuarioUID || null,
+        ultimaConexion: firebase.firestore.FieldValue.serverTimestamp(),
+        dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC"
+      };
+      if (!doc.exists || !doc.data().nombre) base.nombre = nombre || "Anónimo";
+      if (!doc.exists || doc.data().online === false || !doc.data().sesionInicio){
+        base.sesionInicio = firebase.firestore.FieldValue.serverTimestamp();
+      }
+      return ref.set(base, { merge:true });
+    }).catch(function(e){
+      log("err", "🎧 Presencia ERROR: " + e.message);
+      if (!avisoErrorDado && typeof toast === "function"){
+        avisoErrorDado = true;
+        toast("⚠️ Firebase bloqueó la conexión — revisá las reglas");
+      }
+    });
+  }
+
+  /* ⭐ Latido cada 30s: mantiene el 🟢 verde en el panel */
+  function latido(){
+    if (!huellaActual) return;
+    dbFB.collection("usuarios").doc(huellaActual).set({
+      online: true,
+      ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true }).catch(function(e){ log("err", "🎧 Latido ERROR: " + e.message); });
+  }
+
+  function iniciarHeartbeat(){
+    detenerHeartbeat();
+    latido();
+    heartbeatTimer = setInterval(latido, 30000);
+  }
+
+  function detenerHeartbeat(){
+    if (heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  }
+
+  function marcarOffline(){
+    if (!huellaActual) return;
+    dbFB.collection("usuarios").doc(huellaActual).set({
+      online: false,
+      ultimaSalida: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true }).catch(function(){});
+  }
+
+  window.addEventListener("beforeunload", marcarOffline);
+  window.addEventListener("pagehide", marcarOffline);
+  /* Al volver a la app refresca presencia; al minimizar NO marca offline */
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible" && huellaActual){
+      marcarOnline(localStorage.getItem(LS_NOMBRE) || "Anónimo");
+    }
+  });
+  /* Latido extra sincronizado con el audio */
+  audio.addEventListener("playing", function(){ latido(); });
+
+  async function limpiarDuplicadosViejos(){
+    try{
+      const q = await dbFB.collection("usuarios").where("huella","==",huellaActual).get();
+      q.forEach(function(doc){
+        if (doc.id !== huellaActual) doc.ref.delete().catch(function(){});
+      });
+    }catch(e){}
+  }
+
   btnSaltar.onclick = function(){
     modal.style.display = "none";
     log("info", "🎧 Oyente prefirio continuar sin nombre");
+    marcarOnline("Anónimo");
+    iniciarHeartbeat();
   };
 
   firebase.auth().onAuthStateChanged(async function(user){
     if (!user) return;
     try{
-      const huella = await calcularHuella();
+      huellaActual = await calcularHuella();
       const nombreLocal = localStorage.getItem(LS_NOMBRE);
 
-      // Caso 1: ya tiene nombre en este navegador
       if (nombreLocal){
-        await dbFB.collection("usuarios").doc(user.uid).set({
-          nombre: nombreLocal,
-          huella: huella,
-          ultimaConexion: new Date().toISOString()
-        }, { merge:true });
+        await marcarOnline(nombreLocal);
+        iniciarHeartbeat();
+        limpiarDuplicadosViejos();
         log("ok", "🎧 ¡Hola de nuevo, " + nombreLocal + "!");
         if (typeof renderFavs === "function") renderFavs();
         return;
       }
 
-      // Caso 2: desinstalo o borro datos, pero la huella ya existe
-      const q = await dbFB.collection("usuarios").where("huella","==",huella).limit(5).get();
+      const q = await dbFB.collection("usuarios").where("huella","==",huellaActual).limit(5).get();
       if (!q.empty){
         let nombre = "";
         const borrar = [];
         q.forEach(function(doc){
           if (!nombre) nombre = doc.data().nombre || "";
-          if (doc.id !== user.uid) borrar.push(doc);
+          if (doc.id !== huellaActual) borrar.push(doc);
         });
         borrar.forEach(function(doc){ doc.ref.delete().catch(function(){}); });
         if (nombre){
           localStorage.setItem(LS_NOMBRE, nombre);
-          await dbFB.collection("usuarios").doc(user.uid).set({
-            nombre: nombre,
-            huella: huella,
-            ultimaConexion: new Date().toISOString()
-          }, { merge:true });
+          await marcarOnline(nombre);
+          iniciarHeartbeat();
           log("ok", "🎧 ¡Hola de nuevo, " + nombre + "! (dispositivo reconocido)");
           if (typeof renderFavs === "function") renderFavs();
           return;
         }
       }
 
-      // Caso 3: usuario totalmente nuevo -> pedir su nombre
       modal.style.display = "flex";
       btn.onclick = async function(){
         const nombre = (input.value || "").trim();
@@ -1237,11 +1320,8 @@ iniciarPush();
         btn.disabled = true;
         try{
           localStorage.setItem(LS_NOMBRE, nombre);
-          await dbFB.collection("usuarios").doc(user.uid).set({
-            nombre: nombre,
-            huella: huella,
-            ultimaConexion: new Date().toISOString()
-          }, { merge:true });
+          await marcarOnline(nombre);
+          iniciarHeartbeat();
           modal.style.display = "none";
           log("ok", "🎧 ¡Bienvenido a sikodark, " + nombre + "!");
           if (typeof renderFavs === "function") renderFavs();
@@ -1304,30 +1384,24 @@ function actualizarEstadoLike(){
   }
 }
 
-/* =========================================================
-   ⭐ CAJITA DE PREFERIDOS (solo visual, deslizable con el dedo)
-   ========================================================= */
+/* ===== ⭐ CAJITA DE PREFERIDOS (solo visual, deslizable) ===== */
 function renderFavs(){
   var box = document.getElementById("favsBox");
   var lista = document.getElementById("favsLista");
   var nombreSpan = document.getElementById("favsNombre");
   if (!box || !lista) return;
 
-  /* Nombre del oyente (el que puso al entrar) */
   var nombre = "";
   try { nombre = localStorage.getItem("sikodark-nombre") || ""; } catch(e){}
   if (nombreSpan) nombreSpan.textContent = nombre ? "· " + nombre : "";
 
-  /* Armar lista solo con los temas que tienen like */
   var entradas = [];
   for (var k in likesDelUsuario){
     if (!likesDelUsuario[k]) continue;
     var v = likesDelUsuario[k];
     if (typeof v === "object" && v.title){
-      /* Like nuevo: guarda título y artista originales */
       entradas.push({ t: v.t || 0, title: v.title, artist: v.artist || "" });
     } else {
-      /* Like viejo (solo timestamp): recuperar desde la clave "artista||titulo" */
       var p = k.split("||");
       var cap = function(s){ return (s||"").replace(/\b\w/g, function(c){ return c.toUpperCase(); }); };
       entradas.push({ t: (typeof v === "number" ? v : 0), title: cap(p[1]||""), artist: cap(p[0]||"") });
@@ -1340,7 +1414,6 @@ function renderFavs(){
     return;
   }
 
-  /* Los últimos likes primero */
   entradas.sort(function(a,b){ return (b.t||0) - (a.t||0); });
 
   lista.innerHTML = entradas.slice(0,20).map(function(x){
@@ -1350,7 +1423,7 @@ function renderFavs(){
   box.classList.remove("hidden");
 }
 
-/* ---------- ❤️ Like normal: solo marcar (igual que antes) ---------- */
+/* ---------- ❤️ Like normal: solo marcar ---------- */
 if (btnLike) btnLike.addEventListener("click", function(){
   if (!usuarioUID){ toast("⏳ Conectando con la radio, esperá unos segundos…"); return; }
   const track = temaEnPantallaAhora();
@@ -1358,12 +1431,13 @@ if (btnLike) btnLike.addEventListener("click", function(){
   const clave = claveLike(track);
   if (likesDelUsuario[clave]){ toast("Ya marcaste este tema ♥"); return; }
 
-  /* Guarda también título y artista para la cajita */
   likesDelUsuario[clave] = { t: Date.now(), title: track.title, artist: track.artist || "" };
   try { localStorage.setItem("sikodark-likes", JSON.stringify(likesDelUsuario)); } catch(e){}
   actualizarEstadoLike();
 
-  dbFB.collection("megustas").add({
+  /* 1 doc por usuario+tema: sin duplicados en Firebase */
+  const idLike = (usuarioUID + "_" + clave).replace(/[\/#.\[\]]/g, "_");
+  dbFB.collection("megustas").doc(idLike).set({
     uid: usuarioUID,
     artista: track.artist || "Desconocido",
     tema: track.title,
@@ -1375,8 +1449,8 @@ if (btnLike) btnLike.addEventListener("click", function(){
   btnLike.classList.add("pop");
   setTimeout(function(){ btnLike.classList.remove("pop"); }, 450);
 
-  renderHistory(); /* corazón blanco en la tarjeta del historial */
-  renderFavs();    /* aparece en la cajita de preferidos */
+  renderHistory();
+  renderFavs();
 });
 
 /* El corazón grande se resetea cuando cambia el tema */
@@ -1410,6 +1484,162 @@ if (btnReset){
 actualizarEstadoLike();
 renderHistory();
 renderFavs();
+</script>
+
+<!-- ===== ⭐ SESIÓN PERSISTENTE: volumen + último tema + reanudar al refrescar ===== -->
+<script>
+(function(){
+  var LS_VOL = "sikodark-vol", LS_PLAY = "sikodark-playing", LS_TRACK = "sikodark-lasttrack", LS_COVER = "sikodark-lastcover";
+
+  /* 1) Restaurar volumen guardado */
+  try{
+    var v = localStorage.getItem(LS_VOL);
+    if (v !== null && v !== ""){
+      var nv = Math.min(1, Math.max(0, Number(v)));
+      audio.volume = nv;
+      volume.value = nv;
+      volume.style.setProperty("--vol", (nv*100)+"%");
+    }
+  }catch(e){}
+
+  volume.addEventListener("input", function(){
+    try{ localStorage.setItem(LS_VOL, volume.value); }catch(e){}
+  });
+
+  /* 2) Recordar si estaba sonando */
+  audio.addEventListener("playing", function(){
+    try{ localStorage.setItem(LS_PLAY, "1"); }catch(e){}
+  });
+  audio.addEventListener("pause", function(){
+    try{ if (!audio.ended) localStorage.setItem(LS_PLAY, "0"); }catch(e){}
+  });
+
+  /* 3) Mostrar el último tema al instante */
+  try{
+    var tr = JSON.parse(localStorage.getItem(LS_TRACK) || "null");
+    if (tr && tr.title){
+      titleEl.textContent = tr.title;
+      artistEl.textContent = tr.artist || "";
+      if (typeof actualizarEstadoLike === "function") setTimeout(actualizarEstadoLike, 200);
+    }
+    var cv = localStorage.getItem(LS_COVER);
+    if (cv) coverEl.src = cv;
+  }catch(e){}
+
+  new MutationObserver(function(){
+    try{
+      var t = document.getElementById("title").textContent;
+      if (t && t !== "Conectando…"){
+        localStorage.setItem(LS_TRACK, JSON.stringify({
+          title: t,
+          artist: document.getElementById("artist").textContent
+        }));
+      }
+    }catch(e){}
+  }).observe(document.getElementById("title"), { childList:true, characterData:true, subtree:true });
+
+  coverEl.addEventListener("load", function(){
+    try{
+      if (coverEl.src && coverEl.src.indexOf("apple-icon") === -1){
+        localStorage.setItem(LS_COVER, coverEl.src);
+      }
+    }catch(e){}
+  });
+
+  /* 4) Reanudar la reproducción al refrescar */
+  window.addEventListener("load", function(){
+    var estaba = false;
+    try{ estaba = localStorage.getItem(LS_PLAY) === "1"; }catch(e){}
+    if (!estaba || typeof startPlayback !== "function") return;
+
+    setTimeout(function(){
+      if (isPlaying) return;
+      startPlayback();
+      setTimeout(function(){
+        if (isPlaying){
+          if (typeof toast === "function") toast("▶ Seguís donde quedaste");
+        }else{
+          if (typeof toast === "function") toast("▶ Tocá play para seguir donde quedaste");
+        }
+      }, 2500);
+    }, 1200);
+  });
+})();
+</script>
+
+<!-- ===== ⭐📢 CARTELES DE AVISOS EN TIEMPO REAL (lee config/avisos del Panel de Avisos) ===== -->
+<div id="cartelAviso" role="alert">
+  <div class="c-img"><img id="cartelImg" alt="Aviso"></div>
+  <div class="c-body">
+    <div style="flex:1;min-width:0">
+      <span class="c-tag">📢 sikodark radio</span>
+      <div class="c-txt" id="cartelTxt"></div>
+    </div>
+  </div>
+  <a id="cartelBtn" class="c-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
+  <button class="c-close" id="cartelClose" aria-label="Cerrar">×</button>
+</div>
+<script>
+(function(){
+  var box = document.getElementById("cartelAviso"),
+      img = document.getElementById("cartelImg"),
+      txt = document.getElementById("cartelTxt"),
+      btn = document.getElementById("cartelBtn"),
+      close = document.getElementById("cartelClose");
+
+  var timer = null, freq = "sesion";
+
+  /* "sesion" → 1 vez por apertura (localStorage).
+     "siempre" → cada vez que abren la app (sessionStorage) */
+  function store(){ try{ return (freq === "siempre") ? sessionStorage : localStorage; }catch(e){ return localStorage; } }
+  function yaVisto(pub){ try{ return Number(store().getItem("sikodark-aviso-visto") || 0) >= pub; }catch(e){ return true; } }
+  function marcarVisto(pub){ try{ store().setItem("sikodark-aviso-visto", String(pub)); }catch(e){} }
+
+  function ocultar(){
+    box.classList.remove("show");
+    clearTimeout(timer);
+  }
+
+  function mostrar(a, pub){
+    if (a.imagen){
+      img.onerror = function(){ box.classList.remove("con-img"); };
+      img.onload  = function(){ box.classList.add("con-img"); };
+      img.src = a.imagen;
+    } else {
+      box.classList.remove("con-img");
+    }
+    txt.textContent = (a.texto || "").trim();
+    if (a.textoBoton && a.enlace){
+      btn.textContent = a.textoBoton;
+      btn.href = a.enlace;
+      btn.classList.remove("hidden");
+    } else {
+      btn.classList.add("hidden");
+    }
+    if (!a.imagen && !(a.texto || "").trim()) return;
+
+    box.classList.add("show");
+    marcarVisto(pub);
+    clearTimeout(timer);
+    timer = setTimeout(ocultar, 35000);
+  }
+
+  close.addEventListener("click", ocultar);
+
+  /* 🔴 TIEMPO REAL: escucha el aviso del Panel de Avisos (config/avisos) */
+  try{
+    dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
+      if (!snap.exists) return;
+      var a = snap.data().anuncio || {};
+      freq = a.frecuencia || "sesion";
+      if (a.activo === false){ ocultar(); return; }
+      var pub = Number(a.publicadoEn) || 0;
+      if (!pub) return;
+      if (yaVisto(pub)) return;
+      mostrar(a, pub);
+    }, function(e){ console.log("[warn] Avisos: " + e.message); });
+  }catch(e){ console.log("[warn] Avisos: " + e.message); }
+})();
 </script>
 </body>
 </html>
