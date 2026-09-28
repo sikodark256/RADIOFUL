@@ -32,15 +32,13 @@ td.num{font-weight:800;color:var(--pri)}
 .pos{color:var(--muted);font-family:monospace;font-size:12px}
 .nombreUser{font-weight:700}
 .ico{font-size:16px}
-.punto{display:inline-block;width:11px;height:11px;border-radius:50%;background:#55565e}
-.punto.vivo{background:var(--ok);box-shadow:0 0 9px rgba(52,199,89,.9);animation:pulso 1.4s infinite}
-@keyframes pulso{50%{opacity:.4}}
-/* ⭐ BADGE VERDE EN LÍNEA */
+/* ⭐ BADGE EN LÍNEA con pulso */
 .onlineBadge{display:inline-flex;align-items:center;gap:5px;background:rgba(52,199,89,.16);
   color:var(--ok);border:1px solid rgba(52,199,89,.45);border-radius:999px;
   padding:3px 9px;font-size:10.5px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
 .onlineBadge .pt{width:8px;height:8px;border-radius:50%;background:var(--ok);
   box-shadow:0 0 8px rgba(52,199,89,.9);animation:pulso 1.4s infinite}
+@keyframes pulso{50%{opacity:.35}}
 .offlineBadge{display:inline-block;color:#6d6e78;font-size:10.5px;white-space:nowrap}
 .tiempoLinea{display:block;font-size:11px;color:var(--ok);margin-top:3px;font-family:monospace}
 .conexion{font-family:monospace;font-size:12px}
@@ -68,9 +66,6 @@ td.num{font-weight:800;color:var(--pri)}
 
 <h2>👥 Oyentes registrados</h2>
 <div id="tUsuarios"></div>
-
-<h2>🏆 Artistas más queridos</h2>
-<div id="tArtistas"></div>
 
 <h2>❤️ Me gusta</h2>
 <div class="ordenBtns">
@@ -109,7 +104,7 @@ function horaConexion(ms){
   return f.toLocaleDateString([], {day:"2-digit", month:"2-digit"}) + " " + hora;
 }
 
-/* ⭐ CUÁNTO TIEMPO lleva conectado */
+/* ⭐ Cuánto tiempo lleva conectado */
 function duracion(msInicio){
   if (!msInicio) return "";
   const seg = Math.floor((Date.now() - msInicio)/1000);
@@ -132,8 +127,8 @@ let megustas = [];
 let USERS = [];
 const UID2USER = {};
 
-const VENTANA_SENAL = 90000;
-const VENTANA_ONLINE = 3*60*1000;
+const VENTANA_SENAL = 90000;       /* señal vieja de "presencia" < 1.5 min = vivo */
+const VENTANA_ONLINE = 3*60*1000;  /* latido (heartbeat) < 3 min = vivo */
 
 function reconstruir(){
   const byHuella = {};
@@ -149,7 +144,6 @@ function reconstruir(){
     } else if (!u.nombre && d.nombre){ u.nombre = d.nombre; }
     if (d.bloqueado) u.bloqueado = true;
     if (d.online === false) u.online = false;
-    /* ⭐ Guardar el inicio de sesión (el más viejo de los válidos) */
     const sMs = aMs(d.sesionInicio);
     if (sMs && (!u.sesionMs || sMs < u.sesionMs)) u.sesionMs = sMs;
     if (d.uid) u.uids.add(d.uid);
@@ -173,6 +167,7 @@ function dispositivoDe(u){
 const icono = d => d === "celular" ? "📱" : d === "PC" ? "💻" : d === "TV" ? "📺" : "❔";
 const ORDEN = { celular: 0, PC: 1, TV: 2 };
 
+/* ⭐ ¿Está en vivo AHORA? Latido reciente (o señal vieja de presencia) */
 function estaVivo(u){
   for (const uid of u.uids){
     const p = presencia[uid];
@@ -182,7 +177,6 @@ function estaVivo(u){
   return false;
 }
 
-/* ⭐ Inicio de sesión para calcular tiempo: sesionInicio, o primera señal, o última conexión */
 function inicioSesion(u, uid){
   if (u.sesionMs) return u.sesionMs;
   const p = presencia[uid];
@@ -212,7 +206,7 @@ db.collection("visitas").orderBy("fecha","desc").limit(300).get().then(s => {
   render();
 }).catch(function(){});
 
-/* Refresca los tiempos "en línea" cada 15s aunque no haya cambios en Firebase */
+/* Refresca los tiempos cada 15s aunque no haya cambios en Firebase */
 setInterval(render, 15000);
 
 /* ===== 🎨 RENDER ===== */
@@ -234,15 +228,13 @@ function render(){
     return (a.nombre||"Anónimo").localeCompare(b.nombre||"Anónimo");
   });
 
-  /* --- 👥 Oyentes con badge EN LÍNEA + tiempo --- */
   document.getElementById("tUsuarios").innerHTML = ordenados.length
     ? '<table><tr><th>Estado</th><th></th><th>Oyente</th><th>Conexión</th><th>Control</th></tr>' +
       ordenados.map(u => {
         const vivo = estaVivo(u);
         const disp = dispositivoDe(u);
         const hora = horaConexion(u.lastMs);
-        const inicio = inicioSesion(u, u.docId);
-        const tiempo = duracion(inicio);
+        const tiempo = duracion(inicioSesion(u, u.docId));
         const estado = vivo
           ? '<span class="onlineBadge"><span class="pt"></span>EN LÍNEA</span>' +
             (tiempo ? '<span class="tiempoLinea">⏱ ' + tiempo + '</span>' : '')
@@ -262,25 +254,7 @@ function render(){
       }).join("") + '</table>'
     : '<div class="vacio">Aún no hay oyentes registrados.</div>';
 
-  /* --- 🏆 Artistas más queridos --- */
-  const porArtista = {};
-  megustas.forEach(m => {
-    const a = (m.artista || "Desconocido").trim();
-    if (!porArtista[a]) porArtista[a] = { n: 0, uids: new Set() };
-    porArtista[a].n++;
-    if (m.uid) porArtista[a].uids.add(m.uid);
-  });
-  const rankArt = Object.entries(porArtista).sort((a,b) => b[1].n - a[1].n);
-  document.getElementById("tArtistas").innerHTML = rankArt.length
-    ? '<table><tr><th>#</th><th>Artista</th><th>❤️</th></tr>' + rankArt.map((r,i) => {
-        const chips = [...r[1].uids].map(u => '<span class="chip">' + esc(nombreDeUid(u)) + '</span>').join("");
-        return '<tr><td class="pos">' + (i+1) + '</td>' +
-          '<td>' + esc(r[0]) + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</td>' +
-          '<td class="num">' + r[1].n + '</td></tr>';
-      }).join("") + '</table>'
-    : '<div class="vacio">Todavía no hay me gusta.</div>';
-
-  /* --- ❤️ Me gusta ordenable --- */
+  /* --- ❤️ Me gusta ordenable (deduplicado por usuario+tema) --- */
   const porTema = {};
   megustas.forEach(m => {
     const art = (m.artista || "Desconocido").trim();
@@ -295,8 +269,8 @@ function render(){
   });
   const temas = Object.values(porTema).sort((a,b) =>
     ordenTemas === "likes"
-      ? (b.n - a.n) || (b.fecha - a.fecha)
-      : (b.fecha - a.fecha) || (b.n - a.n)
+      ? (b.n - a.n) || (b.fecha - a.fecha)   /* ⭐ más gustados primero */
+      : (b.fecha - a.fecha) || (b.n - a.n)   /* ⭐ recientes primero */
   );
   document.getElementById("tUltimos").innerHTML = temas.length
     ? '<table><tr><th>#</th><th>Tema</th><th>Oyentes</th><th>❤️</th><th>Fecha</th></tr>' + temas.map((t,i) => {
