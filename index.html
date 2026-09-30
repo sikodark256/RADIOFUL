@@ -255,7 +255,7 @@ body::after{
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
-const LOGO = "apple-icon.png";
+const LOGO = "icon-512.png";
 const MAX_HISTORY = 10;
 
 const ZENO_SSE_URL = `https://api.zeno.fm/mounts/metadata/subscribe/${MOUNT_ID}`;
@@ -370,10 +370,9 @@ function actualizarMediaSession(track, urlCaratula) {
     const artwork = [];
     if (urlCaratula && urlCaratula !== LOGO) {
       artwork.push({ src: urlCaratula, sizes: "512x512", type: "image/png" });
-      artwork.push({ src: urlCaratula, sizes: "96x96", type: "image/png" });
-    } else {
-      artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     }
+    artwork.push({ src: "icon-192.png", sizes: "192x192", type: "image/png" });
+    artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
       artist: track.artist || "En vivo",
@@ -989,7 +988,7 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
           }
         });
       });
-      setInterval(() => reg.update(), 30000);
+      setInterval(() => reg.update(), 3600000);
     })
     .catch(err => log("err", "Service Worker: " + err.message));
 });
