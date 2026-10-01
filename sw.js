@@ -1,25 +1,15 @@
-const CACHE_NAME = 'radioful-cache-v1';
+const CACHE_NAME = 'radioful-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/panel.html',
-  '/Radiobospanel.html',
-  '/panelradioboss.html',
-  '/avisos.html',
   '/offline.html',
   '/manifest.json',
-  '/panel-manifest.json',
-  '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
-  '/icon-maskable-512.png',
-  '/icon.svg',
-  '/logo-radio.png',
-  '/placeholder.jpg',
-  '/placeholder.svg'
+  '/icon.svg'
 ];
 
-// Install Service Worker
+// Instalación del Service Worker
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -28,7 +18,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate Service Worker
+// Activación y limpieza de caché vieja
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -43,13 +33,11 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Strategy (Cache First falling back to Network)
+// Estrategia Fetch (Cache First / Fallback a Offline)
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
       return fetch(e.request).catch(() => {
         if (e.request.mode === 'navigate') {
           return caches.match('/offline.html');
@@ -59,28 +47,25 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// Push Notification Event - FIXED WITH ICON AND BADGE
+// CONTROL DE NOTIFICACIONES (Aquí se arregla el logo de Chrome)
 self.addEventListener('push', (e) => {
-  let data = { title: 'RADIOFUL', body: '¡Nueva notificación disponible!' };
+  let data = { title: 'RADIOFUL', body: '¡Ya estamos al aire con la mejor música!' };
   if (e.data) {
     try {
       data = e.data.json();
     } catch (err) {
-      data = { title: 'RADIOFUL', body: e.data.text() };
+      data.body = e.data.text();
     }
   }
 
   const options = {
     body: data.body,
-    icon: '/icon-192.png',          // Large color icon for the notification body
-    badge: '/icon.svg',             // SMALL MONOCHROME (white/transparent) icon for Android status bar
-    vibrate: [100, 50, 100],
+    icon: '/icon-192.png',       // Logo a color en el recuadro
+    badge: '/icon.svg',          // Silueta blanca para la barra superior (Android)
+    vibrate:,
     data: {
       url: data.url || '/'
-    },
-    actions: [
-      { action: 'open', title: 'Escuchar Ahora' }
-    ]
+    }
   };
 
   e.waitUntil(
@@ -88,19 +73,18 @@ self.addEventListener('push', (e) => {
   );
 });
 
-// Notification Click Event
+// Clic en la notificación
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      const targetUrl = e.notification.data.url;
-      for (let client of windowClients) {
-        if (client.url === targetUrl && 'focus' in client) {
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === e.notification.data.url && 'focus' in client) {
           return client.focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        return clients.openWindow(e.notification.data.url);
       }
     })
   );
