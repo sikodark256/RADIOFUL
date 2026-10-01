@@ -1,15 +1,23 @@
 {
-  "name": "Panel DJ — sikodark radio",
-  "short_name": "Panel DJ",
-  "id": "panel-dj",
-  "start_url": "./panel.html",
-  "scope": "./",
+  "name": "RADIOFUL Panel",
+  "short_name": "Radio Panel",
+  "start_url": "/panel.html",
   "display": "standalone",
-  "background_color": "#171820",
-  "theme_color": "#171820",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
   ]
 }
