@@ -1,7 +1,8 @@
 <!-- Enlace corregido al manifiesto -->
 <!DOCTYPE html>
 <html lang="es">
-<head>
+<head><link rel="manifest" href="/manifest.json">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RADIOFUL</title>
@@ -16,6 +17,15 @@
         .then(() => console.log("Service Worker Registrado Exitosamente"))
         .catch(err => console.error("Error al registrar SW:", err));
     }
-  </script>
+  </script><script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+        .catch(err => console.error('Error al registrar el Service Worker:', err));
+    });
+  }
+</script>
+
 </body>
 </html>
