@@ -94,11 +94,14 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
     <label>Opción 1 · Imagen de tu galería (se comprime sola)</label>
     <input type="file" id="pbImg" accept="image/*">
     <div class="o-separador">— o —</div>
-    <label>⭐ Opción 2 · Pega la URL de la imagen</label>
+    <label>Opción 2 · Pega la URL de la imagen</label>
     <input type="text" id="pbUrl" placeholder="https://.../mi-imagen.jpg">
     <div class="prev" id="pbPrev"><img id="pbPrevImg" alt=""></div>
+    <div class="o-separador">— y/o —</div>
+    <label>🎵 Reproductor mini de Spotify (pega el enlace del álbum, tema o playlist)</label>
+    <input type="text" id="pbSpotify" placeholder="https://open.spotify.com/album/...">
     <label>Texto (opcional)</label>
-    <textarea id="pbTexto" placeholder="Ej: 🎸 Todos los viernes pedidos especiales en sikodark"></textarea>
+    <textarea id="pbTexto" placeholder="Ej: 🎸 Escucha lo nuevo de BABYMETAL en sikodark"></textarea>
     <label>Texto del botón (vacío = sin botón)</label>
     <input type="text" id="pbBoton" placeholder="Ver más">
     <label>Enlace del botón (opcional)</label>
@@ -246,11 +249,11 @@ function pintarEstado(){
 
 /* =========================================================
    📦 CANAL 2: PUBLICIDAD FIJA (config/publicidad)
-   Imagen: galería (base64) O URL directa — a elección
+   Imagen: galería O URL — + Reproductor mini de Spotify
    ========================================================= */
-let cfgPubli = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", publicadoEn:0 } };
-let imagenPubliBase64 = null;  /* imagen subida de galería */
-let imagenPubliURL = null;     /* imagen pegada por URL */
+let cfgPubli = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", spotify:"", publicadoEn:0 } };
+let imagenPubliBase64 = null;
+let imagenPubliURL = null;
 
 async function cargarPubli(){
   try {
@@ -264,10 +267,10 @@ async function cargarPubli(){
   $("pbTexto").value = cfgPubli.anuncio.texto || "";
   $("pbBoton").value = cfgPubli.anuncio.textoBoton || "";
   $("pbEnlace").value = cfgPubli.anuncio.enlace || "";
+  $("pbSpotify").value = cfgPubli.anuncio.spotify || "";
   if (cfgPubli.anuncio.imagen){
     $("pbPrev").style.display = "block";
     $("pbPrevImg").src = cfgPubli.anuncio.imagen;
-    /* Si la imagen guardada era una URL, precargamos el campo */
     if (cfgPubli.anuncio.imagen.indexOf("data:") !== 0){
       $("pbUrl").value = cfgPubli.anuncio.imagen;
       imagenPubliURL = cfgPubli.anuncio.imagen;
@@ -276,7 +279,7 @@ async function cargarPubli(){
 }
 function pintarEstadoPubli(){
   const e = $("estadoPubli");
-  if (cfgPubli.anuncio.activo !== false && (cfgPubli.anuncio.imagen || cfgPubli.anuncio.texto)){
+  if (cfgPubli.anuncio.activo !== false && (cfgPubli.anuncio.imagen || cfgPubli.anuncio.texto || cfgPubli.anuncio.spotify)){
     e.className = "vigente publi";
     e.textContent = "🟡 PUBLICIDAD ACTIVA — visible fija en la cajita";
   } else {
@@ -297,7 +300,7 @@ function pintarEstadoPubli(){
     c.height = Math.round(img.height * esc);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
     imagenPubliBase64 = c.toDataURL("image/jpeg", .82);
-    imagenPubliURL = null;          /* la galería pisa la URL */
+    imagenPubliURL = null;
     $("pbUrl").value = "";
     $("pbPrev").style.display = "block";
     $("pbPrevImg").src = imagenPubliBase64;
@@ -306,18 +309,17 @@ function pintarEstadoPubli(){
   img.src = URL.createObjectURL(f);
 });
 
-/* Opción 2: imagen por URL ⭐ */
+/* Opción 2: imagen por URL */
  $("pbUrl").addEventListener("input", () => {
   const url = $("pbUrl").value.trim();
   if (!url){
     imagenPubliURL = null;
     return;
   }
-  /* Validación visual: si la URL carga, se muestra la vista previa */
   const probe = new Image();
   probe.onload = () => {
     imagenPubliURL = url;
-    imagenPubliBase64 = null;      /* la URL pisa la galería */
+    imagenPubliBase64 = null;
     $("pbImg").value = "";
     $("pbPrev").style.display = "block";
     $("pbPrevImg").src = url;
@@ -331,16 +333,27 @@ function pintarEstadoPubli(){
   probe.src = url;
 });
 
+/* 🎵 Spotify: validación en vivo */
+ $("pbSpotify").addEventListener("input", () => {
+  const url = $("pbSpotify").value.trim();
+  if (!url) return;
+  if (/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(album|track|playlist|episode|show|artist)\/[A-Za-z0-9]+/.test(url)){
+    estado("🎵 Enlace de Spotify válido");
+  } else if (url.length > 20){
+    estado("⚠️ Ese enlace no parece de Spotify", "err");
+  }
+});
+
  $("pbTexto").addEventListener("input", () => cfgPubli.anuncio.texto = $("pbTexto").value);
  $("pbBoton").addEventListener("input", () => cfgPubli.anuncio.textoBoton = $("pbBoton").value.trim());
  $("pbEnlace").addEventListener("input", () => cfgPubli.anuncio.enlace = $("pbEnlace").value.trim());
 
  $("btnPublicarPubli").onclick = async () => {
-  /* Prioridad: galería > URL > la imagen que ya tenía guardada */
   const imgFinal = imagenPubliBase64 || imagenPubliURL || cfgPubli.anuncio.imagen || "";
   cfgPubli.anuncio.imagen = imgFinal;
-  if (!cfgPubli.anuncio.imagen && !cfgPubli.anuncio.texto){
-    estado("⚠️ Falta imagen (galería o URL) o texto", "err"); return;
+  cfgPubli.anuncio.spotify = $("pbSpotify").value.trim();
+  if (!cfgPubli.anuncio.imagen && !cfgPubli.anuncio.texto && !cfgPubli.anuncio.spotify){
+    estado("⚠️ Falta imagen, texto o enlace de Spotify", "err"); return;
   }
   cfgPubli.anuncio.activo = true;
   cfgPubli.anuncio.publicadoEn = Date.now();
