@@ -1703,7 +1703,7 @@ renderFavs();
 
   /* 🔴 TIEMPO REAL: lo que publicás en avisos.html aparece acá al instante */
   try{
-    dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
+        dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
       pintar(snap.exists ? (snap.data().anuncio || {}) : {});
     }, function(e){ console.log("[warn] Publicidad: " + e.message); });
   }catch(e){}
