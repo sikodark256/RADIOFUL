@@ -38,6 +38,7 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
   border-radius:10px;padding:10px;font-size:.8rem;margin-bottom:12px}
 .vigente.no{background:rgba(255,255,255,.04);border-color:#2a2b33;color:var(--muted)}
 .vigente.publi{background:rgba(255,204,0,.08);border-color:rgba(255,204,0,.35)}
+.o-separador{text-align:center;font-size:.7rem;color:#778;margin:8px 0 2px}
 </style>
 </head>
 <body>
@@ -90,8 +91,11 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 
   <div class="card publi">
     <div class="seccion">🖼️ La publicidad</div>
-    <label>Imagen (se comprime sola)</label>
+    <label>Opción 1 · Imagen de tu galería (se comprime sola)</label>
     <input type="file" id="pbImg" accept="image/*">
+    <div class="o-separador">— o —</div>
+    <label>⭐ Opción 2 · Pega la URL de la imagen</label>
+    <input type="text" id="pbUrl" placeholder="https://.../mi-imagen.jpg">
     <div class="prev" id="pbPrev"><img id="pbPrevImg" alt=""></div>
     <label>Texto (opcional)</label>
     <textarea id="pbTexto" placeholder="Ej: 🎸 Todos los viernes pedidos especiales en sikodark"></textarea>
@@ -140,7 +144,7 @@ firebase.auth().onAuthStateChanged(u => {
  $("btnSalir").onclick = () => firebase.auth().signOut();
 
 /* =========================================================
-   📢 CANAL 1: AVISO ESPONTÁNEO (config/avisos) — igual que antes
+   📢 CANAL 1: AVISO ESPONTÁNEO (config/avisos)
    ========================================================= */
 let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion", publicadoEn:0 } };
 let imagenBase64 = null;
@@ -241,10 +245,12 @@ function pintarEstado(){
 };
 
 /* =========================================================
-   📦 CANAL 2: PUBLICIDAD FIJA (config/publicidad) — independiente
+   📦 CANAL 2: PUBLICIDAD FIJA (config/publicidad)
+   Imagen: galería (base64) O URL directa — a elección
    ========================================================= */
 let cfgPubli = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", publicadoEn:0 } };
-let imagenPubliBase64 = null;
+let imagenPubliBase64 = null;  /* imagen subida de galería */
+let imagenPubliURL = null;     /* imagen pegada por URL */
 
 async function cargarPubli(){
   try {
@@ -261,6 +267,11 @@ async function cargarPubli(){
   if (cfgPubli.anuncio.imagen){
     $("pbPrev").style.display = "block";
     $("pbPrevImg").src = cfgPubli.anuncio.imagen;
+    /* Si la imagen guardada era una URL, precargamos el campo */
+    if (cfgPubli.anuncio.imagen.indexOf("data:") !== 0){
+      $("pbUrl").value = cfgPubli.anuncio.imagen;
+      imagenPubliURL = cfgPubli.anuncio.imagen;
+    }
   }
 }
 function pintarEstadoPubli(){
@@ -274,6 +285,7 @@ function pintarEstadoPubli(){
   }
 }
 
+/* Opción 1: imagen de galería */
  $("pbImg").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
   estado("📷 Procesando imagen…");
@@ -285,6 +297,8 @@ function pintarEstadoPubli(){
     c.height = Math.round(img.height * esc);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
     imagenPubliBase64 = c.toDataURL("image/jpeg", .82);
+    imagenPubliURL = null;          /* la galería pisa la URL */
+    $("pbUrl").value = "";
     $("pbPrev").style.display = "block";
     $("pbPrevImg").src = imagenPubliBase64;
     estado("✅ Imagen lista (" + Math.round(imagenPubliBase64.length/1024) + " KB)");
@@ -292,14 +306,41 @@ function pintarEstadoPubli(){
   img.src = URL.createObjectURL(f);
 });
 
+/* Opción 2: imagen por URL ⭐ */
+ $("pbUrl").addEventListener("input", () => {
+  const url = $("pbUrl").value.trim();
+  if (!url){
+    imagenPubliURL = null;
+    return;
+  }
+  /* Validación visual: si la URL carga, se muestra la vista previa */
+  const probe = new Image();
+  probe.onload = () => {
+    imagenPubliURL = url;
+    imagenPubliBase64 = null;      /* la URL pisa la galería */
+    $("pbImg").value = "";
+    $("pbPrev").style.display = "block";
+    $("pbPrevImg").src = url;
+    estado("✅ Imagen por URL lista");
+  };
+  probe.onerror = () => {
+    imagenPubliURL = null;
+    $("pbPrev").style.display = "none";
+    estado("⚠️ Esa URL no carga como imagen", "err");
+  };
+  probe.src = url;
+});
+
  $("pbTexto").addEventListener("input", () => cfgPubli.anuncio.texto = $("pbTexto").value);
  $("pbBoton").addEventListener("input", () => cfgPubli.anuncio.textoBoton = $("pbBoton").value.trim());
  $("pbEnlace").addEventListener("input", () => cfgPubli.anuncio.enlace = $("pbEnlace").value.trim());
 
  $("btnPublicarPubli").onclick = async () => {
-  if (imagenPubliBase64) cfgPubli.anuncio.imagen = imagenPubliBase64;
+  /* Prioridad: galería > URL > la imagen que ya tenía guardada */
+  const imgFinal = imagenPubliBase64 || imagenPubliURL || cfgPubli.anuncio.imagen || "";
+  cfgPubli.anuncio.imagen = imgFinal;
   if (!cfgPubli.anuncio.imagen && !cfgPubli.anuncio.texto){
-    estado("⚠️ Falta imagen o texto de la publicidad", "err"); return;
+    estado("⚠️ Falta imagen (galería o URL) o texto", "err"); return;
   }
   cfgPubli.anuncio.activo = true;
   cfgPubli.anuncio.publicadoEn = Date.now();
@@ -310,6 +351,7 @@ function pintarEstadoPubli(){
     estado("✅ ¡Publicada! La cajita se actualizó ya en todos", "ok");
     pintarEstadoPubli();
     imagenPubliBase64 = null;
+    imagenPubliURL = null;
     $("pbImg").value = "";
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
   $("btnPublicarPubli").disabled = false;
