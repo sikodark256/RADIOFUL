@@ -6,13 +6,8 @@
 <meta name="theme-color" content="#000000">
 <meta name="description" content="Escuchá sikodark radio en directo y descubrí la música que ya sonó.">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="sikodark">
+<link rel="icon" href="apple-icon.png">
+<link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
 
 <!-- Montserrat BOLD + JetBrains Mono -->
@@ -105,9 +100,8 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
   box-shadow:0 10px 30px rgba(0,0,0,.5);transition:.25s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* ===== 🚫 OCULTOS: notificación Wikipedia y EQ ===== */
-#smartNotify,.eq{display:none!important}
-/* ===== PANEL DE DIAGNÓSTICO (visible para ver estado de la PWA) ===== */
+/* ===== 🚫 OCULTOS: notificación Wikipedia, EQ y diagnóstico ===== */
+#smartNotify,#diagnostico,.eq{display:none!important}
 
 /* ===== PANEL DE DIAGNÓSTICO (oculto, sigue funcionando por dentro) ===== */
 #diagnostico{
@@ -199,11 +193,11 @@ body::after{
 <section class="card" aria-label="Reproductor de radio">
 <audio id="audio" preload="none"></audio>
 <div class="top">
-  <div class="brand"><img id="brandLogo" src="icon-192.png" alt="sikodark"><div><div class="eyebrow">Radio online</div><div class="brand-name">sikodark</div></div></div>
+  <div class="brand"><img id="brandLogo" src="apple-icon.png" alt="sikodark"><div><div class="eyebrow">Radio online</div><div class="brand-name">sikodark</div></div></div>
   <div id="status" class="status"><span class="dot"></span><span id="statusText">Detenido</span></div>
 </div>
 <div id="coverBox" class="cover">
-  <img id="cover" src="icon-512.png" alt="Logo de sikodark">
+  <img id="cover" src="apple-icon.png" alt="Logo de sikodark">
   <div class="cover-actions">
     <button id="btnShare" class="circle-btn" aria-label="Compartir">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
@@ -246,7 +240,7 @@ body::after{
 <footer>sikodark radio · música en directo</footer>
 
 <div id="smartNotify" role="alert" aria-live="polite">
-  <div class="notify-art"><img id="notifyArt" src="icon-192.png" alt=""></div>
+  <div class="notify-art"><img id="notifyArt" src="apple-icon.png" alt=""></div>
   <div class="notify-body">
     <div class="notify-tag" id="notifyTag">Información del artista</div>
     <div class="notify-phrase" id="notifyPhrase">Cargando…</div>
@@ -262,7 +256,6 @@ body::after{
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
 const LOGO = "icon-512.png";
-const LOGO_NOTIF = "logo-notificacion.png";
 const MAX_HISTORY = 10;
 
 const ZENO_SSE_URL = `https://api.zeno.fm/mounts/metadata/subscribe/${MOUNT_ID}`;
@@ -322,7 +315,7 @@ function log(tipo, mensaje) {
 /* =========================================================
    FUNCIONES BÁSICAS
    ========================================================= */
-function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir");ring(isLoading);try{if("mediaSession" in navigator)navigator.mediaSession.playbackState=v?"playing":"paused";}catch(e){}}
+function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir");ring(isLoading)}
 function spinner(){return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M20 12a8 8 0 0 1-8 8"/></svg>'}
 function playIcon(){return '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
 function pauseIcon(){return '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'}
@@ -366,49 +359,29 @@ btnReset.onclick = () => {
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
 /* =========================================================
-   🎵 MEDIA SESSION API — controla la notificación del sistema
+   🎵 MEDIA SESSION API
    ========================================================= */
-function urlAbsoluta(relativa) {
-  try { return new URL(relativa, location.href).href; }
-  catch(e) { return relativa; }
-}
 function actualizarMediaSession(track, urlCaratula) {
   if (!("mediaSession" in navigator)) {
     log("warn", "Media Session no soportado en este navegador");
     return;
   }
   try {
-    /* Si hay carátula real de la canción, la usamos en varios tamaños.
-       Si no, usamos el logo de la radio en alta resolución.
-       IMPORTANTE: URLs absolutas para que Android las cargue en la notificación. */
     const artwork = [];
-    if (urlCaratula && urlCaratula !== LOGO && urlCaratula !== LOGO_NOTIF) {
-      const abs = urlAbsoluta(urlCaratula);
-      artwork.push({ src: abs, sizes: "96x96",   type: "image/png" });
-      artwork.push({ src: abs, sizes: "128x128", type: "image/png" });
-      artwork.push({ src: abs, sizes: "192x192", type: "image/png" });
-      artwork.push({ src: abs, sizes: "256x256", type: "image/png" });
-      artwork.push({ src: abs, sizes: "384x384", type: "image/png" });
-      artwork.push({ src: abs, sizes: "512x512", type: "image/png" });
-    } else {
-      const logoAbs = urlAbsoluta(LOGO_NOTIF);
-      artwork.push({ src: logoAbs, sizes: "192x192", type: "image/png" });
-      artwork.push({ src: logoAbs, sizes: "256x256", type: "image/png" });
-      artwork.push({ src: logoAbs, sizes: "384x384", type: "image/png" });
-      artwork.push({ src: logoAbs, sizes: "512x512", type: "image/png" });
+    if (urlCaratula && urlCaratula !== LOGO) {
+      artwork.push({ src: urlCaratula, sizes: "512x512", type: "image/png" });
     }
+    artwork.push({ src: "icon-192.png", sizes: "192x192", type: "image/png" });
+    artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
-      artist: track.artist || "En vivo · sikodark radio",
+      artist: track.artist || "En vivo",
       album: "sikodark radio",
       artwork: artwork
     });
-    /* Estado de reproducción para que la notificación muestre pausa/play correcto */
-    try { navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused"; } catch(e){}
     log("ok", `MediaSession actualizado: ${track.artist||""} - ${track.title}`);
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
-    navigator.mediaSession.setActionHandler("stop", () => stopPlayback());
   } catch(e) {
     log("err", "MediaSession error: " + e.message);
   }
@@ -1000,47 +973,24 @@ function pedirPermisoNotificaciones() {
    SERVICE WORKER
    ========================================================= */
 let deferredPrompt=null;
-window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();
-  deferredPrompt=e;
-  install.classList.remove("hidden");
-  install.textContent="⇩  Instalar app en mi celular";
-  log("ok","📲 PWA lista para instalar — botón mostrado");
-});
-window.addEventListener("appinstalled",()=>{
-  deferredPrompt=null;
-  install.classList.add("hidden");
-  log("ok","📲 ¡PWA instalada correctamente!");
-  if(typeof toast==="function") toast("📲 ¡App instalada! Buscala en tu pantalla de inicio");
-});
-install.onclick=async()=>{
-  if(!deferredPrompt){
-    if(typeof toast==="function") toast("Toca los 3 puntitos de Chrome → 'Instalar app' o 'Añadir a pantalla de inicio'");
-    return;
-  }
-  deferredPrompt.prompt();
-  const {outcome}=await deferredPrompt.userChoice;
-  if(outcome==="accepted") log("ok","📲 Usuario aceptó instalar la PWA");
-  deferredPrompt=null;
-  install.classList.add("hidden");
-};
-if(window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true){
-  install.classList.add("hidden");
-  log("ok","📲 PWA ya está instalada y corriendo en modo app");
-}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;install.classList.remove("hidden")});
+install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;install.classList.add("hidden")};
 
 if("serviceWorker" in navigator)window.addEventListener("load",()=>{
   navigator.serviceWorker.register("sw.js")
     .then(reg => {
-      log("ok", "✅ Service Worker ACTIVO — la app se puede instalar");
+      log("ok", "Service Worker registrado (v6)");
       reg.addEventListener("updatefound", () => {
         const nuevoSW = reg.installing;
         nuevoSW.addEventListener("statechange", () => {
-          if (nuevoSW.state === "activated") window.location.reload();
+          if (nuevoSW.state === "installed" && navigator.serviceWorker.controller) {
+            window.location.reload();
+          }
         });
       });
+      setInterval(() => reg.update(), 3600000);
     })
-    .catch(err => log("err", "❌ Service Worker NO cargó: " + err.message));
+    .catch(err => log("err", "Service Worker: " + err.message));
 });
 
 /* =========================================================
@@ -1051,20 +1001,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-/* ===== 📲 CHEQUEO VISIBLE del estado PWA (para que veas qué falta) ===== */
-setTimeout(()=>{
-  const esHTTPS = location.protocol === "https:" || location.hostname === "localhost";
-  const swSoportado = "serviceWorker" in navigator;
-  const manifestOk = !!document.querySelector('link[rel="manifest"]');
-  log(esHTTPS?"ok":"err", esHTTPS ? "✅ HTTPS correcto (requisito PWA)" : "❌ NO es HTTPS — la PWA NO se puede instalar");
-  log(swSoportado?"ok":"err", swSoportado ? "✅ Service Worker soportado" : "❌ Service Worker no soportado");
-  log(manifestOk?"ok":"err", manifestOk ? "✅ Manifest enlazado" : "❌ Manifest no encontrado");
-  if(esHTTPS && swSoportado && manifestOk){
-    log("info","📲 Si el botón 'Instalar app' no aparece, tocá los 3 puntitos ⋮ de Chrome → 'Instalar app'");
-  }
-},1500);
-
-console.log("🧠 Sikodark Radio v17 — PWA reparada + diagnóstico visible");
+console.log("🧠 Sikodark Radio v16 — avisos + presencia + offline propio + 6 respaldos");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
