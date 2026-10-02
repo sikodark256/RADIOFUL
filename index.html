@@ -1665,7 +1665,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CAJITA DE PUBLICIDAD (vivo desde config/avisos — la editás en avisos.html) ===== -->
+<!-- ===== ⭐📢 CAJITA DE PUBLICIDAD (imagen, URL, Spotify mini y texto) ===== -->
 <script>
 (function(){
   var box = document.getElementById("publiBox"),
@@ -1674,12 +1674,28 @@ renderFavs();
       btn = document.getElementById("publiBtn");
   if (!box) return;
 
+  /* Contenedor para el reproductor mini de Spotify (se crea solo) */
+  var spDiv = document.createElement("div");
+  spDiv.style.display = "none";
+  spDiv.style.margin = "10px 0";
+  box.insertBefore(spDiv, txt);
+
+  /* Convierte cualquier enlace de Spotify en enlace de embed */
+  function spotifyEmbed(url){
+    var m = (url||"").match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(album|track|playlist|episode|show|artist)\/([A-Za-z0-9]+)/);
+    return m ? ("https://open.spotify.com/embed/" + m[1] + "/" + m[2]) : null;
+  }
+
   function pintar(a){
     a = a || {};
-    /* Sin aviso activo o vacío → la cajita se oculta y no ocupa espacio */
-    var tiene = (a.activo !== false) && (a.imagen || (a.texto || "").trim());
-    if (!tiene){ box.classList.add("hidden"); box.classList.remove("con-img"); return; }
+    var tiene = (a.activo !== false) && (a.imagen || (a.texto||"").trim() || a.spotify);
+    if (!tiene){
+      box.classList.add("hidden"); box.classList.remove("con-img");
+      spDiv.style.display = "none"; spDiv.innerHTML = "";
+      return;
+    }
 
+    /* Imagen (galería o URL) */
     if (a.imagen){
       img.onerror = function(){ box.classList.remove("con-img"); };
       img.onload  = function(){ box.classList.add("con-img"); };
@@ -1688,8 +1704,20 @@ renderFavs();
       box.classList.remove("con-img");
     }
 
+    /* 🎵 Reproductor mini de Spotify (como el embed de la web) */
+    var emb = spotifyEmbed(a.spotify);
+    if (emb){
+      spDiv.innerHTML =
+        '<iframe src="' + emb + '" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy" style="border:0;border-radius:12px;display:block"></iframe>';
+      spDiv.style.display = "block";
+    } else {
+      spDiv.style.display = "none"; spDiv.innerHTML = "";
+    }
+
+    /* Texto */
     txt.textContent = (a.texto || "").trim();
 
+    /* Botón con enlace */
     if (a.textoBoton && a.enlace){
       btn.textContent = a.textoBoton;
       btn.href = a.enlace;
@@ -1701,9 +1729,9 @@ renderFavs();
     box.classList.remove("hidden");
   }
 
-  /* 🔴 TIEMPO REAL: lo que publicás en avisos.html aparece acá al instante */
+  /* 🔴 TIEMPO REAL */
   try{
-        dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
+    dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
       pintar(snap.exists ? (snap.data().anuncio || {}) : {});
     }, function(e){ console.log("[warn] Publicidad: " + e.message); });
   }catch(e){}
