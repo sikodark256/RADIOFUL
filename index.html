@@ -182,6 +182,15 @@ body::after{
  background:linear-gradient(135deg,#2a1010,#1a1a20);border-bottom:1px solid rgba(255,59,48,.4);
  padding:11px 16px;text-align:center;font-family:var(--sans);font-weight:800;
  font-size:12.5px;color:#ff9d9d;letter-spacing:.03em}
+
+/* ===== ⭐📢 PUBLICIDAD DE LA RADIO (cajita fija, editada desde avisos.html) ===== */
+.publi-box{margin-top:18px;background:#0c0c10;border:1px solid rgba(255,204,0,.28);border-radius:16px;padding:14px;overflow:hidden}
+.publi-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:#ffcc00;text-align:center;margin-bottom:10px}
+.publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
+.publi-img img{width:100%;display:block}
+.publi-box.con-img .publi-img{display:block}
+.publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
+.publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
 </style>
 </head>
 <body>
@@ -232,6 +241,14 @@ body::after{
 <button id="btnReset" class="btn-reset">🧹 Limpiar caché y recargar</button>
 </section>
 
+<!-- ⭐📢 PUBLICIDAD DE LA RADIO (se edita desde avisos.html, aparece en vivo) -->
+<section id="publiBox" class="publi-box hidden" aria-label="Publicidad de la radio">
+  <div class="publi-head">📢 Publicidad de la radio</div>
+  <div class="publi-img"><img id="publiImg" alt="Publicidad"></div>
+  <p id="publiTxt" class="publi-txt"></p>
+  <a id="publiBtn" class="publi-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
+</section>
+
 <section class="card history" aria-labelledby="history-title">
 <div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
@@ -251,7 +268,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v16
+   CONFIGURACIÓN v17
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -1001,7 +1018,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v16 — avisos + presencia + offline propio + 6 respaldos");
+console.log("🧠 Sikodark Radio v17 — publicidad en vivo + avisos + presencia + offline propio + 6 respaldos");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
@@ -1229,7 +1246,7 @@ iniciarPush();
     });
   }
 
-  /* ⭐ Latido cada 30s: mantiene el 🟢 verde en el panel */
+  /* ⭐ Latido cada 30s */
   function latido(){
     if (!huellaActual) return;
     dbFB.collection("usuarios").doc(huellaActual).set({
@@ -1258,13 +1275,11 @@ iniciarPush();
 
   window.addEventListener("beforeunload", marcarOffline);
   window.addEventListener("pagehide", marcarOffline);
-  /* Al volver a la app refresca presencia; al minimizar NO marca offline */
   document.addEventListener("visibilitychange", function(){
     if (document.visibilityState === "visible" && huellaActual){
       marcarOnline(localStorage.getItem(LS_NOMBRE) || "Anónimo");
     }
   });
-  /* Latido extra sincronizado con el audio */
   audio.addEventListener("playing", function(){ latido(); });
 
   async function limpiarDuplicadosViejos(){
@@ -1377,7 +1392,6 @@ function claveLike(track){
   return ((track.artist||"").toLowerCase().trim()) + "||" + track.title.toLowerCase().trim();
 }
 
-/* Pinta el corazón grande según el tema en pantalla */
 function actualizarEstadoLike(){
   const track = temaEnPantallaAhora();
   if (!track || !btnLike) return;
@@ -1392,7 +1406,6 @@ function actualizarEstadoLike(){
   }
 }
 
-/* ===== ⭐ CAJITA DE PREFERIDOS (solo visual, deslizable) ===== */
 function renderFavs(){
   var box = document.getElementById("favsBox");
   var lista = document.getElementById("favsLista");
@@ -1431,7 +1444,6 @@ function renderFavs(){
   box.classList.remove("hidden");
 }
 
-/* ---------- ❤️ Like normal: solo marcar ---------- */
 if (btnLike) btnLike.addEventListener("click", function(){
   if (!usuarioUID){ toast("⏳ Conectando con la radio, esperá unos segundos…"); return; }
   const track = temaEnPantallaAhora();
@@ -1443,7 +1455,6 @@ if (btnLike) btnLike.addEventListener("click", function(){
   try { localStorage.setItem("sikodark-likes", JSON.stringify(likesDelUsuario)); } catch(e){}
   actualizarEstadoLike();
 
-  /* 1 doc por usuario+tema: sin duplicados en Firebase */
   const idLike = (usuarioUID + "_" + clave).replace(/[\/#.\[\]]/g, "_");
   dbFB.collection("megustas").doc(idLike).set({
     uid: usuarioUID,
@@ -1461,11 +1472,9 @@ if (btnLike) btnLike.addEventListener("click", function(){
   renderFavs();
 });
 
-/* El corazón grande se resetea cuando cambia el tema */
 const tituloObs = new MutationObserver(function(){ setTimeout(actualizarEstadoLike, 100); });
 tituloObs.observe(document.getElementById("title"), { childList:true, characterData:true, subtree:true });
 
-/* ---------- 🟠 Compartir ---------- */
 if (btnShare) btnShare.addEventListener("click", async function(){
   const track = temaEnPantallaAhora() || { title:"sikodark radio", artist:null };
   const texto = track.artist ? "🎵 " + track.title + " — " + track.artist : "🎵 " + track.title;
@@ -1481,25 +1490,22 @@ if (btnShare) btnShare.addEventListener("click", async function(){
   }
 });
 
-/* ---------- 🧹 Botón reset como icono ---------- */
 if (btnReset){
   btnReset.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
   btnReset.title = "Limpiar caché y recargar";
   btnReset.setAttribute("aria-label", "Limpiar caché y recargar");
 }
 
-/* Sincroniza todo al cargar */
 actualizarEstadoLike();
 renderHistory();
 renderFavs();
 </script>
 
-<!-- ===== ⭐ SESIÓN PERSISTENTE: volumen + último tema + reanudar al refrescar ===== -->
+<!-- ===== ⭐ SESIÓN PERSISTENTE: volumen + último tema + reanudar ===== -->
 <script>
 (function(){
   var LS_VOL = "sikodark-vol", LS_PLAY = "sikodark-playing", LS_TRACK = "sikodark-lasttrack", LS_COVER = "sikodark-lastcover";
 
-  /* 1) Restaurar volumen guardado */
   try{
     var v = localStorage.getItem(LS_VOL);
     if (v !== null && v !== ""){
@@ -1514,7 +1520,6 @@ renderFavs();
     try{ localStorage.setItem(LS_VOL, volume.value); }catch(e){}
   });
 
-  /* 2) Recordar si estaba sonando */
   audio.addEventListener("playing", function(){
     try{ localStorage.setItem(LS_PLAY, "1"); }catch(e){}
   });
@@ -1522,7 +1527,6 @@ renderFavs();
     try{ if (!audio.ended) localStorage.setItem(LS_PLAY, "0"); }catch(e){}
   });
 
-  /* 3) Mostrar el último tema al instante */
   try{
     var tr = JSON.parse(localStorage.getItem(LS_TRACK) || "null");
     if (tr && tr.title){
@@ -1554,7 +1558,6 @@ renderFavs();
     }catch(e){}
   });
 
-  /* 4) Reanudar la reproducción al refrescar */
   window.addEventListener("load", function(){
     var estaba = false;
     try{ estaba = localStorage.getItem(LS_PLAY) === "1"; }catch(e){}
@@ -1575,7 +1578,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CARTELES DE AVISOS EN TIEMPO REAL (lee config/avisos del Panel de Avisos) ===== -->
+<!-- ===== ⭐📢 CARTELES DE AVISOS EN TIEMPO REAL ===== -->
 <div id="cartelAviso" role="alert">
   <div class="c-img"><img id="cartelImg" alt="Aviso"></div>
   <div class="c-body">
@@ -1597,8 +1600,6 @@ renderFavs();
 
   var timer = null, freq = "sesion";
 
-  /* "sesion" → 1 vez por apertura (localStorage).
-     "siempre" → cada vez que abren la app (sessionStorage) */
   function store(){ try{ return (freq === "siempre") ? sessionStorage : localStorage; }catch(e){ return localStorage; } }
   function yaVisto(pub){ try{ return Number(store().getItem("sikodark-aviso-visto") || 0) >= pub; }catch(e){ return true; } }
   function marcarVisto(pub){ try{ store().setItem("sikodark-aviso-visto", String(pub)); }catch(e){} }
@@ -1634,7 +1635,6 @@ renderFavs();
 
   close.addEventListener("click", ocultar);
 
-  /* 🔴 TIEMPO REAL: escucha el aviso del Panel de Avisos (config/avisos) */
   try{
     dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
       if (!snap.exists) return;
@@ -1650,7 +1650,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📴 BANNER SIN INTERNET (mientras la app está abierta) ===== -->
+<!-- ===== ⭐📴 BANNER SIN INTERNET ===== -->
 <script>
 (function(){
   var b = document.getElementById("offBanner");
@@ -1662,6 +1662,51 @@ renderFavs();
   window.addEventListener("offline", off);
   window.addEventListener("online", on);
   if (!navigator.onLine) off();
+})();
+</script>
+
+<!-- ===== ⭐📢 CAJITA DE PUBLICIDAD (vivo desde config/avisos — la editás en avisos.html) ===== -->
+<script>
+(function(){
+  var box = document.getElementById("publiBox"),
+      img = document.getElementById("publiImg"),
+      txt = document.getElementById("publiTxt"),
+      btn = document.getElementById("publiBtn");
+  if (!box) return;
+
+  function pintar(a){
+    a = a || {};
+    /* Sin aviso activo o vacío → la cajita se oculta y no ocupa espacio */
+    var tiene = (a.activo !== false) && (a.imagen || (a.texto || "").trim());
+    if (!tiene){ box.classList.add("hidden"); box.classList.remove("con-img"); return; }
+
+    if (a.imagen){
+      img.onerror = function(){ box.classList.remove("con-img"); };
+      img.onload  = function(){ box.classList.add("con-img"); };
+      img.src = a.imagen;
+    } else {
+      box.classList.remove("con-img");
+    }
+
+    txt.textContent = (a.texto || "").trim();
+
+    if (a.textoBoton && a.enlace){
+      btn.textContent = a.textoBoton;
+      btn.href = a.enlace;
+      btn.style.display = "block";
+    } else {
+      btn.style.display = "none";
+    }
+
+    box.classList.remove("hidden");
+  }
+
+  /* 🔴 TIEMPO REAL: lo que publicás en avisos.html aparece acá al instante */
+  try{
+    dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
+      pintar(snap.exists ? (snap.data().anuncio || {}) : {});
+    }, function(e){ console.log("[warn] Publicidad: " + e.message); });
+  }catch(e){}
 })();
 </script>
 </body>
