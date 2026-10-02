@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PREVIEW · Player embed sikodark 🤫</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--pri:#f59d3d;--bg:#000;--card:#24242b;--sec:#1a1a20;--txt:#f5f5f7;--mut:#96969f;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Montserrat',Arial,sans-serif;padding:20px 14px 40px}
+.max{max-width:560px;margin:0 auto}
+h1{font-size:15px;text-transform:uppercase;font-weight:900;font-style:italic;letter-spacing:.03em;text-align:center;margin-bottom:4px}
+.sub{text-align:center;font:11px var(--mono);color:var(--mut);margin-bottom:22px}
+.sub b{color:var(--pri)}
+.seccion{font:700 10px var(--mono);text-transform:uppercase;letter-spacing:.15em;color:var(--mut);margin:26px 0 10px;
+ padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08)}
+/* Simula una web ajena */
+.web-ajena{background:#fff;color:#333;border-radius:18px;padding:18px;font-family:Georgia,serif}
+.web-ajena h2{font-size:18px;margin-bottom:8px}
+.web-ajena p{font-size:13.5px;line-height:1.6;margin-bottom:14px;color:#555}
+/* ===== EL EMBED (idéntico al archivo embed.html) ===== */
+.eplayer{width:100%;background:#1c1d24;border:1px solid rgba(245,157,61,.25);
+ border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;overflow:hidden;margin:14px 0}
+.eqw{position:relative;width:58px;height:58px;flex:0 0 58px}
+.eqw img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:1px solid rgba(245,157,61,.4);display:block;background:#0e0f14}
+.eq{position:absolute;left:0;right:0;bottom:0;height:40%;display:none;align-items:flex-end;justify-content:center;
+ gap:3px;padding:6px;background:linear-gradient(to top,rgba(0,0,0,.75),transparent);border-radius:0 0 12px 12px}
+.eq.on{display:flex}
+.eq span{width:4px;background:var(--pri);border-radius:4px;height:25%;animation:reb .7s ease-in-out infinite alternate}
+.eq span:nth-child(2){animation-delay:.1s}.eq span:nth-child(3){animation-delay:.2s}
+.eq span:nth-child(4){animation-delay:.3s}.eq span:nth-child(5){animation-delay:.4s}
+@keyframes reb{to{height:85%}}
+.einfo{flex:1;min-width:0}
+.evivo{display:inline-flex;align-items:center;gap:5px;font:700 9px 'Montserrat';letter-spacing:.14em;
+ color:var(--pri);text-transform:uppercase;margin-bottom:3px}
+.evivo .pt{width:6px;height:6px;border-radius:50%;background:var(--pri);animation:lat 1.2s infinite}
+@keyframes lat{50%{opacity:.3}}
+.etitulo{font-weight:900;font-style:italic;font-size:14px;text-transform:uppercase;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.eartista{font-weight:700;font-size:11.5px;color:var(--mut);font-style:italic;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.eplay{width:44px;height:44px;flex:0 0 44px;border:2px solid #fff;border-radius:14px;background:transparent;
+ color:#fff;display:grid;place-items:center;cursor:pointer;transition:.2s}
+.eplay.suena{background:#fff;color:#111;border-color:#fff}
+.eplay svg{width:20px;height:20px;fill:currentColor}
+.elink{display:block;text-align:center;margin:0 0 6px;font:800 10px 'Montserrat';
+ letter-spacing:.1em;color:var(--pri);text-transform:uppercase;text-decoration:none;opacity:.85}
+/* Versión compacta */
+.eplayer.compacto{max-width:360px;margin-left:auto;margin-right:auto;padding:8px 10px}
+.eplayer.compacto .eqw{width:44px;height:44px;flex:0 0 44px}
+.eplayer.compacto .etitulo{font-size:12px}
+.eplayer.compacto .eartista{font-size:10px}
+.eplayer.compacto .eplay{width:38px;height:38px;flex:0 0 38px}
+.eplayer.compacto ~ .elink{display:none}
+/* Código para copiar */
+.code{background:var(--sec);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;
+ font:11px/1.6 var(--mono);color:#c9cad2;word-break:break-all;white-space:pre-wrap}
+.tag{color:var(--pri)} .str{color:#8fd694}
+.btn{width:100%;margin-top:10px;padding:12px;border:0;border-radius:999px;background:var(--pri);
+ color:#161616;font:800 13px 'Montserrat';cursor:pointer}
+.nota{font:11px/1.5 var(--mono);color:var(--mut);margin-top:8px}
+audio{display:none}
+</style>
+</head>
+<body>
+<div class="max">
+  <h1>🤫 Preview · Player embed sikodark</h1>
+  <p class="sub">Así se ve <b>incrustado en una web ajena</b> — tocá play, suena de verdad</p>
+
+  <!-- ===== SIMULACIÓN: web de un evento con tu player adentro ===== -->
+  <div class="seccion">① Así lo ve el público en otra web</div>
+  <div class="web-ajena">
+    <h2>Metal Fest Perú 2026</h2>
+    <p>No te pierdas el lineup más pesado del año. Mientras reservás tus entradas, escuchá la radio oficial del festival en vivo:</p>
+
+    <!-- ===== AQUÍ VA EL EMBED (misma estructura que embed.html) ===== -->
+    <div class="eplayer" id="player1">
+      <div class="eqw">
+        <img class="eqw" src="apple-icon.png" alt="sikodark" style="position:absolute;inset:0;width:58px;height:58px;border-radius:12px;object-fit:cover;border:1px solid rgba(245,157,61,.4)">
+        <div class="eq" id="eq1"><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="einfo">
+        <span class="evivo"><span class="pt"></span>En vivo</span>
+        <div class="etitulo" id="t1">sikodark radio</div>
+        <div class="eartista" id="a1">Tocá play para escuchar</div>
+      </div>
+      <button class="eplay" id="b1"><svg id="i1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+    </div>
+    <a class="elink" href="https://sikodark256.github.io/RADIOUL/" target="_blank">📻 Abrir sikodark radio completa</a>
+
+    <p style="margin-top:14px">Entradas disponibles en la preventa exclusiva. ¡Nos vemos en el foso! 🤘</p>
+  </div>
+
+  <!-- ===== Versión compacta ===== -->
+  <div class="seccion">② Versión compacta (?compact=1)</div>
+  <div class="eplayer compacto">
+    <div class="eqw">
+      <img src="apple-icon.png" alt="" style="position:absolute;inset:0;width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid rgba(245,157,61,.4)">
+      <div class="eq" style="border-radius:0 0 10px 10px"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="einfo">
+      <span class="evivo"><span class="pt"></span>En vivo</span>
+      <div class="etitulo" id="t2">sikodark radio</div>
+      <div class="eartista" id="a2">Vista mini para barras laterales</div>
+    </div>
+    <button class="eplay" id="b2"><svg id="i2" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+  </div>
+
+  <!-- ===== Código para compartir ===== -->
+  <div class="seccion">③ El código que compartís (como Spotify)</div>
+  <div class="code" id="code">&lt;iframe <span class="tag">src</span>=<span class="str">"https://sikodark256.github.io/RADIOUL/embed.html"</span>
+  width=<span class="str">"100%"</span> height=<span class="str">"132"</span> frameborder=<span class="str">"0"</span>
+  allow=<span class="str">"autoplay; encrypted-media"</span>
+  style=<span class="str">"border:0;border-radius:16px;overflow:hidden"</span>&gt;&lt;/iframe&gt;</div>
+  <button class="btn" onclick="copiar()">📋 Copiar el código embed</button>
+  <p class="nota">El que lo pega en su web ve tu player con la música EN VIVO y metadata actualizada — igual que Spotify. Compacto: agregá <b>?compact=1</b> a la URL y height 88.</p>
+
+  <div class="seccion">④ Cómo sacar el enlace en Spotify (referencia)</div>
+  <p class="nota">Spotify → Compartir → Copiar enlace del álbum → lo pega en el panel → la cajita de publicidad muestra su mini player. Tu sistema es idéntico: tu <b>embed.html</b> es tu "enlace compartible".</p>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+/* ===== Player real (misma lógica que embed.html) ===== */
+const STREAM = "https://stream.zeno.fm/xdkqr4btptutv";
+const MOUNT  = "xdkqr4btptutv";
+const audio  = document.getElementById("audio");
+let suena = false;
+const PLAY = '<path d="M8 5v14l11-7z"/>';
+const PAUSE = '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
+
+function play1(){
+  if (suena){ audio.pause(); return; }
+  if (!audio.src) audio.src = STREAM;
+  audio.play().catch(()=>{ document.getElementById("a1").textContent = "Tocá de nuevo para permitir el audio"; });
+}
+document.getElementById("b1").onclick = play1;
+document.getElementById("b2").onclick = play1;
+audio.onplaying = () => {
+  suena = true;
+  document.getElementById("b1").classList.add("suena");
+  document.getElementById("b2").classList.add("suena");
+  document.getElementById("i1").innerHTML = PAUSE;
+  document.getElementById("i2").innerHTML = PAUSE;
+  document.getElementById("eq1").classList.add("on");
+  document.querySelectorAll(".eq").forEach(e=>e.classList.add("on"));
+};
+audio.onpause = () => {
+  suena = false;
+  document.getElementById("b1").classList.remove("suena");
+  document.getElementById("b2").classList.remove("suena");
+  document.getElementById("i1").innerHTML = PLAY;
+  document.getElementById("i2").innerHTML = PLAY;
+  document.querySelectorAll(".eq").forEach(e=>e.classList.remove("on"));
+};
+
+/* ===== Metadata en vivo (SSE + respaldo) ===== */
+let ultimo = "";
+function parseTitle(raw){
+  raw = (raw||"").trim();
+  const i = raw.indexOf(" - ");
+  return i > 0 ? {a:raw.slice(0,i).trim(), t:raw.slice(i+3).trim()} : {a:"",t:raw};
+}
+function nuevo(st){
+  const p = parseTitle(st);
+  const clave = (p.a||"")+"||"+(p.t||"");
+  if (clave === ultimo) return;
+  ultimo = clave;
+  document.getElementById("t1").textContent = p.t || "sikodark radio";
+  document.getElementById("a1").textContent = p.a || "En vivo en sikodark";
+  document.getElementById("t2").textContent = p.t || "sikodark radio";
+  document.getElementById("a2").textContent = p.a || "En vivo en sikodark";
+}
+try{
+  const src = new EventSource("https://api.zeno.fm/mounts/metadata/subscribe/" + MOUNT);
+  src.onmessage = e => { try{ const d = JSON.parse(e.data); if (d.streamTitle) nuevo(d.streamTitle); }catch(_){}};
+  src.onerror = () => { src.close(); polling(); };
+  setTimeout(function(){ if (ultimo === "") polling(); }, 6000);
+  function polling(){
+    async function consulta(){
+      try{
+        const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.zeno.fm/mounts/" + MOUNT));
+        const d = await r.json();
+        const st = d.streamTitle || (d.now_playing && d.now_playing.song && (d.now_playing.song.artist + " - " + d.now_playing.song.title)) || "";
+        if (st) nuevo(st);
+      }catch(e){}
+    }
+    consulta(); setInterval(consulta, 10000);
+  }
+}catch(e){}
+
+/* ===== Copiar código ===== */
+function copiar(){
+  const codigo = '<iframe src="https://sikodark256.github.io/RADIOUL/embed.html"\n  width="100%" height="132" frameborder="0"\n  allow="autoplay; encrypted-media"\n  style="border:0;border-radius:16px;overflow:hidden"></iframe>';
+  navigator.clipboard.writeText(codigo).then(()=>{
+    document.querySelector(".btn").textContent = "✅ ¡Copiado! Pegalo en cualquier web";
+    setTimeout(()=>{ document.querySelector(".btn").textContent = "📋 Copiar el código embed"; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
