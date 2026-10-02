@@ -16,7 +16,9 @@ h1{font-size:1.1rem;text-align:center;margin:.4rem 0 .3rem}
 .sub{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 14px}
 .caja{max-width:420px;margin:0 auto}
 .card{background:var(--card);border:1px solid #2a2b33;border-radius:14px;padding:14px;margin-bottom:12px}
+.card.publi{border-color:rgba(255,204,0,.35)}
 .seccion{font-size:.68rem;font-weight:bold;text-transform:uppercase;color:#778;letter-spacing:.1em;margin:0 0 10px}
+.card.publi .seccion{color:#ffcc00}
 label{display:block;font-size:.74rem;color:#99a;margin:8px 0 3px}
 input[type=password],input[type=email],input[type=text],select,textarea{width:100%;padding:11px;border:1px solid #333;border-radius:9px;background:#0e0f14;color:#eee;font-size:1rem}
 textarea{resize:vertical;min-height:70px;font-family:inherit}
@@ -24,6 +26,7 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 .btn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--primary);color:#171820;font-weight:800;font-size:.95rem;cursor:pointer;margin-top:6px}
 .btn.gris{background:#2a2b33;color:#ccc;font-weight:600}
 .btn.rojo{background:rgba(255,59,48,.15);color:var(--err);font-weight:700}
+.btn.amarillo{background:#ffcc00;color:#171820}
 .btn:disabled{opacity:.5}
 #estado{position:fixed;bottom:0;left:0;right:0;padding:12px 16px;background:#101116;border-top:1px solid #2a2b33;font-size:.8rem;color:#99a;min-height:44px;z-index:5}
 #estado.ok{color:var(--ok)} #estado.err{color:var(--err)}
@@ -34,6 +37,7 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 .vigente{display:flex;align-items:center;gap:8px;background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.3);
   border-radius:10px;padding:10px;font-size:.8rem;margin-bottom:12px}
 .vigente.no{background:rgba(255,255,255,.04);border-color:#2a2b33;color:var(--muted)}
+.vigente.publi{background:rgba(255,204,0,.08);border-color:rgba(255,204,0,.35)}
 </style>
 </head>
 <body>
@@ -51,13 +55,14 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 
 <div class="caja hidden" id="vPanel">
   <h1>📣 Avisos sikodark</h1>
-  <p class="sub">Publicás acá → aparece en la radio de todos, al instante</p>
+  <p class="sub">Dos canales: el cartel que salta + la publicidad fija</p>
 
+  <!-- ================= SECCIÓN 1: AVISO ESPONTÁNEO ================= -->
   <div class="vigente no" id="estadoActual">—</div>
 
   <div class="card">
-    <div class="seccion">🖼️ El aviso</div>
-    <label>Imagen (de tu galería — se comprime sola)</label>
+    <div class="seccion">📢 Aviso espontáneo (cartel que salta una vez)</div>
+    <label>Imagen (se comprime sola)</label>
     <input type="file" id="anImg" accept="image/*">
     <div class="prev" id="anPrev"><img id="anPrevImg" alt=""></div>
     <label>Texto que acompaña (opcional)</label>
@@ -66,36 +71,52 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
     <input type="text" id="anBoton" placeholder="Ver más">
     <label>Enlace del botón (opcional)</label>
     <input type="text" id="anEnlace" placeholder="https://...">
-  </div>
-
-  <div class="card">
-    <div class="seccion">⚙️ Cuándo se muestra</div>
-    <label>Frecuencia (para quienes abran la app después)</label>
+    <label>Frecuencia (para quienes abran después)</label>
     <select id="anFreq">
       <option value="sesion">1 vez por apertura (recomendado)</option>
       <option value="siempre">Cada vez que abren la app</option>
     </select>
   </div>
 
-  <button class="btn" id="btnPublicar">🚀 Publicar aviso (aparece YA en quienes escuchan)</button>
+  <button class="btn" id="btnPublicar">🚀 Publicar aviso (salta YA en quienes escuchan)</button>
   <button class="btn gris" id="btnReenviar">🔔 Reenviar el aviso actual en vivo</button>
-  <button class="btn rojo" id="btnQuitar">🗑️ Quitar el aviso actual</button>
+  <button class="btn rojo" id="btnQuitar">🗑️ Quitar el aviso del cartel</button>
+
+  <!-- ================= SECCIÓN 2: PUBLICIDAD FIJA ================= -->
+  <h1 style="margin-top:26px">📦 Publicidad de la caja</h1>
+  <p class="sub">Permanente — aparece fija entre el reproductor y el historial</p>
+
+  <div class="vigente publi no" id="estadoPubli">—</div>
+
+  <div class="card publi">
+    <div class="seccion">🖼️ La publicidad</div>
+    <label>Imagen (se comprime sola)</label>
+    <input type="file" id="pbImg" accept="image/*">
+    <div class="prev" id="pbPrev"><img id="pbPrevImg" alt=""></div>
+    <label>Texto (opcional)</label>
+    <textarea id="pbTexto" placeholder="Ej: 🎸 Todos los viernes pedidos especiales en sikodark"></textarea>
+    <label>Texto del botón (vacío = sin botón)</label>
+    <input type="text" id="pbBoton" placeholder="Ver más">
+    <label>Enlace del botón (opcional)</label>
+    <input type="text" id="pbEnlace" placeholder="https://...">
+  </div>
+
+  <button class="btn amarillo" id="btnPublicarPubli">📦 Publicar publicidad (aparece en la cajita YA)</button>
+  <button class="btn rojo" id="btnQuitarPubli">🗑️ Quitar la publicidad de la caja</button>
+
   <button class="btn gris" id="btnSalir">🚪 Salir</button>
 </div>
 
 <div id="estado">Listo.</div>
 
 <script>
-const ADMIN_EMAIL = "sikoradio@hotmail.com";  /* tu email admin */
+const ADMIN_EMAIL = "sikoradio@hotmail.com";
 firebase.initializeApp({
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
   authDomain: "sikodarkradio-26a07.firebaseapp.com",
   projectId: "sikodarkradio-26a07"
 });
 const db = firebase.firestore(), $ = id => document.getElementById(id);
-
-let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion", publicadoEn:0 } };
-let imagenBase64 = null;
 
 function estado(m, t){ $("estado").textContent = m; $("estado").className = t || ""; }
 
@@ -109,7 +130,8 @@ firebase.auth().onAuthStateChanged(u => {
   if (u && u.email === ADMIN_EMAIL) {
     $("vLogin").classList.add("hidden");
     $("vPanel").classList.remove("hidden");
-    cargar();
+    cargarAviso();
+    cargarPubli();
   } else if (u) {
     $("lErr").textContent = "Esta cuenta no es administradora";
     firebase.auth().signOut();
@@ -117,8 +139,13 @@ firebase.auth().onAuthStateChanged(u => {
 });
  $("btnSalir").onclick = () => firebase.auth().signOut();
 
-/* 📥 Cargar aviso vigente */
-async function cargar(){
+/* =========================================================
+   📢 CANAL 1: AVISO ESPONTÁNEO (config/avisos) — igual que antes
+   ========================================================= */
+let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion", publicadoEn:0 } };
+let imagenBase64 = null;
+
+async function cargarAviso(){
   estado("Cargando aviso actual…");
   try {
     const doc = await db.collection("config").doc("avisos").get();
@@ -142,14 +169,13 @@ function pintarEstado(){
   const e = $("estadoActual");
   if (cfg.anuncio.activo && cfg.anuncio.imagen){
     e.className = "vigente";
-    e.textContent = "🟢 AVISO ACTIVO — en la radio ahora";
+    e.textContent = "🟢 AVISO ACTIVO — cartel saltando en la radio";
   } else {
     e.className = "vigente no";
     e.textContent = "⚪ Sin aviso activo";
   }
 }
 
-/* 📷 Imagen */
  $("anImg").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
   estado("📷 Procesando imagen…");
@@ -173,30 +199,27 @@ function pintarEstado(){
  $("anEnlace").addEventListener("input", () => cfg.anuncio.enlace = $("anEnlace").value.trim());
  $("anFreq").addEventListener("change", () => cfg.anuncio.frecuencia = $("anFreq").value);
 
-/* 🚀 Publicar (guarda + envío en vivo automático) */
-const btnPub = $("btnPublicar");
  $("btnPublicar").onclick = async () => {
   if (imagenBase64) cfg.anuncio.imagen = imagenBase64;
-  if (!cfg.anuncio.imagen){
-    estado("⚠️ Falta la imagen del aviso", "err"); return;
+  if (!cfg.anuncio.imagen && !cfg.anuncio.texto){
+    estado("⚠️ Falta imagen o texto del aviso", "err"); return;
   }
   cfg.anuncio.activo = true;
   cfg.anuncio.publicadoEn = Date.now();
-  btnPub.disabled = true;
+  $("btnPublicar").disabled = true;
   try {
     estado("💾 Publicando…");
     await db.collection("config").doc("avisos").set(cfg);
-    estado("✅ ¡Publicado! Ya aparece en quienes están escuchando", "ok");
+    estado("✅ ¡Publicado! El cartel salta ya en quienes escuchan", "ok");
     pintarEstado();
     imagenBase64 = null;
     $("anImg").value = "";
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
-  btnPub.disabled = false;
+  $("btnPublicar").disabled = false;
 };
 
-/* 🔔 Reenviar el mismo aviso en vivo */
  $("btnReenviar").onclick = async () => {
-  if (!cfg.anuncio.activo || !cfg.anuncio.imagen){
+  if (!cfg.anuncio.activo){
     estado("⚠️ No hay aviso activo para reenviar", "err"); return;
   }
   try {
@@ -207,14 +230,98 @@ const btnPub = $("btnPublicar");
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
 };
 
-/* 🗑️ Quitar */
  $("btnQuitar").onclick = async () => {
-  if (!confirm("¿Quitar el aviso actual?")) return;
+  if (!confirm("¿Quitar el aviso del cartel?")) return;
   cfg.anuncio.activo = false;
   try {
     await db.collection("config").doc("avisos").set(cfg);
-    estado("🗑️ Aviso quitado", "ok");
+    estado("🗑️ Aviso del cartel quitado", "ok");
     pintarEstado();
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+};
+
+/* =========================================================
+   📦 CANAL 2: PUBLICIDAD FIJA (config/publicidad) — independiente
+   ========================================================= */
+let cfgPubli = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", publicadoEn:0 } };
+let imagenPubliBase64 = null;
+
+async function cargarPubli(){
+  try {
+    const doc = await db.collection("config").doc("publicidad").get();
+    if (doc.exists && doc.data().anuncio){
+      cfgPubli = doc.data();
+      if (!cfgPubli.anuncio.texto) cfgPubli.anuncio.texto = "";
+    }
+  } catch(e) {}
+  pintarEstadoPubli();
+  $("pbTexto").value = cfgPubli.anuncio.texto || "";
+  $("pbBoton").value = cfgPubli.anuncio.textoBoton || "";
+  $("pbEnlace").value = cfgPubli.anuncio.enlace || "";
+  if (cfgPubli.anuncio.imagen){
+    $("pbPrev").style.display = "block";
+    $("pbPrevImg").src = cfgPubli.anuncio.imagen;
+  }
+}
+function pintarEstadoPubli(){
+  const e = $("estadoPubli");
+  if (cfgPubli.anuncio.activo !== false && (cfgPubli.anuncio.imagen || cfgPubli.anuncio.texto)){
+    e.className = "vigente publi";
+    e.textContent = "🟡 PUBLICIDAD ACTIVA — visible fija en la cajita";
+  } else {
+    e.className = "vigente publi no";
+    e.textContent = "⚪ Caja sin publicidad";
+  }
+}
+
+ $("pbImg").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  estado("📷 Procesando imagen…");
+  const img = new Image();
+  img.onload = () => {
+    const esc = Math.min(1, 1080 / img.width);
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * esc);
+    c.height = Math.round(img.height * esc);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    imagenPubliBase64 = c.toDataURL("image/jpeg", .82);
+    $("pbPrev").style.display = "block";
+    $("pbPrevImg").src = imagenPubliBase64;
+    estado("✅ Imagen lista (" + Math.round(imagenPubliBase64.length/1024) + " KB)");
+  };
+  img.src = URL.createObjectURL(f);
+});
+
+ $("pbTexto").addEventListener("input", () => cfgPubli.anuncio.texto = $("pbTexto").value);
+ $("pbBoton").addEventListener("input", () => cfgPubli.anuncio.textoBoton = $("pbBoton").value.trim());
+ $("pbEnlace").addEventListener("input", () => cfgPubli.anuncio.enlace = $("pbEnlace").value.trim());
+
+ $("btnPublicarPubli").onclick = async () => {
+  if (imagenPubliBase64) cfgPubli.anuncio.imagen = imagenPubliBase64;
+  if (!cfgPubli.anuncio.imagen && !cfgPubli.anuncio.texto){
+    estado("⚠️ Falta imagen o texto de la publicidad", "err"); return;
+  }
+  cfgPubli.anuncio.activo = true;
+  cfgPubli.anuncio.publicadoEn = Date.now();
+  $("btnPublicarPubli").disabled = true;
+  try {
+    estado("💾 Publicando publicidad…");
+    await db.collection("config").doc("publicidad").set(cfgPubli);
+    estado("✅ ¡Publicada! La cajita se actualizó ya en todos", "ok");
+    pintarEstadoPubli();
+    imagenPubliBase64 = null;
+    $("pbImg").value = "";
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+  $("btnPublicarPubli").disabled = false;
+};
+
+ $("btnQuitarPubli").onclick = async () => {
+  if (!confirm("¿Quitar la publicidad de la caja?")) return;
+  cfgPubli.anuncio.activo = false;
+  try {
+    await db.collection("config").doc("publicidad").set(cfgPubli);
+    estado("🗑️ Publicidad quitada — la caja desaparece de la app", "ok");
+    pintarEstadoPubli();
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
 };
 </script>
