@@ -41,12 +41,11 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;outline:none;cursor:pointer;background:linear-gradient(to right,#fff var(--vol,80%),#57575f var(--vol,80%))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:transparent}
 input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:transparent}
-/* Spinner: no ocupa espacio cuando está oculto */
 .load-ring{display:none;width:28px;height:28px;margin:10px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff}
 .load-ring.show{display:block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===== ⭐ CAJITA DE PREFERIDOS (letras delgadas, gris plomo, deslizable con el dedo) ===== */
+/* ===== ⭐ CAJITA DE PREFERIDOS (letras delgadas, gris plomo, deslizable) ===== */
 .favs-box{margin-top:14px;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
 .favs-head{margin:0 0 8px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--primary);display:flex;align-items:baseline;gap:7px}
 .favs-head b{color:#a8a9b3;font-family:var(--sans);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0}
@@ -100,10 +99,9 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
   box-shadow:0 10px 30px rgba(0,0,0,.5);transition:.25s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* ===== 🚫 OCULTOS: notificación Wikipedia, EQ y diagnóstico ===== */
+/* ===== 🚫 OCULTOS ===== */
 #smartNotify,#diagnostico,.eq{display:none!important}
 
-/* ===== PANEL DE DIAGNÓSTICO (oculto, sigue funcionando por dentro) ===== */
 #diagnostico{
   margin-top:16px;padding:12px 14px;border-radius:14px;
   background:var(--secondary);border:1px solid var(--border);
@@ -130,7 +128,6 @@ body::after{
   background:linear-gradient(135deg,rgba(0,0,0,.92),rgba(0,0,0,.82));
   pointer-events:none;
 }
-/* ===== NOTIFICACIÓN INTELIGENTE (oculta) ===== */
 #smartNotify{
   position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
   z-index:9999;max-width:460px;width:calc(100% - 32px);
@@ -152,13 +149,12 @@ body::after{
 #smartNotify .notify-close{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;font-size:16px;line-height:1;flex:0 0 auto}
 #smartNotify .notify-close:hover{color:var(--text)}
 
-/* ===== 🧹 Limpiar caché → icono chiquito ===== */
 .btn-reset{width:42px;height:42px;padding:0!important;margin:12px auto 0!important;
   display:grid;place-items:center;border-radius:50%!important;border:1px dashed var(--border)}
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
 .btn-reset:hover svg{color:var(--error)}
 
-/* ===== ⭐📢 CARTEL DE AVISOS (recibe los avisos del Panel de Avisos) ===== */
+/* ===== ⭐📢 CARTEL DE AVISOS ===== */
 #cartelAviso{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-24px);z-index:99995;
  max-width:430px;width:calc(100% - 28px);background:#1c1d24;border:1px solid rgba(255,138,36,.4);border-radius:18px;
  overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.35s}
@@ -183,7 +179,7 @@ body::after{
  padding:11px 16px;text-align:center;font-family:var(--sans);font-weight:800;
  font-size:12.5px;color:#ff9d9d;letter-spacing:.03em}
 
-/* ===== ⭐📢 PUBLICIDAD DE LA RADIO (cajita fija, editada desde avisos.html) ===== */
+/* ===== ⭐📢 PUBLICIDAD DE LA RADIO ===== */
 .publi-box{margin-top:18px;background:#0c0c10;border:1px solid rgba(255,204,0,.28);border-radius:16px;padding:14px;overflow:hidden}
 .publi-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:#ffcc00;text-align:center;margin-bottom:10px}
 .publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
@@ -191,6 +187,11 @@ body::after{
 .publi-box.con-img .publi-img{display:block}
 .publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
 .publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
+
+/* ===== ⭐🎵 TICKER de la cajita (efemérides + noticias) ===== */
+.publi-box.modo-ticker .publi-txt{min-height:60px;display:grid;place-items:center}
+.publi-tick{transition:opacity .38s ease}
+.publi-tick.saliendo{opacity:0}
 </style>
 </head>
 <body>
@@ -217,7 +218,6 @@ body::after{
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
 
-<!-- ===== PANEL DE DIAGNÓSTICO (oculto) ===== -->
 <div id="diagnostico">
   <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v6...</span></div>
 </div>
@@ -231,7 +231,6 @@ body::after{
 </div>
 <div id="loadRing" class="load-ring"></div>
 
-<!-- ⭐ CAJITA DE PREFERIDOS (debajo del player, deslizable con el dedo) -->
 <div id="favsBox" class="favs-box hidden">
   <div class="favs-head">♥ Tus preferidos <b id="favsNombre"></b></div>
   <div id="favsLista" class="favs-lista"></div>
@@ -243,7 +242,7 @@ body::after{
 
 <!-- ⭐📢 PUBLICIDAD DE LA RADIO (se edita desde avisos.html, aparece en vivo) -->
 <section id="publiBox" class="publi-box hidden" aria-label="Publicidad de la radio">
-  <div class="publi-head">📢 Publicidad de la radio</div>
+  <div class="publi-head" id="publiHead">📢 Publicidad de la radio</div>
   <div class="publi-img"><img id="publiImg" alt="Publicidad"></div>
   <p id="publiTxt" class="publi-txt"></p>
   <a id="publiBtn" class="publi-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
@@ -268,7 +267,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v17
+   CONFIGURACIÓN v18
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -310,14 +309,13 @@ let isPlaying=false,isLoading=false,muted=false,cover=null,history=[];
 let ultimoTitulo = "", pollingInterval = null;
 audio.volume=.8;
 
-// Cargar historial desde localStorage
 try {
   const h = localStorage.getItem("sikodark-history");
   if (h) history = JSON.parse(h);
 } catch(e) { history = []; }
 
 /* =========================================================
-   FUNCIONES DE DEBUG (internas, no visibles)
+   FUNCIONES DE DEBUG
    ========================================================= */
 function log(tipo, mensaje) {
   const iconos = { ok: "✅", err: "❌", info: "ℹ️", warn: "⚠️" };
@@ -356,7 +354,6 @@ audio.onerror=()=>{isLoading=false;setPlaying(false);ring(false);log("err","Erro
 volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false;volume.style.setProperty("--vol",(volume.value*100)+"%")};
 mute.onclick=()=>{muted=!muted;audio.muted=muted;mute.innerHTML=muted?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></svg>':'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg>'};
 
-// Botón reset (también borra los likes locales)
 btnReset.onclick = () => {
   localStorage.removeItem("sikodark-history");
   localStorage.removeItem("sikodark-smart-cache");
@@ -405,7 +402,7 @@ function actualizarMediaSession(track, urlCaratula) {
 }
 
 /* =========================================================
-   SET TRACK — La función CENTRAL
+   SET TRACK
    ========================================================= */
 function setTrack(t){
   if (!t || !t.title) return;
@@ -511,7 +508,7 @@ async function fetchConProxy(url, opciones = {}) {
 }
 
 /* =========================================================
-   🛡️ SALUD DE FUENTES: si una API muere, se pausa sola
+   🛡️ SALUD DE FUENTES
    ========================================================= */
 const SALUD_FUENTES = {};
 function fuenteDisponible(nombre){
@@ -531,7 +528,7 @@ function registrarExito(nombre){
 }
 
 /* =========================================================
-   🔍 VERIFICACIÓN: la carátula debe coincidir en título Y artista
+   🔍 VERIFICACIÓN de carátulas
    ========================================================= */
 function normalizar(s){
   return (s||"").toLowerCase()
@@ -562,7 +559,6 @@ function artistaCoincide(a1,a2){
   });
 }
 
-/* ===== 1️⃣ DEEZER (verificado) ===== */
 async function cover_Deezer_cancion(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -590,7 +586,6 @@ async function cover_Deezer_cancion(t) {
   return null;
 }
 
-/* ===== 2️⃣ ITUNES (verificado) ===== */
 async function cover_iTunes_cancion(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -618,7 +613,6 @@ async function cover_iTunes_cancion(t) {
   return null;
 }
 
-/* ===== 3️⃣ LAST.FM (verifica el artista devuelto) ===== */
 async function cover_LastFM(t) {
   if (!t.artist || !t.title || !LASTFM_KEY) return null;
   try {
@@ -644,7 +638,6 @@ async function cover_LastFM(t) {
   return null;
 }
 
-/* ===== 4️⃣ COVER ART ARCHIVE (MusicBrainz) ===== */
 async function cover_CoverArtArchive(t) {
   if (!t.artist || !t.title) return null;
   try {
@@ -665,7 +658,6 @@ async function cover_CoverArtArchive(t) {
   return null;
 }
 
-/* ===== 5️⃣ ITUNES SOLO TÍTULO — MUY ESTRICTO ===== */
 async function cover_iTunes_soloTitulo(t) {
   if (!t.title) return null;
   try {
@@ -690,15 +682,11 @@ async function cover_iTunes_soloTitulo(t) {
   return null;
 }
 
-/* ===== 6️⃣ FOTO DEL ARTISTA ===== */
 async function cover_imagenArtista() {
   if (imagenArtistaGlobal) return { url: imagenArtistaGlobal, fuente: "Foto artista" };
   return null;
 }
 
-/* =========================================================
-   FETCH COVER — cadena de respaldos con salud por fuente
-   ========================================================= */
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
   log("info", `Buscando carátula para: ${t.artist||"?"} - ${t.title}`);
@@ -815,7 +803,7 @@ async function conectarMetadata() {
 }
 
 /* =========================================================
-   INFO DE ARTISTA (para el fondo dinámico)
+   INFO DE ARTISTA
    ========================================================= */
 const SMART_CACHE = JSON.parse(localStorage.getItem("sikodark-smart-cache") || "{}");
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
@@ -1018,7 +1006,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v17 — publicidad en vivo + avisos + presencia + offline propio + 6 respaldos");
+console.log("🧠 Sikodark Radio v18 — cajita publicidad + ticker música + presencia + offline");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
@@ -1078,7 +1066,6 @@ function registrarFinEscucha() {
 window.addEventListener("beforeunload", registrarFinEscucha);
 window.addEventListener("pagehide", registrarFinEscucha);
 
-/* ===== 🔔 NOTIFICACIONES PUSH ===== */
 async function iniciarPush() {
   try {
     if (!("Notification" in window)) return;
@@ -1221,7 +1208,6 @@ iniciarPush();
     }
   }
 
-  /* ===== PRESENCIA: 1 doc por dispositivo (ID = huella) ===== */
   function marcarOnline(nombre){
     if (!huellaActual) return Promise.resolve();
     const ref = dbFB.collection("usuarios").doc(huellaActual);
@@ -1246,7 +1232,6 @@ iniciarPush();
     });
   }
 
-  /* ⭐ Latido cada 30s */
   function latido(){
     if (!huellaActual) return;
     dbFB.collection("usuarios").doc(huellaActual).set({
@@ -1368,7 +1353,6 @@ try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}
 var btnLike = document.getElementById("btnLike");
 var btnShare = document.getElementById("btnShare");
 
-/* 🔔 Toast */
 var toastDiv = document.getElementById("toast");
 if (!toastDiv){ toastDiv = document.createElement("div"); toastDiv.id = "toast"; document.body.appendChild(toastDiv); }
 var toastTimer = null;
@@ -1501,7 +1485,7 @@ renderHistory();
 renderFavs();
 </script>
 
-<!-- ===== ⭐ SESIÓN PERSISTENTE: volumen + último tema + reanudar ===== -->
+<!-- ===== ⭐ SESIÓN PERSISTENTE ===== -->
 <script>
 (function(){
   var LS_VOL = "sikodark-vol", LS_PLAY = "sikodark-playing", LS_TRACK = "sikodark-lasttrack", LS_COVER = "sikodark-lastcover";
@@ -1665,16 +1649,16 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CAJITA DE PUBLICIDAD (imagen, URL, Spotify mini y texto) ===== -->
+<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🎵 TICKER MÚSICA (efemérides + noticias) ===== -->
 <script>
 (function(){
-  var box = document.getElementById("publiBox"),
-      img = document.getElementById("publiImg"),
-      txt = document.getElementById("publiTxt"),
-      btn = document.getElementById("publiBtn");
+  var box  = document.getElementById("publiBox"),
+      head = document.getElementById("publiHead"),
+      img  = document.getElementById("publiImg"),
+      txt  = document.getElementById("publiTxt"),
+      btn  = document.getElementById("publiBtn");
   if (!box) return;
 
-  /* Contenedor para el reproductor mini de Spotify (se crea solo) */
   var spDiv = document.createElement("div");
   spDiv.style.display = "none";
   spDiv.style.margin = "10px 0";
@@ -1686,16 +1670,17 @@ renderFavs();
     return m ? ("https://open.spotify.com/embed/" + m[1] + "/" + m[2]) : null;
   }
 
-  function pintar(a){
-    a = a || {};
-    var tiene = (a.activo !== false) && (a.imagen || (a.texto||"").trim() || a.spotify);
-    if (!tiene){
-      box.classList.add("hidden"); box.classList.remove("con-img");
-      spDiv.style.display = "none"; spDiv.innerHTML = "";
-      return;
-    }
+  var modoActual = null;      /* "publi" | "ticker" */
+  var tickerItems = [], tickerIdx = 0, tickerTimer = null;
 
-    /* Imagen (galería o URL) */
+  /* ---------- MODO PUBLICIDAD (prioridad) ---------- */
+  function mostrarPubli(a){
+    salirTicker();
+    if (modoActual !== "publi"){
+      modoActual = "publi";
+      head.textContent = "📢 Publicidad de la radio";
+      box.classList.remove("modo-ticker");
+    }
     if (a.imagen){
       img.onerror = function(){ box.classList.remove("con-img"); };
       img.onload  = function(){ box.classList.add("con-img"); };
@@ -1703,30 +1688,124 @@ renderFavs();
     } else {
       box.classList.remove("con-img");
     }
-
-    /* 🎵 Reproductor mini de Spotify (como el embed de la web) */
     var emb = spotifyEmbed(a.spotify);
     if (emb){
-      spDiv.innerHTML =
-        '<iframe src="' + emb + '" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy" style="border:0;border-radius:12px;display:block"></iframe>';
+      spDiv.innerHTML = '<iframe src="' + emb + '" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy" style="border:0;border-radius:12px;display:block"></iframe>';
       spDiv.style.display = "block";
     } else {
       spDiv.style.display = "none"; spDiv.innerHTML = "";
     }
-
-    /* Texto */
     txt.textContent = (a.texto || "").trim();
-
-    /* Botón con enlace */
     if (a.textoBoton && a.enlace){
-      btn.textContent = a.textoBoton;
-      btn.href = a.enlace;
-      btn.style.display = "block";
-    } else {
-      btn.style.display = "none";
-    }
-
+      btn.textContent = a.textoBoton; btn.href = a.enlace; btn.style.display = "block";
+    } else { btn.style.display = "none"; }
     box.classList.remove("hidden");
+  }
+
+  /* ---------- MODO TICKER 🎵 (efemérides + noticias) ---------- */
+  var PALABRAS_MUSICA = ["música","musical","músico","cantante","banda","álbum","album","rock","pop","metal","punk","jazz","blues","guitarrista","baterista","vocalista","discográfica","sencillo","gira","concierto","festival","grammy","billboard","mtv","sello","grabación","estudio de grabación","hit","singer","musician","band","recording"];
+
+  function esMusical(texto){
+    var t = (texto||"").toLowerCase();
+    return PALABRAS_MUSICA.some(function(p){ return t.includes(p); });
+  }
+
+  /* 📜 Efemérides musicales de HOY (Wikipedia ES — gratis, sin key) */
+  async function efemeridesDeHoy(){
+    var d = new Date();
+    var clave = "sikodark-efem-" + d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache) return JSON.parse(cache);
+    }catch(e){}
+    var mm = ("0"+(d.getMonth()+1)).slice(-2), dd = ("0"+d.getDate()).slice(-2);
+    var r = await fetch("https://api.wikimedia.org/feed/v1/wikipedia/es/onthisday/all/" + mm + "/" + dd);
+    if (!r.ok) throw new Error("efem " + r.status);
+    var datos = await r.json();
+    var items = [];
+    ["events","births","selected"].forEach(function(cat){
+      (datos[cat]||[]).forEach(function(ev){
+        if (ev.text && esMusical(ev.text)){
+          items.push("📜 " + ev.text.trim());
+        }
+      });
+    });
+    items = items.slice(0, 12);
+    try{ localStorage.setItem(clave, JSON.stringify(items)); }catch(e){}
+    return items;
+  }
+
+  /* 📰 Noticias de la industria (RSS gratis vía proxies) */
+  var RSS_FEEDS = [
+    { nombre:"LOS40",        url:"https://www.los40.com/rss/los40/principal.xml" },
+    { nombre:"20minutos",    url:"https://www.20minutos.es/rss/minuteca/musica/" },
+    { nombre:"RollingStone", url:"https://www.rollingstone.com/music/music-news/feed/" },
+    { nombre:"Billboard",    url:"https://www.billboard.com/feed/" }
+  ];
+  async function noticiasMusicales(){
+    for (var i = 0; i < RSS_FEEDS.length; i++){
+      try{
+        var r = await fetchConProxy(RSS_FEEDS[i].url);
+        var xmlText = await r.text();
+        var doc = new DOMParser().parseFromString(xmlText, "text/xml");
+        var nodos = doc.querySelectorAll("item > title, entry > title");
+        var items = [];
+        for (var j = 0; j < nodos.length && items.length < 8; j++){
+          var t = (nodos[j].textContent || "").trim();
+          if (t.length > 25) items.push("📰 [" + RSS_FEEDS[i].nombre + "] " + t);
+        }
+        if (items.length >= 3) return items;
+      }catch(e){ continue; }
+    }
+    return [];
+  }
+
+  function salirTicker(){
+    if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = null; }
+    txt.classList.remove("saliendo");
+  }
+
+  async function modoTicker(){
+    if (modoActual === "ticker") return;
+    modoActual = "ticker";
+    salirTicker();
+    head.textContent = "🎵 El mundo de la música";
+    box.classList.remove("con-img");
+    spDiv.style.display = "none"; spDiv.innerHTML = "";
+    btn.style.display = "none";
+    box.classList.add("modo-ticker");
+    box.classList.remove("hidden");
+    txt.textContent = "🎵 Cargando el mundo de la música…";
+
+    var items = [];
+    try{ items = items.concat(await efemeridesDeHoy()); }catch(e){}
+    try{ items = items.concat(await noticiasMusicales()); }catch(e){}
+    if (!items.length){
+      items = ["🎸 Sikodark radio — tu música, tu mundo. Dejanos tu ♥ en lo que suena"];
+    }
+    tickerItems = items;
+    tickerIdx = 0;
+
+    function rotar(){
+      if (modoActual !== "ticker") return;
+      txt.classList.add("saliendo");
+      setTimeout(function(){
+        if (modoActual !== "ticker") return;
+        txt.textContent = tickerItems[tickerIdx % tickerItems.length];
+        tickerIdx++;
+        txt.classList.remove("saliendo");
+      }, 400);
+    }
+    rotar();
+    tickerTimer = setInterval(rotar, 9000);
+  }
+
+  /* ---------- DIRECTOR: publicidad activa → publi; si no → ticker ---------- */
+  function pintar(a){
+    a = a || {};
+    var tiene = (a.activo !== false) && (a.imagen || (a.texto||"").trim() || a.spotify);
+    if (tiene) mostrarPubli(a);
+    else modoTicker();
   }
 
   /* 🔴 TIEMPO REAL */
