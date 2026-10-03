@@ -45,7 +45,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .load-ring.show{display:block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===== ⭐ CAJITA DE PREFERIDOS (letras delgadas, gris plomo, deslizable) ===== */
+/* ===== ⭐ CAJITA DE PREFERIDOS ===== */
 .favs-box{margin-top:14px;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
 .favs-head{margin:0 0 8px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--primary);display:flex;align-items:baseline;gap:7px}
 .favs-head b{color:#a8a9b3;font-family:var(--sans);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0}
@@ -73,7 +73,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .hidden{display:none}
 
-/* ===== ❤️🟠 BOTONES CIRCULARES sobre la carátula ===== */
+/* ===== ❤️🟠 BOTONES CIRCULARES ===== */
 .cover-actions{position:absolute;right:12px;bottom:12px;z-index:3;display:flex;flex-direction:column;gap:10px;margin:0}
 .circle-btn{width:42px;height:42px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.18);
   background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -83,7 +83,7 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .circle-btn.liked{color:#ff3b30;border-color:rgba(255,59,48,.55);background:rgba(255,59,48,.16)}
 .circle-btn.flash{color:var(--primary);border-color:rgba(255,138,36,.65)}
 
-/* ===== ♥ CORAZÓN SOLO VISUAL en las portadas del historial ===== */
+/* ===== ♥ CORAZÓN VISUAL historial ===== */
 .track-heart{position:absolute;right:6px;top:6px;z-index:2;width:32px;height:32px;
   display:grid;place-items:center;color:#fff;pointer-events:none;
   filter:drop-shadow(0 2px 5px rgba(0,0,0,.65))}
@@ -188,14 +188,21 @@ body::after{
 .publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
 .publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
 
-/* ===== ⭐🎵 TICKER de la cajita (efemérides + noticias) ===== */
-.publi-box.modo-ticker .publi-txt{min-height:60px;display:grid;place-items:center}
-.publi-tick{transition:opacity .38s ease}
-.publi-tick.saliendo{opacity:0}
+/* ===== ⭐🎵 TICKER con tarjetas con imagen ===== */
+.publi-box.modo-ticker .publi-txt,
+.publi-box.modo-ticker .publi-img{display:none!important}
+.tick-card{display:flex;gap:10px;align-items:center;background:var(--secondary);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;transition:opacity .38s ease}
+.tick-card.saliendo{opacity:0}
+#tickImg{width:58px;height:58px;flex:0 0 58px;border-radius:10px;object-fit:cover;display:none}
+.tick-card.con-img #tickImg{display:block}
+#tickIco{width:58px;height:58px;flex:0 0 58px;border-radius:10px;display:grid;place-items:center;font-size:26px;background:linear-gradient(135deg,#3a2a12,#24242b)}
+.tick-card.con-img #tickIco{display:none}
+#tickTag{display:block;font:9px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:3px}
+#tickTexto{font-family:var(--sans);font-weight:600;font-size:12.5px;line-height:1.45;color:#d8d9de;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 </style>
 </head>
 <body>
-<!-- ⭐📴 Banner sin conexión (arriba de todo) -->
+<!-- ⭐📴 Banner sin conexión -->
 <div id="offBanner">📴 Sin conexión a Internet — esperando señal…</div>
 
 <main>
@@ -240,11 +247,22 @@ body::after{
 <button id="btnReset" class="btn-reset">🧹 Limpiar caché y recargar</button>
 </section>
 
-<!-- ⭐📢 PUBLICIDAD DE LA RADIO (se edita desde avisos.html, aparece en vivo) -->
+<!-- ⭐📢 PUBLICIDAD + 🎵 TICKER (se edita desde avisos.html, aparece en vivo) -->
 <section id="publiBox" class="publi-box hidden" aria-label="Publicidad de la radio">
   <div class="publi-head" id="publiHead">📢 Publicidad de la radio</div>
   <div class="publi-img"><img id="publiImg" alt="Publicidad"></div>
   <p id="publiTxt" class="publi-txt"></p>
+
+  <!-- 🎵 Tarjeta del ticker (efemérides + clásicos con imagen) -->
+  <div id="tickerCard" class="tick-card hidden">
+    <img id="tickImg" alt="">
+    <div id="tickIco">🎸</div>
+    <div style="flex:1;min-width:0">
+      <span id="tickTag">📜 EFEMÉRIDES</span>
+      <div id="tickTexto"></div>
+    </div>
+  </div>
+
   <a id="publiBtn" class="publi-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
 </section>
 
@@ -267,7 +285,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v18
+   CONFIGURACIÓN v19
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -314,9 +332,6 @@ try {
   if (h) history = JSON.parse(h);
 } catch(e) { history = []; }
 
-/* =========================================================
-   FUNCIONES DE DEBUG
-   ========================================================= */
 function log(tipo, mensaje) {
   const iconos = { ok: "✅", err: "❌", info: "ℹ️", warn: "⚠️" };
   const linea = document.createElement("div");
@@ -327,9 +342,6 @@ function log(tipo, mensaje) {
   console.log(`[${tipo}] ${mensaje}`);
 }
 
-/* =========================================================
-   FUNCIONES BÁSICAS
-   ========================================================= */
 function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir");ring(isLoading)}
 function spinner(){return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M20 12a8 8 0 0 1-8 8"/></svg>'}
 function playIcon(){return '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
@@ -372,14 +384,8 @@ btnReset.onclick = () => {
 
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
-/* =========================================================
-   🎵 MEDIA SESSION API
-   ========================================================= */
 function actualizarMediaSession(track, urlCaratula) {
-  if (!("mediaSession" in navigator)) {
-    log("warn", "Media Session no soportado en este navegador");
-    return;
-  }
+  if (!("mediaSession" in navigator)) return;
   try {
     const artwork = [];
     if (urlCaratula && urlCaratula !== LOGO) {
@@ -393,24 +399,15 @@ function actualizarMediaSession(track, urlCaratula) {
       album: "sikodark radio",
       artwork: artwork
     });
-    log("ok", `MediaSession actualizado: ${track.artist||""} - ${track.title}`);
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
-  } catch(e) {
-    log("err", "MediaSession error: " + e.message);
-  }
+  } catch(e) {}
 }
 
-/* =========================================================
-   SET TRACK
-   ========================================================= */
 function setTrack(t){
   if (!t || !t.title) return;
   const trackKey = `${t.artist||""}||${t.title}`;
-  if (trackKey === ultimoTitulo && t.title !== "En vivo") {
-    log("info", `Misma canción: ${t.title} — ignorando`);
-    return;
-  }
+  if (trackKey === ultimoTitulo && t.title !== "En vivo") return;
   ultimoTitulo = trackKey;
   log("ok", `🎵 Nueva canción: ${t.artist || "?"} - ${t.title}`);
   titleEl.textContent = t.title || "En vivo";
@@ -425,15 +422,9 @@ function setTrack(t){
     inicioEscucha = Date.now();
     temaActual = t;
   }
-  setTimeout(() => {
-    log("info", "Disparando notificación inteligente...");
-    procesarCancionInteligente(t);
-  }, 800);
+  setTimeout(() => { procesarCancionInteligente(t); }, 800);
 }
 
-/* =========================================================
-   CORAZÓN VISUAL + HISTORIAL
-   ========================================================= */
 const CORAZON_BLANCO = '<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
 function esLikedSeguro(track){
@@ -445,10 +436,7 @@ function esLikedSeguro(track){
 
 function agregarAlHistorial(track) {
   try {
-    if (!track.title || track.title === "En vivo" || track.title === "Conectando…") {
-      log("warn", "Historial: título inválido, saltando");
-      return;
-    }
+    if (!track.title || track.title === "En vivo" || track.title === "Conectando…") return;
     const item = {
       title: track.title,
       artist: track.artist || null,
@@ -456,9 +444,7 @@ function agregarAlHistorial(track) {
     };
     const mismo = (x) => x && x.title === item.title && x.artist === item.artist;
     if (history.length > 0 && mismo(history[0])) {
-      if (item.cover && history[0].cover !== item.cover) {
-        history[0].cover = item.cover;
-      }
+      if (item.cover && history[0].cover !== item.cover) history[0].cover = item.cover;
     } else {
       history = history.filter(x => !mismo(x));
       history.unshift(item);
@@ -466,9 +452,7 @@ function agregarAlHistorial(track) {
     }
     localStorage.setItem("sikodark-history", JSON.stringify(history));
     renderHistory();
-  } catch(e) {
-    log("err", "Historial ERROR: " + e.message);
-  }
+  } catch(e) {}
 }
 
 function renderHistory(){
@@ -483,15 +467,10 @@ function renderHistory(){
       const fav = esLikedSeguro(x) ? '<span class="track-heart">' + CORAZON_BLANCO + '</span>' : '';
       return `<article class="track"><div class="track-art"><img src="${esc(x.cover||LOGO)}" alt="Carátula" onerror="this.src='${LOGO}'"><span class="rank">#${i+1}</span>${fav}</div><div class="track-info"><p class="track-title">${esc(x.title)}</p><p class="track-artist">${esc(x.artist||"sikodark radio")}</p></div></article>`;
     }).join("");
-  } catch(e) {
-    log("err", "renderHistory ERROR: " + e.message);
-  }
+  } catch(e) {}
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
 
-/* =========================================================
-   FETCH con PROXY
-   ========================================================= */
 async function fetchConProxy(url, opciones = {}) {
   try {
     const r = await fetch(url, opciones);
@@ -507,9 +486,6 @@ async function fetchConProxy(url, opciones = {}) {
   throw new Error("Todos los proxies fallaron");
 }
 
-/* =========================================================
-   🛡️ SALUD DE FUENTES
-   ========================================================= */
 const SALUD_FUENTES = {};
 function fuenteDisponible(nombre){
   const s = SALUD_FUENTES[nombre];
@@ -527,9 +503,6 @@ function registrarExito(nombre){
   SALUD_FUENTES[nombre] = {fallos:0, bloqueadaHasta:0};
 }
 
-/* =========================================================
-   🔍 VERIFICACIÓN de carátulas
-   ========================================================= */
 function normalizar(s){
   return (s||"").toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -580,7 +553,6 @@ async function cover_Deezer_cancion(t) {
         const img = mejor.album.cover_xl || mejor.album.cover_big || mejor.album.cover_medium;
         if (img) return { url: img, fuente: "Deezer" };
       }
-      log("info", "Deezer: sin coincidencia verificada");
     }
   } catch(e) {}
   return null;
@@ -607,7 +579,6 @@ async function cover_iTunes_cancion(t) {
         let img = mejor.artworkUrl100 || mejor.artworkUrl60 || "";
         return { url: img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb"), fuente: "iTunes" };
       }
-      log("info", "iTunes: resultados no coinciden, descartados");
     }
   } catch(e) {}
   return null;
@@ -622,17 +593,13 @@ async function cover_LastFM(t) {
     const d = await r.json();
     if (!(d && d.track && d.track.album)) return null;
     const artNombre = (d.track.artist && d.track.artist.name) || "";
-    if (artNombre && !artistaCoincide(t.artist, artNombre)) {
-      log("info", "Last.fm: artista devuelto no coincide, descartado");
-      return null;
-    }
+    if (artNombre && !artistaCoincide(t.artist, artNombre)) return null;
     const imgs = d.track.album.image;
     if (imgs && imgs.length) {
       const img = imgs[imgs.length-1]["#text"];
       if (img && !img.includes("2a96cbd8b46e442fc41c2b86b821562f") && !img.includes("c6f59c1e5e7240a4c0d427abd71f3dbb")) {
         return { url: img, fuente: "Last.fm" };
       }
-      log("info", "Last.fm: no tiene carátula real para este tema");
     }
   } catch(e) {}
   return null;
@@ -653,7 +620,6 @@ async function cover_CoverArtArchive(t) {
         if (head.ok) return { url: caaUrl, fuente: "Cover Art Archive" };
       } catch(e) { continue; }
     }
-    log("info", "Cover Art Archive: sin carátula para este tema");
   } catch(e) {}
   return null;
 }
@@ -676,7 +642,6 @@ async function cover_iTunes_soloTitulo(t) {
         let img = mejor.artworkUrl100 || mejor.artworkUrl60 || "";
         return { url: img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb"), fuente: "iTunes (solo título)" };
       }
-      log("info", "iTunes (solo título): sin coincidencia verificada");
     }
   } catch(e) {}
   return null;
@@ -689,7 +654,6 @@ async function cover_imagenArtista() {
 
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
-  log("info", `Buscando carátula para: ${t.artist||"?"} - ${t.title}`);
   const estrategias = [
     { fn: cover_Deezer_cancion,    nombre: "Deezer" },
     { fn: cover_iTunes_cancion,    nombre: "iTunes" },
@@ -699,15 +663,11 @@ async function fetchCover(t) {
     { fn: cover_imagenArtista,     nombre: "Foto artista" }
   ];
   for (const e of estrategias) {
-    if (!fuenteDisponible(e.nombre)) {
-      log("info", "⏸️ " + e.nombre + " en pausa — saltando a la siguiente");
-      continue;
-    }
+    if (!fuenteDisponible(e.nombre)) continue;
     try {
       const r = await e.fn(t);
       if (r && r.url) {
         registrarExito(e.nombre);
-        log("ok", "Carátula: " + r.fuente);
         cover = r.url;
         coverEl.src = cover;
         actualizarMediaSession(t, cover);
@@ -721,14 +681,10 @@ async function fetchCover(t) {
     } catch(err) {}
     registrarFallo(e.nombre);
   }
-  log("warn", "Sin carátula en ninguna fuente, usando logo");
   cover = null;
   coverEl.src = LOGO;
 }
 
-/* =========================================================
-   SISTEMA DE METADATA
-   ========================================================= */
 function procesarMetadataRaw(streamTitle) {
   if (!streamTitle) return;
   const track = parseTitle(streamTitle);
@@ -740,7 +696,6 @@ function procesarMetadataRaw(streamTitle) {
 function intentarSSE() {
   return new Promise((resolve, reject) => {
     try {
-      log("info", "Intentando SSE directo...");
       const source = new EventSource(ZENO_SSE_URL);
       let recibioAlgo = false;
       source.onmessage = e => {
@@ -766,7 +721,6 @@ function intentarSSE() {
 }
 
 async function iniciarPolling() {
-  log("warn", "SSE falló — activando Polling con proxy CORS");
   async function consultar() {
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
@@ -778,12 +732,8 @@ async function iniciarPolling() {
         const np = d.now_playing.song;
         streamTitle = `${np.artist || ""} - ${np.title || ""}`.trim();
       }
-      if (streamTitle) {
-        procesarMetadataRaw(streamTitle);
-      }
-    } catch(e) {
-      log("err", "Polling error: " + e.message);
-    }
+      if (streamTitle) procesarMetadataRaw(streamTitle);
+    } catch(e) {}
   }
   consultar();
   if (pollingInterval) clearInterval(pollingInterval);
@@ -791,23 +741,16 @@ async function iniciarPolling() {
 }
 
 async function conectarMetadata() {
-  log("info", "Conectando sistema de metadata...");
   try {
     await intentarSSE();
-    log("ok", "SSE conectado correctamente");
     return;
-  } catch(e) {
-    log("warn", "SSE falló: " + e.message);
-  }
+  } catch(e) {}
   iniciarPolling();
 }
 
-/* =========================================================
-   INFO DE ARTISTA
-   ========================================================= */
 const SMART_CACHE = JSON.parse(localStorage.getItem("sikodark-smart-cache") || "{}");
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
-let lastSmartTrack = "", notifyTimeout = null;
+let lastSmartTrack = "";
 
 const FRASES_RESPALDO = [
   "Una canción para disfrutar en sikodark radio, tu compañero musical diario.",
@@ -836,8 +779,7 @@ async function buscarEnWikipedia(artista) {
     }
     if (!pagina) pagina = d.query.search[0].title;
     const paginaEncoded = encodeURIComponent(pagina.replace(/ /g, "_"));
-    const summaryUrl = `${WIKIPEDIA_SUMMARY_URL}${paginaEncoded}`;
-    const r2 = await fetch(summaryUrl);
+    const r2 = await fetch(`${WIKIPEDIA_SUMMARY_URL}${paginaEncoded}`);
     if (!r2.ok) return null;
     const d2 = await r2.json();
     if (!d2.extract) return null;
@@ -889,7 +831,7 @@ async function buscarEnAudioDB(artista) {
       if (posicion > 30) frase = biografia.substring(0, posicion).trim();
       return { frase, imagenArtista, genero, fuente: "TheAudioDB" };
     }
-  } catch(e) { log("err", "AudioDB: " + e.message); }
+  } catch(e) {}
   return null;
 }
 
@@ -926,10 +868,6 @@ function cambiarFondo(urlImagen) {
   } catch(e) {}
 }
 
-function mostrarNotificacionInteligente(info) {
-  if (info.caratula && info.caratula !== LOGO) cambiarFondo(info.caratula);
-}
-
 async function procesarCancionInteligente(track) {
   if (!track || !track.artist || !track.title) return;
   const trackId = `${track.artist.toLowerCase().trim()}||${track.title.toLowerCase().trim()}`;
@@ -959,24 +897,16 @@ async function procesarCancionInteligente(track) {
   if (infoFinal.caratula && infoFinal.caratula !== LOGO) cambiarFondo(infoFinal.caratula);
 }
 
-/* =========================================================
-   PERMISO NOTIFICACIONES (push)
-   ========================================================= */
 function pedirPermisoNotificaciones() {
   if ("Notification" in window && Notification.permission === "default") {
     const pedir = () => {
-      Notification.requestPermission().then(p => {
-        log("info", `Permiso notificaciones: ${p}`);
-      });
+      Notification.requestPermission().then(p => {});
       document.removeEventListener("click", pedir);
     };
     document.addEventListener("click", pedir, { once: true });
   }
 }
 
-/* =========================================================
-   SERVICE WORKER
-   ========================================================= */
 let deferredPrompt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;install.classList.remove("hidden")});
 install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;install.classList.add("hidden")};
@@ -984,7 +914,6 @@ install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();awai
 if("serviceWorker" in navigator)window.addEventListener("load",()=>{
   navigator.serviceWorker.register("sw.js")
     .then(reg => {
-      log("ok", "Service Worker registrado (v6)");
       reg.addEventListener("updatefound", () => {
         const nuevoSW = reg.installing;
         nuevoSW.addEventListener("statechange", () => {
@@ -998,18 +927,14 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
     .catch(err => log("err", "Service Worker: " + err.message));
 });
 
-/* =========================================================
-   INICIAR TODO
-   ========================================================= */
-log("info", `Historial cargado: ${history.length} temas guardados`);
 renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v18 — cajita publicidad + ticker música + presencia + offline");
+console.log("🧠 Sikodark Radio v19 — ticker rock&pop con imágenes + publicidad + presencia");
 </script>
 
-<!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
+<!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
@@ -1070,45 +995,41 @@ async function iniciarPush() {
   try {
     if (!("Notification" in window)) return;
     const permiso = await Notification.requestPermission();
-    if (permiso !== "granted") { log("warn", "🔔 Permiso: " + permiso); return; }
+    if (permiso !== "granted") return;
     const reg = await navigator.serviceWorker.ready;
     const token = await firebase.messaging().getToken({
       vapidKey: "BJKwpC2B3i-nswoRDKX-WKb2M10zhTdXy19XcZeAsKAqI_2R1ltSjsQVzoK_VVaeDhNlToob4-snEfBQfKF7bOI",
       serviceWorkerRegistration: reg
     });
-    if (!token) { log("warn", "🔔 Sin token"); return; }
+    if (!token) return;
     await dbFB.collection("tokens").doc(token).set({
       uid: usuarioUID || "desconocido",
       dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC",
       fecha: new Date().toISOString()
     });
     log("ok", "🔔 Notificaciones activadas");
-  } catch(e) {
-    log("err", "🔔 Push: " + e.message);
-  }
+  } catch(e) {}
 }
 iniciarPush();
 </script>
 
-<!-- ===== 🔄 AUTO-RECUPERACION DEL STREAM + AUDIFONOS ===== -->
+<!-- ===== 🔄 AUTO-RECUPERACION + AUDIFONOS ===== -->
 <script>
 (function(){
   var ultimaPos = 0, fallos = 0, vigia = null;
 
   function reconectar(){
     try{
-      log("warn", "🔄 Señal perdida — reconectando al vivo...");
       audio.pause();
       setTimeout(function(){
         audio.src = STREAM_URL;
         audio.load();
         audio.play().then(function(){
           fallos = 0;
-          log("ok", "🔄 ¡De vuelta al aire! Sincronizado con el tema actual");
+          log("ok", "🔄 ¡De vuelta al aire!");
         }).catch(function(){
           fallos++;
           if (fallos <= 6) setTimeout(reconectar, 4000);
-          else log("warn", "🔄 Sin señal — reintento automático cuando vuelva internet");
         });
       }, 300);
     }catch(e){}
@@ -1121,7 +1042,6 @@ iniciarPush();
       var pos = audio.currentTime;
       if (Math.abs(pos - ultimaPos) < 0.05){
         fallos++;
-        if (fallos === 3) log("warn", "🔄 Stream lento o congelado...");
         if (fallos >= 4) reconectar();
       } else {
         fallos = 0;
@@ -1131,11 +1051,7 @@ iniciarPush();
   }
   iniciarVigia();
 
-  window.addEventListener("offline", function(){
-    log("warn", "📴 Sin conexión — esperando señal...");
-  });
   window.addEventListener("online", function(){
-    log("ok", "📶 ¡Internet volvió! Reconectando stream...");
     if (isPlaying) reconectar();
   });
 
@@ -1161,12 +1077,11 @@ iniciarPush();
         if (isPlaying) reconectar();
       });
     }catch(e){}
-    log("ok", "🎧 Botones de audífonos activados (play, pausa, stop, sincronizar)");
   }
 })();
 </script>
 
-<!-- ===== 🎧 REGISTRO + PRESENCIA EN TIEMPO REAL ===== -->
+<!-- ===== 🎧 REGISTRO + PRESENCIA ===== -->
 <div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
@@ -1237,7 +1152,7 @@ iniciarPush();
     dbFB.collection("usuarios").doc(huellaActual).set({
       online: true,
       ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge:true }).catch(function(e){ log("err", "🎧 Latido ERROR: " + e.message); });
+    }, { merge:true }).catch(function(){});
   }
 
   function iniciarHeartbeat(){
@@ -1278,7 +1193,6 @@ iniciarPush();
 
   btnSaltar.onclick = function(){
     modal.style.display = "none";
-    log("info", "🎧 Oyente prefirio continuar sin nombre");
     marcarOnline("Anónimo");
     iniciarHeartbeat();
   };
@@ -1345,7 +1259,7 @@ iniciarPush();
 })();
 </script>
 
-<!-- ===== ❤️ LIKE + 🟠 COMPARTIR + ♥ corazones + ⭐ CAJITA DE PREFERIDOS ===== -->
+<!-- ===== ❤️ LIKE + 🟠 COMPARTIR + ♥ corazones + ⭐ PREFERIDOS ===== -->
 <script>
 var likesDelUsuario = {};
 try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}"); } catch(e){}
@@ -1382,11 +1296,9 @@ function actualizarEstadoLike(){
   if (likesDelUsuario[claveLike(track)]){
     btnLike.classList.add("liked");
     btnLike.innerHTML = corazon("#ff3b30", true);
-    btnLike.setAttribute("aria-label", "Te gusta este tema");
   } else {
     btnLike.classList.remove("liked");
     btnLike.innerHTML = corazon("#f5f5f7", false);
-    btnLike.setAttribute("aria-label", "Marcar me gusta");
   }
 }
 
@@ -1477,7 +1389,6 @@ if (btnShare) btnShare.addEventListener("click", async function(){
 if (btnReset){
   btnReset.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
   btnReset.title = "Limpiar caché y recargar";
-  btnReset.setAttribute("aria-label", "Limpiar caché y recargar");
 }
 
 actualizarEstadoLike();
@@ -1562,7 +1473,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CARTELES DE AVISOS EN TIEMPO REAL ===== -->
+<!-- ===== ⭐📢 CARTELES DE AVISOS ===== -->
 <div id="cartelAviso" role="alert">
   <div class="c-img"><img id="cartelImg" alt="Aviso"></div>
   <div class="c-body">
@@ -1630,7 +1541,7 @@ renderFavs();
       if (yaVisto(pub)) return;
       mostrar(a, pub);
     }, function(e){ console.log("[warn] Avisos: " + e.message); });
-  }catch(e){ console.log("[warn] Avisos: " + e.message); }
+  }catch(e){}
 })();
 </script>
 
@@ -1649,38 +1560,42 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🎵 TICKER MÚSICA (efemérides + noticias) ===== -->
+<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🎵 TICKER ROCK&POP con imágenes ===== -->
 <script>
 (function(){
   var box  = document.getElementById("publiBox"),
       head = document.getElementById("publiHead"),
       img  = document.getElementById("publiImg"),
       txt  = document.getElementById("publiTxt"),
-      btn  = document.getElementById("publiBtn");
+      btn  = document.getElementById("publiBtn"),
+      tickCard = document.getElementById("tickerCard"),
+      tickImg  = document.getElementById("tickImg"),
+      tickIco  = document.getElementById("tickIco"),
+      tickTag  = document.getElementById("tickTag"),
+      tickTexto= document.getElementById("tickTexto");
   if (!box) return;
 
   var spDiv = document.createElement("div");
   spDiv.style.display = "none";
   spDiv.style.margin = "10px 0";
-  box.insertBefore(spDiv, txt);
+  box.insertBefore(spDiv, tickCard);
 
-  /* Convierte cualquier enlace de Spotify en enlace de embed */
   function spotifyEmbed(url){
     var m = (url||"").match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(album|track|playlist|episode|show|artist)\/([A-Za-z0-9]+)/);
     return m ? ("https://open.spotify.com/embed/" + m[1] + "/" + m[2]) : null;
   }
 
-  var modoActual = null;      /* "publi" | "ticker" */
+  var modoActual = null;
   var tickerItems = [], tickerIdx = 0, tickerTimer = null;
+  var ICONOS = ["🎸","🤘","🎤","🥁","🎹","🎼","⭐"];
 
-  /* ---------- MODO PUBLICIDAD (prioridad) ---------- */
   function mostrarPubli(a){
     salirTicker();
-    if (modoActual !== "publi"){
-      modoActual = "publi";
-      head.textContent = "📢 Publicidad de la radio";
-      box.classList.remove("modo-ticker");
-    }
+    modoActual = "publi";
+    head.textContent = "📢 Publicidad de la radio";
+    box.classList.remove("modo-ticker");
+    tickCard.classList.add("hidden");
+
     if (a.imagen){
       img.onerror = function(){ box.classList.remove("con-img"); };
       img.onload  = function(){ box.classList.add("con-img"); };
@@ -1702,105 +1617,147 @@ renderFavs();
     box.classList.remove("hidden");
   }
 
-  /* ---------- MODO TICKER 🎵 (efemérides + noticias) ---------- */
-  var PALABRAS_MUSICA = ["música","musical","músico","cantante","banda","álbum","album","rock","pop","metal","punk","jazz","blues","guitarrista","baterista","vocalista","discográfica","sencillo","gira","concierto","festival","grammy","billboard","mtv","sello","grabación","estudio de grabación","hit","singer","musician","band","recording"];
+  /* ---------- 🧠 TICKER ROCK & POP ---------- */
+  var NUCLEO_ROCKPOP = ["rock","pop","metal","punk","guitarra","beatles","rolling stones","queen","pink floyd","led zeppelin","guns n' roses","nirvana","soda stereo","charly garcía","ramones","elvis","michael jackson","madonna","david bowie","freddie mercury","john lennon","paul mccartney","ac/dc","metallica","bon jovi","bruce springsteen","the who","abba","bee gees"];
 
-  function esMusical(texto){
-    var t = (texto||"").toLowerCase();
-    return PALABRAS_MUSICA.some(function(p){ return t.includes(p); });
+  function esMusical(t){
+    t = (t||"").toLowerCase();
+    return /música|musical|músico|cantante|banda|álbum|album|rock|pop|metal|punk|jazz|blues|guitarrista|baterista|vocalista|discográfica|sencillo|gira|concierto|festival|grammy|billboard|sello|grabación|hit|songwriter/.test(t);
+  }
+  function esRockPop(t){
+    t = (t||"").toLowerCase();
+    return NUCLEO_ROCKPOP.some(function(p){ return t.includes(p); });
+  }
+  function textoConImagen(ev){
+    if (ev.thumbnail && ev.thumbnail.source) return ev.thumbnail.source;
+    if (ev.pages && ev.pages.length){
+      for (var i = 0; i < ev.pages.length; i++){
+        if (ev.pages[i].thumbnail && ev.pages[i].thumbnail.source) return ev.pages[i].thumbnail.source;
+      }
+    }
+    return "";
   }
 
-  /* 📜 Efemérides musicales de HOY (Wikipedia ES — gratis, sin key) */
   async function efemeridesDeHoy(){
     var d = new Date();
-    var clave = "sikodark-efem-" + d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
-    try{
-      var cache = localStorage.getItem(clave);
-      if (cache) return JSON.parse(cache);
-    }catch(e){}
     var mm = ("0"+(d.getMonth()+1)).slice(-2), dd = ("0"+d.getDate()).slice(-2);
     var r = await fetch("https://api.wikimedia.org/feed/v1/wikipedia/es/onthisday/all/" + mm + "/" + dd);
     if (!r.ok) throw new Error("efem " + r.status);
     var datos = await r.json();
     var items = [];
-    ["events","births","selected"].forEach(function(cat){
+    ["selected","births","events"].forEach(function(cat){
       (datos[cat]||[]).forEach(function(ev){
-        if (ev.text && esMusical(ev.text)){
-          items.push("📜 " + ev.text.trim());
-        }
+        if (!ev.text || !esMusical(ev.text)) return;
+        var texto = ev.text.trim();
+        var score = cat === "births" ? 2 : 1;
+        if (textoConImagen(ev)) score += 2;
+        if (esRockPop(texto)) score += 2;
+        if (/álbum|album|nº 1|número 1|estrena|lanza|funda|grabación|rock|pop|metal/i.test(texto)) score += 1;
+        items.push({
+          tag: "📜 " + (cat === "births" ? "TAL DÍA NACÍA" : "TAL DÍA COMO HOY"),
+          texto: texto,
+          img: textoConImagen(ev),
+          score: score
+        });
       });
     });
-    items = items.slice(0, 12);
-    try{ localStorage.setItem(clave, JSON.stringify(items)); }catch(e){}
     return items;
   }
 
-  /* 📰 Noticias de la industria (RSS gratis vía proxies) */
-  var RSS_FEEDS = [
-    { nombre:"LOS40",        url:"https://www.los40.com/rss/los40/principal.xml" },
-    { nombre:"20minutos",    url:"https://www.20minutos.es/rss/minuteca/musica/" },
-    { nombre:"RollingStone", url:"https://www.rollingstone.com/music/music-news/feed/" },
-    { nombre:"Billboard",    url:"https://www.billboard.com/feed/" }
-  ];
-  async function noticiasMusicales(){
-    for (var i = 0; i < RSS_FEEDS.length; i++){
-      try{
-        var r = await fetchConProxy(RSS_FEEDS[i].url);
-        var xmlText = await r.text();
-        var doc = new DOMParser().parseFromString(xmlText, "text/xml");
-        var nodos = doc.querySelectorAll("item > title, entry > title");
-        var items = [];
-        for (var j = 0; j < nodos.length && items.length < 8; j++){
-          var t = (nodos[j].textContent || "").trim();
-          if (t.length > 25) items.push("📰 [" + RSS_FEEDS[i].nombre + "] " + t);
-        }
-        if (items.length >= 3) return items;
-      }catch(e){ continue; }
+  async function clasicosEternos(){
+    try{
+      var r = await fetchConProxy("https://www.theaudiodb.com/api/v1/json/123/mostloved.php?format=track");
+      var d = await r.json();
+      var items = [];
+      ((d && d.loved) || []).forEach(function(t){
+        if (!t.strTrack) return;
+        items.push({
+          tag: "🎸 CLÁSICO ETERNO",
+          texto: "“" + t.strTrack + "” — " + (t.strArtist || "") + " · uno de los temas más queridos de todos los tiempos",
+          img: t.strTrackThumb || t.trackArt || "",
+          score: 3 + (t.strTrackArt ? 1 : 0)
+        });
+      });
+      return items;
+    }catch(e){ return []; }
+  }
+
+  async function construirPool(){
+    var d = new Date();
+    var bloque = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()+"-"+Math.floor(d.getHours()/3);
+    var clave = "sikodark-tick-" + bloque;
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache) return JSON.parse(cache);
+    }catch(e){}
+
+    var efem = [], clas = [];
+    try{ efem = await efemeridesDeHoy(); }catch(e){}
+    try{ clas = await clasicosEternos(); }catch(e){}
+    efem.sort(function(a,b){ return b.score - a.score; });
+    clas.sort(function(a,b){ return b.score - a.score; });
+
+    var pool = [];
+    var i = 0, j = 0;
+    while (pool.length < 15 && (i < efem.length || j < clas.length)){
+      if (i < efem.length) pool.push(efem[i++]);
+      if (j < clas.length && pool.length < 15) pool.push(clas[j++]);
     }
-    return [];
+    try{ localStorage.setItem(clave, JSON.stringify(pool)); }catch(e){}
+    return pool;
   }
 
   function salirTicker(){
     if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = null; }
-    txt.classList.remove("saliendo");
+    tickCard.classList.remove("saliendo");
   }
 
   async function modoTicker(){
     if (modoActual === "ticker") return;
     modoActual = "ticker";
     salirTicker();
-    head.textContent = "🎵 El mundo de la música";
+    head.textContent = "🎵 El mundo del rock & pop";
     box.classList.remove("con-img");
     spDiv.style.display = "none"; spDiv.innerHTML = "";
     btn.style.display = "none";
     box.classList.add("modo-ticker");
     box.classList.remove("hidden");
-    txt.textContent = "🎵 Cargando el mundo de la música…";
+    tickTexto.textContent = "Cargando el mundo de la música…";
+    tickTag.textContent = "🎸 SIKODARK";
+    tickCard.classList.remove("con-img", "hidden");
+    tickIco.textContent = "🎸";
 
-    var items = [];
-    try{ items = items.concat(await efemeridesDeHoy()); }catch(e){}
-    try{ items = items.concat(await noticiasMusicales()); }catch(e){}
-    if (!items.length){
-      items = ["🎸 Sikodark radio — tu música, tu mundo. Dejanos tu ♥ en lo que suena"];
+    var pool = await construirPool();
+    if (!pool.length){
+      pool = [{ tag:"🎸 SIKODARK", texto:"Tu música, tu mundo. Dejanos tu ♥ en lo que suena", img:"" }];
     }
-    tickerItems = items;
+    tickerItems = pool;
     tickerIdx = 0;
 
     function rotar(){
       if (modoActual !== "ticker") return;
-      txt.classList.add("saliendo");
+      var it = tickerItems[tickerIdx % tickerItems.length];
+      tickerIdx++;
+      tickCard.classList.add("saliendo");
       setTimeout(function(){
         if (modoActual !== "ticker") return;
-        txt.textContent = tickerItems[tickerIdx % tickerItems.length];
-        tickerIdx++;
-        txt.classList.remove("saliendo");
+        tickTag.textContent = it.tag;
+        tickTexto.textContent = it.texto;
+        if (it.img){
+          tickImg.onerror = function(){ tickCard.classList.remove("con-img"); tickIco.textContent = ICONOS[tickerIdx % ICONOS.length]; };
+          tickImg.onload  = function(){ tickCard.classList.add("con-img"); };
+          tickImg.src = it.img;
+        } else {
+          tickCard.classList.remove("con-img");
+          tickIco.textContent = ICONOS[tickerIdx % ICONOS.length];
+        }
+        tickCard.classList.remove("saliendo");
       }, 400);
     }
     rotar();
     tickerTimer = setInterval(rotar, 9000);
   }
 
-  /* ---------- DIRECTOR: publicidad activa → publi; si no → ticker ---------- */
   function pintar(a){
     a = a || {};
     var tiene = (a.activo !== false) && (a.imagen || (a.texto||"").trim() || a.spotify);
@@ -1808,7 +1765,6 @@ renderFavs();
     else modoTicker();
   }
 
-  /* 🔴 TIEMPO REAL */
   try{
     dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
       pintar(snap.exists ? (snap.data().anuncio || {}) : {});
