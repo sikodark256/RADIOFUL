@@ -179,33 +179,32 @@ body::after{
  padding:11px 16px;text-align:center;font-family:var(--sans);font-weight:800;
  font-size:12.5px;color:#ff9d9d;letter-spacing:.03em}
 
-/* ===== ⭐📢 PUBLICIDAD DE LA RADIO ===== */
+/* ===== ⭐📢 PUBLICIDAD / 🤘 TICKER ===== */
 .publi-box{margin-top:18px;background:#0c0c10;border:1px solid rgba(255,204,0,.28);border-radius:16px;padding:14px;overflow:hidden}
-.publi-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:#ffcc00;text-align:center;margin-bottom:10px}
 .publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
 .publi-img img{width:100%;display:block}
 .publi-box.con-img .publi-img{display:block}
 .publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
 .publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
 
-/* ===== 🤘 TICKER estilo revista (Metal Hammer) ===== */
+/* ===== 🤘 TICKER (limpio, profesional, abreviado) ===== */
 .publi-box.modo-ticker .publi-txt,
 .publi-box.modo-ticker .publi-img{display:none!important}
-.tick-card{display:flex;gap:12px;align-items:stretch;background:#0a0a0d;
+.tick-card{display:flex;gap:12px;align-items:center;background:#0a0a0d;
   border:1px solid rgba(255,255,255,.12);border-left:4px solid var(--primary);
   border-radius:10px;padding:12px;transition:opacity .38s ease}
 .tick-card.saliendo{opacity:0}
-#tickImg{width:88px;height:88px;flex:0 0 88px;border-radius:8px;object-fit:cover;display:none;
+#tickImg{width:64px;height:64px;flex:0 0 64px;border-radius:8px;object-fit:cover;display:none;
   filter:grayscale(20%) contrast(1.08);border:1px solid rgba(255,255,255,.1)}
 .tick-card.con-img #tickImg{display:block}
-#tickIco{width:88px;height:88px;flex:0 0 88px;border-radius:8px;display:grid;place-items:center;
-  font-size:34px;background:linear-gradient(135deg,#3a2a12,#1a1a20);border:1px solid rgba(255,255,255,.08)}
+#tickIco{width:64px;height:64px;flex:0 0 64px;border-radius:8px;display:grid;place-items:center;
+  font-size:26px;background:linear-gradient(135deg,#3a2a12,#1a1a20);border:1px solid rgba(255,255,255,.08)}
 .tick-card.con-img #tickIco{display:none}
 #tickTag{display:inline-block;background:var(--primary);color:#0a0a0d;
   font:800 8.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;
   padding:3px 8px;border-radius:3px;margin-bottom:6px}
-#tickTexto{font-family:var(--sans);font-weight:700;font-size:13px;line-height:1.55;
-  color:#f0f0f3;word-wrap:break-word;max-height:none;overflow:visible}
+#tickTexto{font-family:var(--sans);font-weight:600;font-size:12px;line-height:1.45;
+  color:#e6e7ec;word-wrap:break-word;max-height:none;overflow:visible}
 </style>
 </head>
 <body>
@@ -254,13 +253,11 @@ body::after{
 <button id="btnReset" class="btn-reset">🧹 Limpiar caché y recargar</button>
 </section>
 
-<!-- ⭐📢 PUBLICIDAD + 🎵 TICKER DJ BRAIN (se edita desde avisos.html, aparece en vivo) -->
+<!-- ⭐📢 PUBLICIDAD + 🤘 TICKER (sin rótulo — la cajita habla sola) -->
 <section id="publiBox" class="publi-box hidden" aria-label="Publicidad de la radio">
-  <div class="publi-head" id="publiHead">📢 Publicidad de la radio</div>
   <div class="publi-img"><img id="publiImg" alt="Publicidad"></div>
   <p id="publiTxt" class="publi-txt"></p>
 
-  <!-- 🤘 Tarjeta del ticker (estilo revista) -->
   <div id="tickerCard" class="tick-card hidden">
     <img id="tickImg" alt="">
     <div id="tickIco">🎸</div>
@@ -292,7 +289,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v20
+   CONFIGURACIÓN v21
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -945,7 +942,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v20 — DJ Brain con memoria + ticker rock&pop + publicidad + presencia");
+console.log("🧠 Sikodark Radio v21 — DJ Brain pro (abreviado, sin rótulo) + ticker rock&pop");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1574,11 +1571,10 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🤘 DJ BRAIN (rock&pop con imágenes, memoria y ruleta) ===== -->
+<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🤘 DJ BRAIN (pro, abreviado, sin rótulo) ===== -->
 <script>
 (function(){
   var box  = document.getElementById("publiBox"),
-      head = document.getElementById("publiHead"),
       img  = document.getElementById("publiImg"),
       txt  = document.getElementById("publiTxt"),
       btn  = document.getElementById("publiBtn"),
@@ -1607,8 +1603,6 @@ renderFavs();
   function mostrarPubli(a){
     salirTicker();
     modoActual = "publi";
-    head.textContent = "📢 Publicidad de la radio";
-    box.classList.remove("modo-ticker");
     tickCard.classList.add("hidden");
 
     if (a.imagen){
@@ -1672,6 +1666,17 @@ renderFavs();
     return "";
   }
 
+  /* ✂️ Abreviador profesional: corta en la última oración/frase natural */
+  function recortar(t, max){
+    t = (t||"").trim();
+    if (t.length <= max) return t;
+    var cortado = t.substring(0, max);
+    var punto = Math.max(cortado.lastIndexOf("."), cortado.lastIndexOf(","));
+    if (punto > 60) return cortado.substring(0, punto + 1);
+    var espacio = cortado.lastIndexOf(" ");
+    return (espacio > 40 ? cortado.substring(0, espacio) : cortado) + "…";
+  }
+
   /* 🏷️ Detecta el género desde la reseña */
   function generoDe(extracto){
     var t = (extracto||"").toLowerCase();
@@ -1685,7 +1690,7 @@ renderFavs();
     return "ROCK & POP";
   }
 
-  /* 📜 Efemérides de hoy (Wikipedia Feed API) */
+  /* 📜 Efemérides de hoy (Wikipedia Feed API) — abreviadas */
   async function efemeridesDeHoy(){
     var d = new Date();
     var mm = ("0"+(d.getMonth()+1)).slice(-2), dd = ("0"+d.getDate()).slice(-2);
@@ -1701,15 +1706,15 @@ renderFavs();
           var nombre = (ev.pages && ev.pages[0] && ev.pages[0].normalizedtitle) ? ev.pages[0].normalizedtitle : "";
           var limpio = texto.replace(/^\s*\d{3,4}\s*[–—-]?\s*/, "");
           texto = nombre
-            ? "Un día como hoy nacía " + nombre + ". " + limpio
-            : "Un día como hoy nacía: " + texto;
+            ? recortar("Un día como hoy nacía " + nombre + ". " + limpio, 140)
+            : recortar("Un día como hoy nacía: " + texto, 140);
         } else {
-          texto = "Un día como hoy, " + texto;
+          texto = recortar("Un día como hoy, " + texto, 140);
         }
         var score = cat === "births" ? 2 : 1;
         if (textoConImagen(ev)) score += 2;
         if (esRockPop(texto)) score += 2;
-        if (esBandasES(texto)) score += 3;   /* 🎸🇪🇸 rock en español al tope */
+        if (esBandasES(texto)) score += 3;
         if (/álbum|album|nº 1|número 1|estrena|lanza|funda|grabación|rock|pop|metal/i.test(texto)) score += 1;
         items.push({
           tag: "📜 UN DÍA COMO HOY",
@@ -1722,7 +1727,7 @@ renderFavs();
     return items;
   }
 
-  /* 🎸 Clásicos eternos (TheAudioDB) */
+  /* 🎸 Clásicos eternos (TheAudioDB) — abreviados */
   async function clasicosEternos(){
     try{
       var r = await fetchConProxy("https://www.theaudiodb.com/api/v1/json/123/mostloved.php?format=track");
@@ -1732,7 +1737,7 @@ renderFavs();
         if (!t.strTrack) return;
         items.push({
           tag: "🎸 CLÁSICO ETERNO",
-          texto: "“" + t.strTrack + "” — " + (t.strArtist || "") + " · uno de los temas más queridos de todos los tiempos",
+          texto: "“" + t.strTrack + "” — " + (t.strArtist || ""),
           img: t.strTrackThumb || t.trackArt || "",
           score: 3 + (t.strTrackArt ? 1 : 0)
         });
@@ -1741,7 +1746,7 @@ renderFavs();
     }catch(e){ return []; }
   }
 
-  /* 🌟 Banda del día: reseña editorial completa (estilo revista) */
+  /* 🌟 Banda del día: reseña breve y precisa */
   async function bandaDelDia(){
     var d = new Date();
     var inicio = new Date(d.getFullYear(), 0, 0);
@@ -1754,16 +1759,16 @@ renderFavs();
       var extracto = (d2.extract || "").trim();
       if (!extracto) throw new Error("sin extracto");
       var frases = 0, pos = 0;
-      while (frases < 4 && pos < extracto.length){
+      while (frases < 2 && pos < extracto.length){
         var punto = extracto.substring(pos).search(/[.!?]/);
         if (punto === -1) break;
         pos += punto + 1; frases++;
       }
-      var reseña = extracto.substring(0, pos > 120 ? pos : Math.min(extracto.length, 480)).trim();
+      var reseña = recortar(extracto.substring(0, pos > 60 ? pos : Math.min(extracto.length, 180)).trim(), 180);
       var img = (d2.thumbnail && d2.thumbnail.source) || (d2.originalimage && d2.originalimage.source) || "";
       return [{
-        tag: "🌟 BANDA DEL DÍA · " + generoDe(extracto),
-        texto: banda + " — " + reseña,
+        tag: "🌟 " + banda.toUpperCase() + " · " + generoDe(extracto),
+        texto: reseña,
         img: img,
         score: 6
       }];
@@ -1802,7 +1807,7 @@ renderFavs();
       if (buenas.length){
         items.push({
           tag: "⚡ AHORA SUENA · " + nombre.toUpperCase(),
-          texto: "Mientras suena " + nombre + " en sikodark: " + buenas[0].o,
+          texto: recortar("Mientras suena " + nombre + ": " + buenas[0].o, 150),
           img: img,
           score: buenas[0].s >= 2 ? 7 : 4
         });
@@ -1810,7 +1815,7 @@ renderFavs();
       if (buenas[1]){
         items.push({
           tag: "⚡ SUENA AHORA · DATO DE " + nombre.toUpperCase(),
-          texto: "Más sobre " + nombre + ": " + buenas[1].o,
+          texto: recortar("Más sobre " + nombre + ": " + buenas[1].o, 130),
           img: img,
           score: 5
         });
@@ -1833,7 +1838,6 @@ renderFavs();
     if (!items.length || modoActual !== "ticker" || !tickerItems.length) return;
     var yaEsta = tickerItems.some(function(x){ return x.tag === items[0].tag; });
     if (!yaEsta){
-      /* 🎲 Improvisa: casi siempre cerca del tope, pero nunca en el mismo lugar */
       var pos = Math.floor(Math.random() * 3);
       tickerItems.splice(pos, 0, items[0]);
       if (items[1]) tickerItems.splice(Math.floor(Math.random() * 4) + 1, 0, items[1]);
@@ -1902,7 +1906,6 @@ renderFavs();
     var artActual = (document.getElementById("artist").textContent || "").trim();
     try{ anecs = await anecdotasDelArtista(artActual); }catch(e){}
 
-    /* 🎲 Todas las fuentes juntas, barajadas — el orden lo decide el DJ */
     var pool = banda.concat(anecs, efem, clas);
     for (var i = pool.length - 1; i > 0; i--){
       var j = Math.floor(Math.random() * (i + 1));
@@ -1921,26 +1924,25 @@ renderFavs();
     if (modoActual === "ticker") return;
     modoActual = "ticker";
     salirTicker();
-    head.textContent = "🎵 El mundo del rock & pop";
     box.classList.remove("con-img");
     spDiv.style.display = "none"; spDiv.innerHTML = "";
     btn.style.display = "none";
     box.classList.add("modo-ticker");
     box.classList.remove("hidden");
-    tickTexto.textContent = "Cargando el mundo de la música…";
+    tickTexto.textContent = "Cargando…";
     tickTag.textContent = "🎸 SIKODARK";
     tickCard.classList.remove("con-img", "hidden");
     tickIco.textContent = "🎸";
 
     var pool = await construirPool();
     if (!pool.length){
-      pool = [{ tag:"🎸 SIKODARK", texto:"Tu música, tu mundo. Dejanos tu ♥ en lo que suena", img:"" }];
+      pool = [{ tag:"🎸 SIKODARK", texto:"Tu música, tu mundo", img:"" }];
     }
     tickerItems = pool;
 
     function rotar(){
       if (modoActual !== "ticker") return;
-      var it = djElegir();      /* 🧠 el DJ elige con memoria y suerte */
+      var it = djElegir();
       djRecordar(it);
       tickCard.classList.add("saliendo");
       setTimeout(function(){
