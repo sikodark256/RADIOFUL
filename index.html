@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
 
-<!-- ⭐ Montserrat BOLD + JetBrains Mono -->
+<!-- Montserrat BOLD + JetBrains Mono -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <!-- ===== 📊 Librerías de Firebase ===== -->
@@ -20,21 +20,19 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <style>
-/* ⭐ Paleta negra + Montserrat BOLD */
 :root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:'JetBrains Mono',monospace;--sans:'Montserrat',Arial,Helvetica,sans-serif}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans)}
-main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px 16px}
-.wrap{width:100%;max-width:448px}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.55)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.wrap{width:100%;max-width:448px;margin:0 auto}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.55)}
 @media(min-width:640px){.card{padding:32px}}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:24px;padding:32px 16px}
 .top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
 .brand-name{font-family:var(--sans);font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:13px;margin-top:2px}
 .status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font:10px var(--mono);text-transform:uppercase;letter-spacing:.14em;background:#141419;border:1px solid var(--border);color:#cfcfd6}.status.live{color:var(--primary)}.dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}.live .dot{animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.3}}
-.cover{position:relative;margin-top:24px;aspect-ratio:1;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
-/* ⭐ Título naranja BOLD + artista blanco, tamaños reducidos */
+/* ⭐ Carátula con fallback TV: padding-hack en vez de aspect-ratio */
+.cover{position:relative;margin-top:24px;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover::before{content:"";display:block;padding-top:100%}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
 .now{margin-top:22px;min-height:58px;text-align:center}.now .eyebrow{margin-bottom:5px}
 .title{margin:0;font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:20px;line-height:1.2;color:var(--primary)}
 .artist{margin:4px 0 0;font-family:var(--sans);font-weight:800;color:#e9e9ee;font-size:14px}
-/* ⭐ Play squircle borde blanco + volumen barra blanca */
 .controls{margin-top:22px;display:flex;align-items:center;gap:18px}
 .play{width:58px;height:58px;flex:0 0 58px;border:2.5px solid #fff;border-radius:18px;background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .2s,color .2s}
 .play:hover{transform:scale(1.05)}.play:active{transform:scale(.92)}
@@ -44,20 +42,32 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;outline:none;cursor:pointer;background:linear-gradient(to right,#fff var(--vol,80%),#57575f var(--vol,80%))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:transparent}
 input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:transparent}
-/* ⭐ Spinner circular debajo de los controles */
-.load-ring{width:28px;height:28px;margin:16px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff;animation:spin 1s linear infinite;opacity:0;transition:opacity .2s}
-.load-ring.show{opacity:1}
+.load-ring{display:none;width:28px;height:28px;margin:10px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff}
+.load-ring.show{display:block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== ⭐ CAJITA DE PREFERIDOS ===== */
+.favs-box{margin-top:14px;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.favs-head{margin:0 0 8px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--primary);display:flex;align-items:baseline;gap:7px}
+.favs-head b{color:#a8a9b3;font-family:var(--sans);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0}
+.favs-lista{max-height:130px;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;scrollbar-width:thin}
+.favs-lista::-webkit-scrollbar{width:4px}
+.favs-lista::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+.fav-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.fav-item:last-child{border-bottom:0}
+.fav-t{font-family:var(--sans);font-weight:400;font-size:12.5px;color:#a8a9b3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.fav-a{font-family:var(--sans);font-weight:400;font-size:11px;color:#7d7e88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%}
+
 .install{margin-top:24px;width:100%;padding:12px;border:1px solid var(--border);border-radius:999px;background:var(--secondary);color:var(--text);font-family:var(--sans);font-weight:800;text-transform:uppercase;cursor:pointer}.install:hover{background:#34353d}
 .btn-reset{margin-top:10px;width:100%;padding:10px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--mono)}
 .btn-reset:hover{color:var(--error);border-color:var(--error)}
-/* ⭐ Historial: subtítulo naranja + títulos reducidos */
 .history{margin-top:24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .history h2{font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:15px;margin:0;letter-spacing:.02em}
 .history p.sub{font-family:var(--sans);font-weight:800;font-size:12px;color:var(--primary);margin:4px 0 0}
 .count{padding:6px 11px;border-radius:999px;background:#141419;border:1px solid var(--border);color:#cfcfd6;font:10px var(--mono);white-space:nowrap}
 .history-grid{margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}
-.track{overflow:hidden;border-radius:14px;background:var(--secondary)}.track-art{position:relative;aspect-ratio:1}.track-art img{width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(0,0,0,.65);padding:4px 7px;font:10px var(--mono);font-weight:700}
+/* ⭐ Mini-carátulas con fallback TV: padding-hack en vez de aspect-ratio */
+.track{overflow:hidden;border-radius:14px;background:var(--secondary)}.track-art{position:relative}.track-art::before{content:"";display:block;padding-top:100%}.track-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(0,0,0,.65);padding:4px 7px;font:10px var(--mono);font-weight:700}
 .track-info{padding:9px}
 .track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:11px}
@@ -65,7 +75,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .hidden{display:none}
 
-/* ===== ❤️🟠 BOTONES CIRCULARES sobre la carátula ===== */
+/* ===== ❤️🟠 BOTONES CIRCULARES ===== */
 .cover-actions{position:absolute;right:12px;bottom:12px;z-index:3;display:flex;flex-direction:column;gap:10px;margin:0}
 .circle-btn{width:42px;height:42px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.18);
   background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -75,7 +85,7 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .circle-btn.liked{color:#ff3b30;border-color:rgba(255,59,48,.55);background:rgba(255,59,48,.16)}
 .circle-btn.flash{color:var(--primary);border-color:rgba(255,138,36,.65)}
 
-/* ===== ♥ CORAZÓN SOLO VISUAL en las portadas del historial ===== */
+/* ===== ♥ CORAZÓN VISUAL historial ===== */
 .track-heart{position:absolute;right:6px;top:6px;z-index:2;width:32px;height:32px;
   display:grid;place-items:center;color:#fff;pointer-events:none;
   filter:drop-shadow(0 2px 5px rgba(0,0,0,.65))}
@@ -91,10 +101,9 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
   box-shadow:0 10px 30px rgba(0,0,0,.5);transition:.25s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* ===== 🚫 OCULTOS: notificación Wikipedia, EQ y diagnóstico ===== */
+/* ===== 🚫 OCULTOS ===== */
 #smartNotify,#diagnostico,.eq{display:none!important}
 
-/* ===== PANEL DE DIAGNÓSTICO (oculto, sigue funcionando por dentro) ===== */
 #diagnostico{
   margin-top:16px;padding:12px 14px;border-radius:14px;
   background:var(--secondary);border:1px solid var(--border);
@@ -108,7 +117,7 @@ footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .diag-line.info .msg{color:var(--info)}
 .diag-line.warn .msg{color:var(--warning)}
 
-/* ===== FONDO DINÁMICO (más oscuro, predomina el negro) ===== */
+/* ===== FONDO DINÁMICO ===== */
 body::before{
   content:"";position:fixed;inset:0;z-index:-2;
   background:var(--bg);background-size:cover;background-position:center;
@@ -121,7 +130,6 @@ body::after{
   background:linear-gradient(135deg,rgba(0,0,0,.92),rgba(0,0,0,.82));
   pointer-events:none;
 }
-/* ===== NOTIFICACIÓN INTELIGENTE (oculta) ===== */
 #smartNotify{
   position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
   z-index:9999;max-width:460px;width:calc(100% - 32px);
@@ -143,14 +151,77 @@ body::after{
 #smartNotify .notify-close{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;font-size:16px;line-height:1;flex:0 0 auto}
 #smartNotify .notify-close:hover{color:var(--text)}
 
-/* ===== 🧹 Limpiar caché → icono chiquito ===== */
 .btn-reset{width:42px;height:42px;padding:0!important;margin:12px auto 0!important;
   display:grid;place-items:center;border-radius:50%!important;border:1px dashed var(--border)}
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
 .btn-reset:hover svg{color:var(--error)}
+
+/* ===== ⭐📢 CARTEL DE AVISOS ===== */
+#cartelAviso{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-24px);z-index:99995;
+ max-width:430px;width:calc(100% - 28px);background:#1c1d24;border:1px solid rgba(255,138,36,.4);border-radius:18px;
+ overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.35s}
+#cartelAviso.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#cartelAviso .c-img{display:none;width:100%;max-height:240px;overflow:hidden;background:#0e0f14}
+#cartelAviso .c-img img{width:100%;height:100%;object-fit:cover;display:block}
+#cartelAviso.con-img .c-img{display:block}
+#cartelAviso .c-body{padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+#cartelAviso .c-txt{flex:1;min-width:0;font-family:var(--sans);font-weight:700;font-size:13.5px;
+ line-height:1.45;color:#f5f5f7;word-wrap:break-word}
+#cartelAviso .c-tag{font:10px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:4px;display:block}
+#cartelAviso .c-btn{display:inline-block;margin:0 14px 13px;padding:9px 18px;border-radius:999px;
+ background:var(--primary);color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;
+ text-transform:uppercase;text-decoration:none;text-align:center}
+#cartelAviso .c-close{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+ border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#f5f5f7;font-size:16px;
+ line-height:1;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(6px)}
+
+/* ===== ⭐📴 BANNER SIN INTERNET ===== */
+#offBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:99996;
+ background:linear-gradient(135deg,#2a1010,#1a1a20);border-bottom:1px solid rgba(255,59,48,.4);
+ padding:11px 16px;text-align:center;font-family:var(--sans);font-weight:800;
+ font-size:12.5px;color:#ff9d9d;letter-spacing:.03em}
+
+/* ===== ⭐📢 PUBLICIDAD / 🤘 TICKER ===== */
+.publi-box{margin-top:18px;background:#0c0c10;border:1px solid rgba(255,204,0,.28);border-radius:16px;padding:14px;overflow:hidden}
+.publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
+.publi-img img{width:100%;display:block}
+.publi-box.con-img .publi-img{display:block}
+.publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
+.publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
+
+/* ===== 🤘 TICKER (limpio, profesional, abreviado) ===== */
+.publi-box.modo-ticker .publi-txt,
+.publi-box.modo-ticker .publi-img{display:none!important}
+.tick-card{display:flex;gap:12px;align-items:center;background:#0a0a0d;
+  border:1px solid rgba(255,255,255,.12);border-left:4px solid var(--primary);
+  border-radius:10px;padding:12px;transition:opacity .38s ease}
+.tick-card.saliendo{opacity:0}
+#tickImg{width:64px;height:64px;flex:0 0 64px;border-radius:8px;object-fit:cover;display:none;
+  filter:grayscale(20%) contrast(1.08);border:1px solid rgba(255,255,255,.1)}
+.tick-card.con-img #tickImg{display:block}
+#tickIco{width:64px;height:64px;flex:0 0 64px;border-radius:8px;display:grid;place-items:center;
+  font-size:26px;background:linear-gradient(135deg,#3a2a12,#1a1a20);border:1px solid rgba(255,255,255,.08)}
+.tick-card.con-img #tickIco{display:none}
+#tickTag{display:inline-block;background:var(--primary);color:#0a0a0d;
+  font:800 8.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;
+  padding:3px 8px;border-radius:3px;margin-bottom:6px}
+#tickTexto{font-family:var(--sans);font-weight:600;font-size:12px;line-height:1.45;
+  color:#e6e7ec;word-wrap:break-word;max-height:none;overflow:visible}
+
+/* ===== ⭐⬆️ BOTÓN VOLVER ARRIBA ===== */
+#btnTop{position:fixed;bottom:18px;right:16px;z-index:99997;width:46px;height:46px;
+  border:0;border-radius:50%;background:var(--primary);color:#161616;cursor:pointer;
+  display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transform:translateY(14px);transition:.3s}
+#btnTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#btnTop:active{transform:scale(.9)}
+#btnTop svg{width:20px;height:20px;fill:currentColor}
 </style>
 </head>
 <body>
+<!-- ⭐📴 Banner sin conexión -->
+<div id="offBanner">📴 Sin conexión a Internet — esperando señal…</div>
+
 <main>
 <div class="wrap">
 <section class="card" aria-label="Reproductor de radio">
@@ -161,7 +232,6 @@ body::after{
 </div>
 <div id="coverBox" class="cover">
   <img id="cover" src="apple-icon.png" alt="Logo de sikodark">
-  <!-- Botones circulares: compartir arriba, corazón abajo -->
   <div class="cover-actions">
     <button id="btnShare" class="circle-btn" aria-label="Compartir">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
@@ -172,7 +242,6 @@ body::after{
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
 
-<!-- ===== PANEL DE DIAGNÓSTICO (oculto) ===== -->
 <div id="diagnostico">
   <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v6...</span></div>
 </div>
@@ -185,8 +254,31 @@ body::after{
   </div>
 </div>
 <div id="loadRing" class="load-ring"></div>
+
+<div id="favsBox" class="favs-box hidden">
+  <div class="favs-head">♥ Tus preferidos <b id="favsNombre"></b></div>
+  <div id="favsLista" class="favs-lista"></div>
+</div>
+
 <button id="install" class="install hidden">⇩ &nbsp; Instalar app</button>
 <button id="btnReset" class="btn-reset">🧹 Limpiar caché y recargar</button>
+</section>
+
+<!-- ⭐📢 PUBLICIDAD + 🤘 TICKER (sin rótulo — la cajita habla sola) -->
+<section id="publiBox" class="publi-box hidden" aria-label="Publicidad de la radio">
+  <div class="publi-img"><img id="publiImg" alt="Publicidad"></div>
+  <p id="publiTxt" class="publi-txt"></p>
+
+  <div id="tickerCard" class="tick-card hidden">
+    <img id="tickImg" alt="">
+    <div id="tickIco">🎸</div>
+    <div style="flex:1;min-width:0">
+      <span id="tickTag">📜 UN DÍA COMO HOY</span>
+      <div id="tickTexto"></div>
+    </div>
+  </div>
+
+  <a id="publiBtn" class="publi-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
 </section>
 
 <section class="card history" aria-labelledby="history-title">
@@ -208,11 +300,11 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v6
+   CONFIGURACIÓN v23
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
-const LOGO = "apple-icon.png";
+const LOGO = "icon-512.png";
 const MAX_HISTORY = 10;
 
 const ZENO_SSE_URL = `https://api.zeno.fm/mounts/metadata/subscribe/${MOUNT_ID}`;
@@ -220,7 +312,6 @@ const ZENO_REST_URL = `https://api.zeno.fm/mounts/${MOUNT_ID}`;
 
 const ITUNES_URL = "https://itunes.apple.com/search";
 const DEEZER_URL = "https://api.deezer.com/search";
-const DEEZER_ALBUM_URL = "https://api.deezer.com/search/album";
 const LASTFM_URL = "https://ws.audioscrobbler.com/2.0/";
 const LASTFM_KEY = "8a2156a5c0c1194f8b8e96d22f0a0a9b";
 
@@ -251,15 +342,11 @@ let isPlaying=false,isLoading=false,muted=false,cover=null,history=[];
 let ultimoTitulo = "", pollingInterval = null;
 audio.volume=.8;
 
-// Cargar historial desde localStorage
 try {
   const h = localStorage.getItem("sikodark-history");
   if (h) history = JSON.parse(h);
 } catch(e) { history = []; }
 
-/* =========================================================
-   FUNCIONES DE DEBUG (internas, no visibles)
-   ========================================================= */
 function log(tipo, mensaje) {
   const iconos = { ok: "✅", err: "❌", info: "ℹ️", warn: "⚠️" };
   const linea = document.createElement("div");
@@ -270,9 +357,6 @@ function log(tipo, mensaje) {
   console.log(`[${tipo}] ${mensaje}`);
 }
 
-/* =========================================================
-   FUNCIONES BÁSICAS
-   ========================================================= */
 function setPlaying(v){isPlaying=v;status.classList.toggle("live",v);statusText.textContent=v?"En vivo":"Detenido";eq.classList.toggle("playing",v);play.classList.toggle("playing",v);play.innerHTML=isLoading?spinner():v?pauseIcon():playIcon();play.setAttribute("aria-label",v?"Pausar":"Reproducir");ring(isLoading)}
 function spinner(){return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M20 12a8 8 0 0 1-8 8"/></svg>'}
 function playIcon(){return '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'}
@@ -297,13 +381,14 @@ audio.onerror=()=>{isLoading=false;setPlaying(false);ring(false);log("err","Erro
 volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false;volume.style.setProperty("--vol",(volume.value*100)+"%")};
 mute.onclick=()=>{muted=!muted;audio.muted=muted;mute.innerHTML=muted?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></svg>':'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg>'};
 
-// Botón reset (también borra los likes locales)
 btnReset.onclick = () => {
   localStorage.removeItem("sikodark-history");
   localStorage.removeItem("sikodark-smart-cache");
   localStorage.removeItem("sikodark-likes");
+  localStorage.removeItem("sikodark-dj-memoria");
   history = [];
   renderHistory();
+  if (typeof renderFavs === "function") renderFavs();
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
       Promise.all(regs.map(r => r.unregister())).then(() => window.location.reload(true));
@@ -319,42 +404,32 @@ function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",art
    🎵 MEDIA SESSION API
    ========================================================= */
 function actualizarMediaSession(track, urlCaratula) {
-  if (!("mediaSession" in navigator)) {
-    log("warn", "Media Session no soportado en este navegador");
-    return;
-  }
+  if (!("mediaSession" in navigator)) return;
   try {
     const artwork = [];
     if (urlCaratula && urlCaratula !== LOGO) {
       artwork.push({ src: urlCaratula, sizes: "512x512", type: "image/png" });
-      artwork.push({ src: urlCaratula, sizes: "96x96", type: "image/png" });
-    } else {
-      artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     }
+    artwork.push({ src: "icon-192.png", sizes: "192x192", type: "image/png" });
+    artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
       artist: track.artist || "En vivo",
       album: "sikodark radio",
       artwork: artwork
     });
-    log("ok", `MediaSession actualizado: ${track.artist||""} - ${track.title}`);
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
-  } catch(e) {
-    log("err", "MediaSession error: " + e.message);
-  }
+  } catch(e) {}
 }
 
 /* =========================================================
-   SET TRACK — La función CENTRAL
+   SET TRACK
    ========================================================= */
 function setTrack(t){
   if (!t || !t.title) return;
   const trackKey = `${t.artist||""}||${t.title}`;
-  if (trackKey === ultimoTitulo && t.title !== "En vivo") {
-    log("info", `Misma canción: ${t.title} — ignorando`);
-    return;
-  }
+  if (trackKey === ultimoTitulo && t.title !== "En vivo") return;
   ultimoTitulo = trackKey;
   log("ok", `🎵 Nueva canción: ${t.artist || "?"} - ${t.title}`);
   titleEl.textContent = t.title || "En vivo";
@@ -369,15 +444,9 @@ function setTrack(t){
     inicioEscucha = Date.now();
     temaActual = t;
   }
-  setTimeout(() => {
-    log("info", "Disparando notificación inteligente...");
-    procesarCancionInteligente(t);
-  }, 800);
+  setTimeout(() => { procesarCancionInteligente(t); }, 800);
 }
 
-/* =========================================================
-   ⭐ CORAZÓN VISUAL + HISTORIAL
-   ========================================================= */
 const CORAZON_BLANCO = '<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
 function esLikedSeguro(track){
@@ -389,10 +458,7 @@ function esLikedSeguro(track){
 
 function agregarAlHistorial(track) {
   try {
-    if (!track.title || track.title === "En vivo" || track.title === "Conectando…") {
-      log("warn", "Historial: título inválido, saltando");
-      return;
-    }
+    if (!track.title || track.title === "En vivo" || track.title === "Conectando…") return;
     const item = {
       title: track.title,
       artist: track.artist || null,
@@ -400,9 +466,7 @@ function agregarAlHistorial(track) {
     };
     const mismo = (x) => x && x.title === item.title && x.artist === item.artist;
     if (history.length > 0 && mismo(history[0])) {
-      if (item.cover && history[0].cover !== item.cover) {
-        history[0].cover = item.cover;
-      }
+      if (item.cover && history[0].cover !== item.cover) history[0].cover = item.cover;
     } else {
       history = history.filter(x => !mismo(x));
       history.unshift(item);
@@ -410,9 +474,7 @@ function agregarAlHistorial(track) {
     }
     localStorage.setItem("sikodark-history", JSON.stringify(history));
     renderHistory();
-  } catch(e) {
-    log("err", "Historial ERROR: " + e.message);
-  }
+  } catch(e) {}
 }
 
 function renderHistory(){
@@ -424,19 +486,13 @@ function renderHistory(){
     }
     historyEl.innerHTML = history.map((x,i) => {
       if (!x) return "";
-      // Corazón blanco SOLO VISUAL en los temas con like
       const fav = esLikedSeguro(x) ? '<span class="track-heart">' + CORAZON_BLANCO + '</span>' : '';
       return `<article class="track"><div class="track-art"><img src="${esc(x.cover||LOGO)}" alt="Carátula" onerror="this.src='${LOGO}'"><span class="rank">#${i+1}</span>${fav}</div><div class="track-info"><p class="track-title">${esc(x.title)}</p><p class="track-artist">${esc(x.artist||"sikodark radio")}</p></div></article>`;
     }).join("");
-  } catch(e) {
-    log("err", "renderHistory ERROR: " + e.message);
-  }
+  } catch(e) {}
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
 
-/* =========================================================
-   FETCH con PROXY
-   ========================================================= */
 async function fetchConProxy(url, opciones = {}) {
   try {
     const r = await fetch(url, opciones);
@@ -452,51 +508,167 @@ async function fetchConProxy(url, opciones = {}) {
   throw new Error("Todos los proxies fallaron");
 }
 
-/* =========================================================
-   BÚSQUEDA DE CARÁTULAS
-   ========================================================= */
-async function cover_iTunes_cancion(t) {
-  if (!t.artist || !t.title) return null;
-  try {
-    const term = encodeURIComponent(`${t.artist} ${t.title}`);
-    const r = await fetchConProxy(`${ITUNES_URL}?term=${term}&media=music&limit=3&entity=song`);
-    const d = await r.json();
-    if (d.resultCount > 0) {
-      let img = d.results[0].artworkUrl100 || d.results[0].artworkUrl60 || "";
-      img = img.replace("100x100bb", "600x600bb").replace("60x60bb", "600x600bb");
-      return { url: img, fuente: "iTunes" };
-    }
-  } catch(e) {}
-  return null;
+const SALUD_FUENTES = {};
+function fuenteDisponible(nombre){
+  const s = SALUD_FUENTES[nombre];
+  return !s || Date.now() > s.bloqueadaHasta;
 }
+function registrarFallo(nombre){
+  const s = SALUD_FUENTES[nombre] || (SALUD_FUENTES[nombre] = {fallos:0, bloqueadaHasta:0});
+  s.fallos++;
+  if (s.fallos >= 3){
+    s.bloqueadaHasta = Date.now() + 10*60*1000;
+    log("warn", "🛡️ " + nombre + ": 3 fallos seguidos — pausa 10 minutos");
+  }
+}
+function registrarExito(nombre){
+  SALUD_FUENTES[nombre] = {fallos:0, bloqueadaHasta:0};
+}
+
+function normalizar(s){
+  return (s||"").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/\(.*?\)|\[.*?\]/g,"")
+    .replace(/\b(feat|ft|featuring|con)\b.*$/,"")
+    .replace(/[^a-z0-9 ]/g," ")
+    .replace(/\s+/g," ").trim();
+}
+function parecido(a,b){
+  a=normalizar(a); b=normalizar(b);
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  if(a.includes(b)||b.includes(a)) return 0.95;
+  const wa=a.split(" ").filter(w=>w.length>2), wb=b.split(" ").filter(w=>w.length>2);
+  if(!wa.length||!wb.length) return 0;
+  let c=0; wa.forEach(function(w){ if(wb.includes(w)) c++; });
+  return c/Math.max(wa.length,wb.length);
+}
+function palabras(s){ return normalizar(s).split(" ").filter(w=>w.length>2); }
+function artistaCoincide(a1,a2){
+  const w1=palabras(a1), w2=palabras(a2);
+  if(!w1.length||!w2.length) return false;
+  return w1.some(function(x){
+    return w2.some(function(y){
+      return y===x || (x.length>4 && y.length>4 && (y.includes(x)||x.includes(y)));
+    });
+  });
+}
+
 async function cover_Deezer_cancion(t) {
   if (!t.artist || !t.title) return null;
   try {
     const q = encodeURIComponent(`${t.artist} ${t.title}`);
-    const r = await fetchConProxy(`${DEEZER_URL}?limit=3&q=${q}`);
+    const r = await fetchConProxy(`${DEEZER_URL}?limit=10&q=${q}`);
     const d = await r.json();
-    const tr = d.data && d.data[0];
-    if (tr && tr.album) {
-      const img = tr.album.cover_xl || tr.album.cover_big || tr.album.cover_medium;
-      if (img) return { url: img, fuente: "Deezer" };
+    if (d.data && d.data.length) {
+      let mejor=null, mejorP=0;
+      for (const tr of d.data) {
+        const nombreArtista = (tr.artist&&tr.artist.name)||"";
+        const pt = parecido(t.title, tr.title||"");
+        const pa = parecido(t.artist, nombreArtista);
+        if (pt < 0.6) continue;
+        if (!artistaCoincide(t.artist, nombreArtista)) continue;
+        const p = Math.min(pt, pa);
+        if (p > mejorP){ mejorP=p; mejor=tr; }
+      }
+      if (mejor && mejor.album) {
+        const img = mejor.album.cover_xl || mejor.album.cover_big || mejor.album.cover_medium;
+        if (img) return { url: img, fuente: "Deezer" };
+      }
     }
   } catch(e) {}
   return null;
 }
+
+async function cover_iTunes_cancion(t) {
+  if (!t.artist || !t.title) return null;
+  try {
+    const term = encodeURIComponent(`${t.artist} ${t.title}`);
+    const r = await fetchConProxy(`${ITUNES_URL}?term=${term}&media=music&limit=25&entity=song`);
+    const d = await r.json();
+    if (d.resultCount > 0) {
+      let mejor=null, mejorP=0;
+      for (const res of d.results) {
+        const pt = parecido(t.title, res.trackName||"");
+        const pa = parecido(t.artist, res.artistName||"");
+        if (pt < 0.6) continue;
+        if (!artistaCoincide(t.artist, res.artistName||"")) continue;
+        if (pa < 0.5) continue;
+        const p = Math.min(pt, pa);
+        if (p > mejorP){ mejorP=p; mejor=res; }
+      }
+      if (mejor) {
+        let img = mejor.artworkUrl100 || mejor.artworkUrl60 || "";
+        return { url: img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb"), fuente: "iTunes" };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function cover_LastFM(t) {
+  if (!t.artist || !t.title || !LASTFM_KEY) return null;
+  try {
+    const url = `${LASTFM_URL}?method=track.getInfo&api_key=${LASTFM_KEY}` +
+      `&artist=${encodeURIComponent(t.artist)}&track=${encodeURIComponent(t.title)}&format=json`;
+    const r = await fetchConProxy(url);
+    const d = await r.json();
+    if (!(d && d.track && d.track.album)) return null;
+    const artNombre = (d.track.artist && d.track.artist.name) || "";
+    if (artNombre && !artistaCoincide(t.artist, artNombre)) return null;
+    const imgs = d.track.album.image;
+    if (imgs && imgs.length) {
+      const img = imgs[imgs.length-1]["#text"];
+      if (img && !img.includes("2a96cbd8b46e442fc41c2b86b821562f") && !img.includes("c6f59c1e5e7240a4c0d427abd71f3dbb")) {
+        return { url: img, fuente: "Last.fm" };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function cover_CoverArtArchive(t) {
+  if (!t.artist || !t.title) return null;
+  try {
+    const q = encodeURIComponent(`artist:"${t.artist}" AND recording:"${t.title}"`);
+    const r = await fetchConProxy(`https://musicbrainz.org/ws/2/release/?query=${q}&fmt=json&limit=5`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    const rels = (d.releases || []).filter(x => x.score >= 75 && x.id);
+    for (const rel of rels) {
+      const caaUrl = `https://coverartarchive.org/release/${rel.id}/front-500`;
+      try {
+        const head = await fetch(caaUrl, { method: "HEAD" });
+        if (head.ok) return { url: caaUrl, fuente: "Cover Art Archive" };
+      } catch(e) { continue; }
+    }
+  } catch(e) {}
+  return null;
+}
+
 async function cover_iTunes_soloTitulo(t) {
   if (!t.title) return null;
   try {
     const term = encodeURIComponent(t.title);
-    const r = await fetchConProxy(`${ITUNES_URL}?term=${term}&media=music&limit=3&entity=song`);
+    const r = await fetchConProxy(`${ITUNES_URL}?term=${term}&media=music&limit=25&entity=song`);
     const d = await r.json();
     if (d.resultCount > 0) {
-      let img = d.results[0].artworkUrl100 || d.results[0].artworkUrl60 || "";
-      img = img.replace("100x100bb", "600x600bb").replace("60x60bb", "600x600bb");
-      return { url: img, fuente: "iTunes (solo título)" };
+      let mejor=null, mejorP=0;
+      for (const res of d.results) {
+        const pt = parecido(t.title, res.trackName||"");
+        if (pt < 0.85) continue;
+        if (t.artist && !artistaCoincide(t.artist, res.artistName||"")) continue;
+        if (pt > mejorP){ mejorP=pt; mejor=res; }
+      }
+      if (mejor) {
+        let img = mejor.artworkUrl100 || mejor.artworkUrl60 || "";
+        return { url: img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb"), fuente: "iTunes (solo título)" };
+      }
     }
   } catch(e) {}
   return null;
 }
+
 async function cover_imagenArtista() {
   if (imagenArtistaGlobal) return { url: imagenArtistaGlobal, fuente: "Foto artista" };
   return null;
@@ -504,13 +676,20 @@ async function cover_imagenArtista() {
 
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
-  log("info", `Buscando carátula para: ${t.artist||"?"} - ${t.title}`);
-  const estrategias = [cover_iTunes_cancion, cover_Deezer_cancion, cover_iTunes_soloTitulo, cover_imagenArtista];
-  for (const estrategia of estrategias) {
+  const estrategias = [
+    { fn: cover_Deezer_cancion,    nombre: "Deezer" },
+    { fn: cover_iTunes_cancion,    nombre: "iTunes" },
+    { fn: cover_LastFM,            nombre: "Last.fm" },
+    { fn: cover_CoverArtArchive,   nombre: "Cover Art Archive" },
+    { fn: cover_iTunes_soloTitulo, nombre: "iTunes (solo título)" },
+    { fn: cover_imagenArtista,     nombre: "Foto artista" }
+  ];
+  for (const e of estrategias) {
+    if (!fuenteDisponible(e.nombre)) continue;
     try {
-      const r = await estrategia(t);
+      const r = await e.fn(t);
       if (r && r.url) {
-        log("ok", `Carátula: ${r.fuente}`);
+        registrarExito(e.nombre);
         cover = r.url;
         coverEl.src = cover;
         actualizarMediaSession(t, cover);
@@ -521,16 +700,13 @@ async function fetchCover(t) {
         }
         return;
       }
-    } catch(e) {}
+    } catch(err) {}
+    registrarFallo(e.nombre);
   }
-  log("warn", "Sin carátula, usando logo");
   cover = null;
   coverEl.src = LOGO;
 }
 
-/* =========================================================
-   SISTEMA DE METADATA
-   ========================================================= */
 function procesarMetadataRaw(streamTitle) {
   if (!streamTitle) return;
   const track = parseTitle(streamTitle);
@@ -542,7 +718,6 @@ function procesarMetadataRaw(streamTitle) {
 function intentarSSE() {
   return new Promise((resolve, reject) => {
     try {
-      log("info", "Intentando SSE directo...");
       const source = new EventSource(ZENO_SSE_URL);
       let recibioAlgo = false;
       source.onmessage = e => {
@@ -568,7 +743,6 @@ function intentarSSE() {
 }
 
 async function iniciarPolling() {
-  log("warn", "SSE falló — activando Polling con proxy CORS");
   async function consultar() {
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
@@ -580,12 +754,8 @@ async function iniciarPolling() {
         const np = d.now_playing.song;
         streamTitle = `${np.artist || ""} - ${np.title || ""}`.trim();
       }
-      if (streamTitle) {
-        procesarMetadataRaw(streamTitle);
-      }
-    } catch(e) {
-      log("err", "Polling error: " + e.message);
-    }
+      if (streamTitle) procesarMetadataRaw(streamTitle);
+    } catch(e) {}
   }
   consultar();
   if (pollingInterval) clearInterval(pollingInterval);
@@ -593,23 +763,16 @@ async function iniciarPolling() {
 }
 
 async function conectarMetadata() {
-  log("info", "Conectando sistema de metadata...");
   try {
     await intentarSSE();
-    log("ok", "SSE conectado correctamente");
     return;
-  } catch(e) {
-    log("warn", "SSE falló: " + e.message);
-  }
+  } catch(e) {}
   iniciarPolling();
 }
 
-/* =========================================================
-   INFO DE ARTISTA (para el fondo dinámico)
-   ========================================================= */
 const SMART_CACHE = JSON.parse(localStorage.getItem("sikodark-smart-cache") || "{}");
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
-let lastSmartTrack = "", notifyTimeout = null;
+let lastSmartTrack = "";
 
 const FRASES_RESPALDO = [
   "Una canción para disfrutar en sikodark radio, tu compañero musical diario.",
@@ -638,8 +801,7 @@ async function buscarEnWikipedia(artista) {
     }
     if (!pagina) pagina = d.query.search[0].title;
     const paginaEncoded = encodeURIComponent(pagina.replace(/ /g, "_"));
-    const summaryUrl = `${WIKIPEDIA_SUMMARY_URL}${paginaEncoded}`;
-    const r2 = await fetch(summaryUrl);
+    const r2 = await fetch(`${WIKIPEDIA_SUMMARY_URL}${paginaEncoded}`);
     if (!r2.ok) return null;
     const d2 = await r2.json();
     if (!d2.extract) return null;
@@ -691,7 +853,7 @@ async function buscarEnAudioDB(artista) {
       if (posicion > 30) frase = biografia.substring(0, posicion).trim();
       return { frase, imagenArtista, genero, fuente: "TheAudioDB" };
     }
-  } catch(e) { log("err", "AudioDB: " + e.message); }
+  } catch(e) {}
   return null;
 }
 
@@ -728,11 +890,6 @@ function cambiarFondo(urlImagen) {
   } catch(e) {}
 }
 
-/* La ventana ya no se muestra (oculta por CSS) pero el fondo sí cambia */
-function mostrarNotificacionInteligente(info) {
-  if (info.caratula && info.caratula !== LOGO) cambiarFondo(info.caratula);
-}
-
 async function procesarCancionInteligente(track) {
   if (!track || !track.artist || !track.title) return;
   const trackId = `${track.artist.toLowerCase().trim()}||${track.title.toLowerCase().trim()}`;
@@ -762,24 +919,16 @@ async function procesarCancionInteligente(track) {
   if (infoFinal.caratula && infoFinal.caratula !== LOGO) cambiarFondo(infoFinal.caratula);
 }
 
-/* =========================================================
-   PERMISO NOTIFICACIONES (push)
-   ========================================================= */
 function pedirPermisoNotificaciones() {
   if ("Notification" in window && Notification.permission === "default") {
     const pedir = () => {
-      Notification.requestPermission().then(p => {
-        log("info", `Permiso notificaciones: ${p}`);
-      });
+      Notification.requestPermission().then(p => {});
       document.removeEventListener("click", pedir);
     };
     document.addEventListener("click", pedir, { once: true });
   }
 }
 
-/* =========================================================
-   SERVICE WORKER
-   ========================================================= */
 let deferredPrompt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;install.classList.remove("hidden")});
 install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;install.classList.add("hidden")};
@@ -787,7 +936,6 @@ install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();awai
 if("serviceWorker" in navigator)window.addEventListener("load",()=>{
   navigator.serviceWorker.register("sw.js")
     .then(reg => {
-      log("ok", "Service Worker registrado (v6)");
       reg.addEventListener("updatefound", () => {
         const nuevoSW = reg.installing;
         nuevoSW.addEventListener("statechange", () => {
@@ -796,23 +944,19 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
           }
         });
       });
-      setInterval(() => reg.update(), 30000);
+      setInterval(() => reg.update(), 3600000);
     })
     .catch(err => log("err", "Service Worker: " + err.message));
 });
 
-/* =========================================================
-   INICIAR TODO
-   ========================================================= */
-log("info", `Historial cargado: ${history.length} temas guardados`);
 renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v9 — diseño negro Montserrat BOLD");
+console.log("🧠 Sikodark Radio v23 — fallback TV + DJ Brain + ticker + volver arriba");
 </script>
 
-<!-- ===== 📊 SEGUIMIENTO DE OYENTES + 🔔 PUSH — Firebase ===== -->
+<!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
@@ -869,50 +1013,45 @@ function registrarFinEscucha() {
 window.addEventListener("beforeunload", registrarFinEscucha);
 window.addEventListener("pagehide", registrarFinEscucha);
 
-/* ===== 🔔 NOTIFICACIONES PUSH ===== */
 async function iniciarPush() {
   try {
     if (!("Notification" in window)) return;
     const permiso = await Notification.requestPermission();
-    if (permiso !== "granted") { log("warn", "🔔 Permiso: " + permiso); return; }
+    if (permiso !== "granted") return;
     const reg = await navigator.serviceWorker.ready;
     const token = await firebase.messaging().getToken({
       vapidKey: "BJKwpC2B3i-nswoRDKX-WKb2M10zhTdXy19XcZeAsKAqI_2R1ltSjsQVzoK_VVaeDhNlToob4-snEfBQfKF7bOI",
       serviceWorkerRegistration: reg
     });
-    if (!token) { log("warn", "🔔 Sin token"); return; }
+    if (!token) return;
     await dbFB.collection("tokens").doc(token).set({
       uid: usuarioUID || "desconocido",
       dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC",
       fecha: new Date().toISOString()
     });
     log("ok", "🔔 Notificaciones activadas");
-  } catch(e) {
-    log("err", "🔔 Push: " + e.message);
-  }
+  } catch(e) {}
 }
 iniciarPush();
 </script>
 
-<!-- ===== 🔄 AUTO-RECUPERACION DEL STREAM + AUDIFONOS ===== -->
+<!-- ===== 🔄 AUTO-RECUPERACION + AUDIFONOS ===== -->
 <script>
 (function(){
   var ultimaPos = 0, fallos = 0, vigia = null;
 
   function reconectar(){
     try{
-      log("warn", "🔄 Señal perdida — reconectando al vivo...");
       audio.pause();
       setTimeout(function(){
         audio.src = STREAM_URL;
         audio.load();
         audio.play().then(function(){
           fallos = 0;
-          log("ok", "🔄 ¡De vuelta al aire! Sincronizado con el tema actual");
+          log("ok", "🔄 ¡De vuelta al aire!");
         }).catch(function(){
           fallos++;
           if (fallos <= 6) setTimeout(reconectar, 4000);
-          else log("warn", "🔄 Sin señal — reintento automático cuando vuelva internet");
         });
       }, 300);
     }catch(e){}
@@ -925,7 +1064,6 @@ iniciarPush();
       var pos = audio.currentTime;
       if (Math.abs(pos - ultimaPos) < 0.05){
         fallos++;
-        if (fallos === 3) log("warn", "🔄 Stream lento o congelado...");
         if (fallos >= 4) reconectar();
       } else {
         fallos = 0;
@@ -935,11 +1073,7 @@ iniciarPush();
   }
   iniciarVigia();
 
-  window.addEventListener("offline", function(){
-    log("warn", "📴 Sin conexión — esperando señal...");
-  });
   window.addEventListener("online", function(){
-    log("ok", "📶 ¡Internet volvió! Reconectando stream...");
     if (isPlaying) reconectar();
   });
 
@@ -965,12 +1099,11 @@ iniciarPush();
         if (isPlaying) reconectar();
       });
     }catch(e){}
-    log("ok", "🎧 Botones de audífonos activados (play, pausa, stop, sincronizar)");
   }
 })();
 </script>
 
-<!-- ===== 🎧 REGISTRO SIMPLE: nombre del oyente ===== -->
+<!-- ===== 🎧 REGISTRO + PRESENCIA ===== -->
 <div id="modalNombre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.98);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
@@ -986,6 +1119,10 @@ iniciarPush();
   const input = document.getElementById("inputNombre");
   const btn = document.getElementById("btnGuardarNombre");
   const btnSaltar = document.getElementById("btnSaltarNombre");
+
+  let huellaActual = null;
+  let heartbeatTimer = null;
+  let avisoErrorDado = false;
 
   async function calcularHuella(){
     try{
@@ -1008,51 +1145,114 @@ iniciarPush();
     }
   }
 
+  function marcarOnline(nombre){
+    if (!huellaActual) return Promise.resolve();
+    const ref = dbFB.collection("usuarios").doc(huellaActual);
+    return ref.get().then(function(doc){
+      const base = {
+        online: true,
+        uid: usuarioUID || null,
+        ultimaConexion: firebase.firestore.FieldValue.serverTimestamp(),
+        dispositivo: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? "celular" : "PC"
+      };
+      if (!doc.exists || !doc.data().nombre) base.nombre = nombre || "Anónimo";
+      if (!doc.exists || doc.data().online === false || !doc.data().sesionInicio){
+        base.sesionInicio = firebase.firestore.FieldValue.serverTimestamp();
+      }
+      return ref.set(base, { merge:true });
+    }).catch(function(e){
+      log("err", "🎧 Presencia ERROR: " + e.message);
+      if (!avisoErrorDado && typeof toast === "function"){
+        avisoErrorDado = true;
+        toast("⚠️ Firebase bloqueó la conexión — revisá las reglas");
+      }
+    });
+  }
+
+  function latido(){
+    if (!huellaActual) return;
+    dbFB.collection("usuarios").doc(huellaActual).set({
+      online: true,
+      ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true }).catch(function(){});
+  }
+
+  function iniciarHeartbeat(){
+    detenerHeartbeat();
+    latido();
+    heartbeatTimer = setInterval(latido, 30000);
+  }
+
+  function detenerHeartbeat(){
+    if (heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  }
+
+  function marcarOffline(){
+    if (!huellaActual) return;
+    dbFB.collection("usuarios").doc(huellaActual).set({
+      online: false,
+      ultimaSalida: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true }).catch(function(){});
+  }
+
+  window.addEventListener("beforeunload", marcarOffline);
+  window.addEventListener("pagehide", marcarOffline);
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible" && huellaActual){
+      marcarOnline(localStorage.getItem(LS_NOMBRE) || "Anónimo");
+    }
+  });
+  audio.addEventListener("playing", function(){ latido(); });
+
+  async function limpiarDuplicadosViejos(){
+    try{
+      const q = await dbFB.collection("usuarios").where("huella","==",huellaActual).get();
+      q.forEach(function(doc){
+        if (doc.id !== huellaActual) doc.ref.delete().catch(function(){});
+      });
+    }catch(e){}
+  }
+
   btnSaltar.onclick = function(){
     modal.style.display = "none";
-    log("info", "🎧 Oyente prefirio continuar sin nombre");
+    marcarOnline("Anónimo");
+    iniciarHeartbeat();
   };
 
   firebase.auth().onAuthStateChanged(async function(user){
     if (!user) return;
     try{
-      const huella = await calcularHuella();
+      huellaActual = await calcularHuella();
       const nombreLocal = localStorage.getItem(LS_NOMBRE);
 
-      // Caso 1: ya tiene nombre en este navegador
       if (nombreLocal){
-        await dbFB.collection("usuarios").doc(user.uid).set({
-          nombre: nombreLocal,
-          huella: huella,
-          ultimaConexion: new Date().toISOString()
-        }, { merge:true });
+        await marcarOnline(nombreLocal);
+        iniciarHeartbeat();
+        limpiarDuplicadosViejos();
         log("ok", "🎧 ¡Hola de nuevo, " + nombreLocal + "!");
+        if (typeof renderFavs === "function") renderFavs();
         return;
       }
 
-      // Caso 2: desinstalo o borro datos, pero la huella ya existe
-      const q = await dbFB.collection("usuarios").where("huella","==",huella).limit(5).get();
+      const q = await dbFB.collection("usuarios").where("huella","==",huellaActual).limit(5).get();
       if (!q.empty){
         let nombre = "";
         const borrar = [];
         q.forEach(function(doc){
           if (!nombre) nombre = doc.data().nombre || "";
-          if (doc.id !== user.uid) borrar.push(doc);
+          if (doc.id !== huellaActual) borrar.push(doc);
         });
         borrar.forEach(function(doc){ doc.ref.delete().catch(function(){}); });
         if (nombre){
           localStorage.setItem(LS_NOMBRE, nombre);
-          await dbFB.collection("usuarios").doc(user.uid).set({
-            nombre: nombre,
-            huella: huella,
-            ultimaConexion: new Date().toISOString()
-          }, { merge:true });
+          await marcarOnline(nombre);
+          iniciarHeartbeat();
           log("ok", "🎧 ¡Hola de nuevo, " + nombre + "! (dispositivo reconocido)");
+          if (typeof renderFavs === "function") renderFavs();
           return;
         }
       }
 
-      // Caso 3: usuario totalmente nuevo -> pedir su nombre
       modal.style.display = "flex";
       btn.onclick = async function(){
         const nombre = (input.value || "").trim();
@@ -1064,13 +1264,11 @@ iniciarPush();
         btn.disabled = true;
         try{
           localStorage.setItem(LS_NOMBRE, nombre);
-          await dbFB.collection("usuarios").doc(user.uid).set({
-            nombre: nombre,
-            huella: huella,
-            ultimaConexion: new Date().toISOString()
-          }, { merge:true });
+          await marcarOnline(nombre);
+          iniciarHeartbeat();
           modal.style.display = "none";
           log("ok", "🎧 ¡Bienvenido a sikodark, " + nombre + "!");
+          if (typeof renderFavs === "function") renderFavs();
         }catch(e){
           log("err", "🎧 No se pudo guardar el nombre: " + e.message);
         }
@@ -1083,7 +1281,7 @@ iniciarPush();
 })();
 </script>
 
-<!-- ===== ❤️ LIKE (como antes) + 🟠 COMPARTIR + ♥ corazones visuales en historial ===== -->
+<!-- ===== ❤️ LIKE + 🟠 COMPARTIR + ♥ corazones + ⭐ PREFERIDOS ===== -->
 <script>
 var likesDelUsuario = {};
 try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}"); } catch(e){}
@@ -1091,7 +1289,6 @@ try { likesDelUsuario = JSON.parse(localStorage.getItem("sikodark-likes") || "{}
 var btnLike = document.getElementById("btnLike");
 var btnShare = document.getElementById("btnShare");
 
-/* 🔔 Toast */
 var toastDiv = document.getElementById("toast");
 if (!toastDiv){ toastDiv = document.createElement("div"); toastDiv.id = "toast"; document.body.appendChild(toastDiv); }
 var toastTimer = null;
@@ -1115,22 +1312,56 @@ function claveLike(track){
   return ((track.artist||"").toLowerCase().trim()) + "||" + track.title.toLowerCase().trim();
 }
 
-/* Pinta el corazón grande según el tema en pantalla */
 function actualizarEstadoLike(){
   const track = temaEnPantallaAhora();
   if (!track || !btnLike) return;
   if (likesDelUsuario[claveLike(track)]){
     btnLike.classList.add("liked");
     btnLike.innerHTML = corazon("#ff3b30", true);
-    btnLike.setAttribute("aria-label", "Te gusta este tema");
   } else {
     btnLike.classList.remove("liked");
     btnLike.innerHTML = corazon("#f5f5f7", false);
-    btnLike.setAttribute("aria-label", "Marcar me gusta");
   }
 }
 
-/* ---------- ❤️ Like normal: solo marcar (igual que antes) ---------- */
+function renderFavs(){
+  var box = document.getElementById("favsBox");
+  var lista = document.getElementById("favsLista");
+  var nombreSpan = document.getElementById("favsNombre");
+  if (!box || !lista) return;
+
+  var nombre = "";
+  try { nombre = localStorage.getItem("sikodark-nombre") || ""; } catch(e){}
+  if (nombreSpan) nombreSpan.textContent = nombre ? "· " + nombre : "";
+
+  var entradas = [];
+  for (var k in likesDelUsuario){
+    if (!likesDelUsuario[k]) continue;
+    var v = likesDelUsuario[k];
+    if (typeof v === "object" && v.title){
+      entradas.push({ t: v.t || 0, title: v.title, artist: v.artist || "" });
+    } else {
+      var p = k.split("||");
+      var cap = function(s){ return (s||"").replace(/\b\w/g, function(c){ return c.toUpperCase(); }); };
+      entradas.push({ t: (typeof v === "number" ? v : 0), title: cap(p[1]||""), artist: cap(p[0]||"") });
+    }
+  }
+
+  if (!entradas.length){
+    box.classList.add("hidden");
+    lista.innerHTML = "";
+    return;
+  }
+
+  entradas.sort(function(a,b){ return (b.t||0) - (a.t||0); });
+
+  lista.innerHTML = entradas.slice(0,20).map(function(x){
+    return '<div class="fav-item"><span class="fav-t">' + esc(x.title) + '</span><span class="fav-a">' + esc(x.artist||"") + '</span></div>';
+  }).join("");
+
+  box.classList.remove("hidden");
+}
+
 if (btnLike) btnLike.addEventListener("click", function(){
   if (!usuarioUID){ toast("⏳ Conectando con la radio, esperá unos segundos…"); return; }
   const track = temaEnPantallaAhora();
@@ -1138,11 +1369,12 @@ if (btnLike) btnLike.addEventListener("click", function(){
   const clave = claveLike(track);
   if (likesDelUsuario[clave]){ toast("Ya marcaste este tema ♥"); return; }
 
-  likesDelUsuario[clave] = Date.now();
+  likesDelUsuario[clave] = { t: Date.now(), title: track.title, artist: track.artist || "" };
   try { localStorage.setItem("sikodark-likes", JSON.stringify(likesDelUsuario)); } catch(e){}
   actualizarEstadoLike();
 
-  dbFB.collection("megustas").add({
+  const idLike = (usuarioUID + "_" + clave).replace(/[\/#.\[\]]/g, "_");
+  dbFB.collection("megustas").doc(idLike).set({
     uid: usuarioUID,
     artista: track.artist || "Desconocido",
     tema: track.title,
@@ -1154,14 +1386,13 @@ if (btnLike) btnLike.addEventListener("click", function(){
   btnLike.classList.add("pop");
   setTimeout(function(){ btnLike.classList.remove("pop"); }, 450);
 
-  renderHistory(); /* el corazón blanco aparece en la tarjeta del historial */
+  renderHistory();
+  renderFavs();
 });
 
-/* El corazón grande se resetea cuando cambia el tema */
 const tituloObs = new MutationObserver(function(){ setTimeout(actualizarEstadoLike, 100); });
 tituloObs.observe(document.getElementById("title"), { childList:true, characterData:true, subtree:true });
 
-/* ---------- 🟠 Compartir ---------- */
 if (btnShare) btnShare.addEventListener("click", async function(){
   const track = temaEnPantallaAhora() || { title:"sikodark radio", artist:null };
   const texto = track.artist ? "🎵 " + track.title + " — " + track.artist : "🎵 " + track.title;
@@ -1177,16 +1408,597 @@ if (btnShare) btnShare.addEventListener("click", async function(){
   }
 });
 
-/* ---------- 🧹 Botón reset como icono ---------- */
 if (btnReset){
   btnReset.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
   btnReset.title = "Limpiar caché y recargar";
-  btnReset.setAttribute("aria-label", "Limpiar caché y recargar");
 }
 
-/* Sincroniza todo al cargar */
 actualizarEstadoLike();
 renderHistory();
+renderFavs();
+</script>
+
+<!-- ===== ⭐ SESIÓN PERSISTENTE ===== -->
+<script>
+(function(){
+  var LS_VOL = "sikodark-vol", LS_PLAY = "sikodark-playing", LS_TRACK = "sikodark-lasttrack", LS_COVER = "sikodark-lastcover";
+
+  try{
+    var v = localStorage.getItem(LS_VOL);
+    if (v !== null && v !== ""){
+      var nv = Math.min(1, Math.max(0, Number(v)));
+      audio.volume = nv;
+      volume.value = nv;
+      volume.style.setProperty("--vol", (nv*100)+"%");
+    }
+  }catch(e){}
+
+  volume.addEventListener("input", function(){
+    try{ localStorage.setItem(LS_VOL, volume.value); }catch(e){}
+  });
+
+  audio.addEventListener("playing", function(){
+    try{ localStorage.setItem(LS_PLAY, "1"); }catch(e){}
+  });
+  audio.addEventListener("pause", function(){
+    try{ if (!audio.ended) localStorage.setItem(LS_PLAY, "0"); }catch(e){}
+  });
+
+  try{
+    var tr = JSON.parse(localStorage.getItem(LS_TRACK) || "null");
+    if (tr && tr.title){
+      titleEl.textContent = tr.title;
+      artistEl.textContent = tr.artist || "";
+      if (typeof actualizarEstadoLike === "function") setTimeout(actualizarEstadoLike, 200);
+    }
+    var cv = localStorage.getItem(LS_COVER);
+    if (cv) coverEl.src = cv;
+  }catch(e){}
+
+  new MutationObserver(function(){
+    try{
+      var t = document.getElementById("title").textContent;
+      if (t && t !== "Conectando…"){
+        localStorage.setItem(LS_TRACK, JSON.stringify({
+          title: t,
+          artist: document.getElementById("artist").textContent
+        }));
+      }
+    }catch(e){}
+  }).observe(document.getElementById("title"), { childList:true, characterData:true, subtree:true });
+
+  coverEl.addEventListener("load", function(){
+    try{
+      if (coverEl.src && coverEl.src.indexOf("apple-icon") === -1){
+        localStorage.setItem(LS_COVER, coverEl.src);
+      }
+    }catch(e){}
+  });
+
+  window.addEventListener("load", function(){
+    var estaba = false;
+    try{ estaba = localStorage.getItem(LS_PLAY) === "1"; }catch(e){}
+    if (!estaba || typeof startPlayback !== "function") return;
+
+    setTimeout(function(){
+      if (isPlaying) return;
+      startPlayback();
+      setTimeout(function(){
+        if (isPlaying){
+          if (typeof toast === "function") toast("▶ Seguís donde quedaste");
+        }else{
+          if (typeof toast === "function") toast("▶ Tocá play para seguir donde quedaste");
+        }
+      }, 2500);
+    }, 1200);
+  });
+})();
+</script>
+
+<!-- ===== ⭐📢 CARTELES DE AVISOS ===== -->
+<div id="cartelAviso" role="alert">
+  <div class="c-img"><img id="cartelImg" alt="Aviso"></div>
+  <div class="c-body">
+    <div style="flex:1;min-width:0">
+      <span class="c-tag">📢 sikodark radio</span>
+      <div class="c-txt" id="cartelTxt"></div>
+    </div>
+  </div>
+  <a id="cartelBtn" class="c-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
+  <button class="c-close" id="cartelClose" aria-label="Cerrar">×</button>
+</div>
+<script>
+(function(){
+  var box = document.getElementById("cartelAviso"),
+      img = document.getElementById("cartelImg"),
+      txt = document.getElementById("cartelTxt"),
+      btn = document.getElementById("cartelBtn"),
+      close = document.getElementById("cartelClose");
+
+  var timer = null, freq = "sesion";
+
+  function store(){ try{ return (freq === "siempre") ? sessionStorage : localStorage; }catch(e){ return localStorage; } }
+  function yaVisto(pub){ try{ return Number(store().getItem("sikodark-aviso-visto") || 0) >= pub; }catch(e){ return true; } }
+  function marcarVisto(pub){ try{ store().setItem("sikodark-aviso-visto", String(pub)); }catch(e){} }
+
+  function ocultar(){
+    box.classList.remove("show");
+    clearTimeout(timer);
+  }
+
+  function mostrar(a, pub){
+    if (a.imagen){
+      img.onerror = function(){ box.classList.remove("con-img"); };
+      img.onload  = function(){ box.classList.add("con-img"); };
+      img.src = a.imagen;
+    } else {
+      box.classList.remove("con-img");
+    }
+    txt.textContent = (a.texto || "").trim();
+    if (a.textoBoton && a.enlace){
+      btn.textContent = a.textoBoton;
+      btn.href = a.enlace;
+      btn.classList.remove("hidden");
+    } else {
+      btn.classList.add("hidden");
+    }
+    if (!a.imagen && !(a.texto || "").trim()) return;
+
+    box.classList.add("show");
+    marcarVisto(pub);
+    clearTimeout(timer);
+    timer = setTimeout(ocultar, 35000);
+  }
+
+  close.addEventListener("click", ocultar);
+
+  try{
+    dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
+      if (!snap.exists) return;
+      var a = snap.data().anuncio || {};
+      freq = a.frecuencia || "sesion";
+      if (a.activo === false){ ocultar(); return; }
+      var pub = Number(a.publicadoEn) || 0;
+      if (!pub) return;
+      if (yaVisto(pub)) return;
+      mostrar(a, pub);
+    }, function(e){ console.log("[warn] Avisos: " + e.message); });
+  }catch(e){}
+})();
+</script>
+
+<!-- ===== ⭐📴 BANNER SIN INTERNET ===== -->
+<script>
+(function(){
+  var b = document.getElementById("offBanner");
+  function off(){ if (b) b.style.display = "block"; }
+  function on(){
+    if (b) b.style.display = "none";
+    if (typeof toast === "function") toast("📶 ¡Internet volvió!");
+  }
+  window.addEventListener("offline", off);
+  window.addEventListener("online", on);
+  if (!navigator.onLine) off();
+})();
+</script>
+
+<!-- ===== ⭐📢 CAJITA PUBLICIDAD + 🤘 DJ BRAIN (pro, abreviado, sin rótulo) ===== -->
+<script>
+(function(){
+  var box  = document.getElementById("publiBox"),
+      img  = document.getElementById("publiImg"),
+      txt  = document.getElementById("publiTxt"),
+      btn  = document.getElementById("publiBtn"),
+      tickCard = document.getElementById("tickerCard"),
+      tickImg  = document.getElementById("tickImg"),
+      tickIco  = document.getElementById("tickIco"),
+      tickTag  = document.getElementById("tickTag"),
+      tickTexto= document.getElementById("tickTexto");
+  if (!box) return;
+
+  var spDiv = document.createElement("div");
+  spDiv.style.display = "none";
+  spDiv.style.margin = "10px 0";
+  box.insertBefore(spDiv, tickCard);
+
+  function spotifyEmbed(url){
+    var m = (url||"").match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(album|track|playlist|episode|show|artist)\/([A-Za-z0-9]+)/);
+    return m ? ("https://open.spotify.com/embed/" + m[1] + "/" + m[2]) : null;
+  }
+
+  var modoActual = null;
+  var tickerItems = [], tickerTimer = null;
+  var ICONOS = ["🎸","🤘","🎤","🥁","🎹","🎼","⭐"];
+
+  /* ---------- MODO PUBLICIDAD (prioridad) ---------- */
+  function mostrarPubli(a){
+    salirTicker();
+    modoActual = "publi";
+    tickCard.classList.add("hidden");
+
+    if (a.imagen){
+      img.onerror = function(){ box.classList.remove("con-img"); };
+      img.onload  = function(){ box.classList.add("con-img"); };
+      img.src = a.imagen;
+    } else {
+      box.classList.remove("con-img");
+    }
+    var emb = spotifyEmbed(a.spotify);
+    if (emb){
+      spDiv.innerHTML = '<iframe src="' + emb + '" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy" style="border:0;border-radius:12px;display:block"></iframe>';
+      spDiv.style.display = "block";
+    } else {
+      spDiv.style.display = "none"; spDiv.innerHTML = "";
+    }
+    txt.textContent = (a.texto || "").trim();
+    if (a.textoBoton && a.enlace){
+      btn.textContent = a.textoBoton; btn.href = a.enlace; btn.style.display = "block";
+    } else { btn.style.display = "none"; }
+    box.classList.remove("hidden");
+  }
+
+  /* ---------- 🧠 NÚCLEO DEL ALGORITMO ---------- */
+  var NUCLEO_ROCKPOP = ["rock","pop","metal","punk","guitarra","new wave","synthpop","synth pop","gótico","gotico","gothic","post-punk","post punk","dark","heavy metal","power metal","nu metal","nu rock","alternativo","alternative","beatles","rolling stones","queen","pink floyd","led zeppelin","guns n' roses","nirvana","ramones","elvis","michael jackson","madonna","david bowie","freddie mercury","john lennon","paul mccartney","ac/dc","metallica","bon jovi","bruce springsteen","the who","abba","bee gees","the cure","depeche mode","joy division","new order","duran duran","pet shop boys","the smiths","siouxsie","bauhaus","sisters of mercy","type o negative","lacrimosa","kraftwerk","eurythmics","a-ha","tears for fears"];
+
+  /* 🎸🇪🇸 Rock en español */
+  var BANDAS_ES = ["soda stereo","git","arena hash","enanitos verdes","prisioneros","los prisioneros","charly garcía","charly garcia","spinetta","luis alberto spinetta","fito páez","fito paez","sumo","virus","suéter","sueter","babasónicos","babasonicos","divididos","la renga","patricio rey","redonditos","attaque 77","2 minutos","dos minutos","rata blanca","andrés calamaro","andres calamaro","los rodríguez","los rodriguez","héroes del silencio","heroes del silencio","caifanes","jaguares","maná","mana","café tacvba","cafe tacvba","cafe tacuba","molotov","aterciopelados","la ley","fobia","santa sabina","maldita vecindad","zoé","zoe","enjambre","los fabulosos cadillacs","cadillacs","los cafres","nonpalidece","v8","hermética","hermetica","almafuerte","pappo","vox dei","sui generis","manal","los gatos","almendra","pescado rabioso","invisible","serú girán","seru giran","nito mestre","illya kuryaki","mago de oz","extremoduro","leño","leno","rosendo","barricada","siniestro total","alaska","celtas cortos"];
+
+  /* 🌟 BANDA DEL DÍA */
+  var BANDAS_ROTATIVAS = [
+    "Soda Stereo","GIT","Arena Hash","Enanitos Verdes","Los Prisioneros",
+    "Charly García","Luis Alberto Spinetta","Fito Páez","Andrés Calamaro","Sumo",
+    "Héroes del Silencio","Caifanes","Café Tacvba","Molotov","Aterciopelados",
+    "Rata Blanca","La Ley","Los Fabulosos Cadillacs","Zoé","Divididos",
+    "The Cure","Depeche Mode","Joy Division","New Order","The Smiths",
+    "Siouxsie and the Banshees","Bauhaus","The Sisters of Mercy","Duran Duran","Pet Shop Boys",
+    "Mago de Oz","Fobia","Santa Sabina","Illya Kuryaki and the Valderramas","Babasónicos"
+  ];
+
+  function normArtista(a){ return (a||"").toLowerCase().trim(); }
+  function esMusical(t){
+    t = (t||"").toLowerCase();
+    return /música|musical|músico|cantante|banda|álbum|album|rock|pop|metal|punk|jazz|blues|guitarrista|baterista|vocalista|discográfica|sencillo|gira|concierto|festival|grammy|billboard|sello|grabación|hit|songwriter/.test(t);
+  }
+  function esRockPop(t){
+    t = (t||"").toLowerCase();
+    return NUCLEO_ROCKPOP.some(function(p){ return t.includes(p); });
+  }
+  function esBandasES(t){
+    t = (t||"").toLowerCase();
+    return BANDAS_ES.some(function(p){ return t.includes(p); });
+  }
+  function textoConImagen(ev){
+    if (ev.thumbnail && ev.thumbnail.source) return ev.thumbnail.source;
+    if (ev.pages && ev.pages.length){
+      for (var i = 0; i < ev.pages.length; i++){
+        if (ev.pages[i].thumbnail && ev.pages[i].thumbnail.source) return ev.pages[i].thumbnail.source;
+      }
+    }
+    return "";
+  }
+
+  function recortar(t, max){
+    t = (t||"").trim();
+    if (t.length <= max) return t;
+    var cortado = t.substring(0, max);
+    var punto = Math.max(cortado.lastIndexOf("."), cortado.lastIndexOf(","));
+    if (punto > 60) return cortado.substring(0, punto + 1);
+    var espacio = cortado.lastIndexOf(" ");
+    return (espacio > 40 ? cortado.substring(0, espacio) : cortado) + "…";
+  }
+
+  function generoDe(extracto){
+    var t = (extracto||"").toLowerCase();
+    if (/gótico|gothic|post-punk|dark wave|siniestro/.test(t)) return "GOTHIC · DARK";
+    if (/new wave|synth|sintetizad/.test(t)) return "NEW WAVE · SYNTHPOP";
+    if (/heavy|thrash|metal\b/.test(t)) return "HEAVY METAL";
+    if (/punk/.test(t)) return "PUNK";
+    if (/rock nacional|argentino|latinoamericano|español|iberoamericano|chileno|peruano/.test(t)) return "ROCK EN ESPAÑOL";
+    if (/pop/.test(t)) return "POP · NEW WAVE";
+    if (/alternativo|alternative/.test(t)) return "ALTERNATIVO";
+    return "ROCK & POP";
+  }
+
+  async function efemeridesDeHoy(){
+    var d = new Date();
+    var mm = ("0"+(d.getMonth()+1)).slice(-2), dd = ("0"+d.getDate()).slice(-2);
+    var r = await fetch("https://api.wikimedia.org/feed/v1/wikipedia/es/onthisday/all/" + mm + "/" + dd);
+    if (!r.ok) throw new Error("efem " + r.status);
+    var datos = await r.json();
+    var items = [];
+    ["selected","births","events"].forEach(function(cat){
+      (datos[cat]||[]).forEach(function(ev){
+        if (!ev.text || !esMusical(ev.text)) return;
+        var texto = ev.text.trim();
+        if (cat === "births"){
+          var nombre = (ev.pages && ev.pages[0] && ev.pages[0].normalizedtitle) ? ev.pages[0].normalizedtitle : "";
+          var limpio = texto.replace(/^\s*\d{3,4}\s*[–—-]?\s*/, "");
+          texto = nombre
+            ? recortar("Un día como hoy nacía " + nombre + ". " + limpio, 140)
+            : recortar("Un día como hoy nacía: " + texto, 140);
+        } else {
+          texto = recortar("Un día como hoy, " + texto, 140);
+        }
+        var score = cat === "births" ? 2 : 1;
+        if (textoConImagen(ev)) score += 2;
+        if (esRockPop(texto)) score += 2;
+        if (esBandasES(texto)) score += 3;
+        if (/álbum|album|nº 1|número 1|estrena|lanza|funda|grabación|rock|pop|metal/i.test(texto)) score += 1;
+        items.push({
+          tag: "📜 UN DÍA COMO HOY",
+          texto: texto,
+          img: textoConImagen(ev),
+          score: score
+        });
+      });
+    });
+    return items;
+  }
+
+  async function clasicosEternos(){
+    try{
+      var r = await fetchConProxy("https://www.theaudiodb.com/api/v1/json/123/mostloved.php?format=track");
+      var d = await r.json();
+      var items = [];
+      ((d && d.loved) || []).forEach(function(t){
+        if (!t.strTrack) return;
+        items.push({
+          tag: "🎸 CLÁSICO ETERNO",
+          texto: "“" + t.strTrack + "” — " + (t.strArtist || ""),
+          img: t.strTrackThumb || t.trackArt || "",
+          score: 3 + (t.strTrackArt ? 1 : 0)
+        });
+      });
+      return items;
+    }catch(e){ return []; }
+  }
+
+  async function bandaDelDia(){
+    var d = new Date();
+    var inicio = new Date(d.getFullYear(), 0, 0);
+    var diaDelAnio = Math.floor((d - inicio) / 86400000);
+    var banda = BANDAS_ROTATIVAS[diaDelAnio % BANDAS_ROTATIVAS.length];
+    try{
+      var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(banda));
+      if (!r.ok) throw new Error("bd " + r.status);
+      var d2 = await r.json();
+      var extracto = (d2.extract || "").trim();
+      if (!extracto) throw new Error("sin extracto");
+      var frases = 0, pos = 0;
+      while (frases < 2 && pos < extracto.length){
+        var punto = extracto.substring(pos).search(/[.!?]/);
+        if (punto === -1) break;
+        pos += punto + 1; frases++;
+      }
+      var reseña = recortar(extracto.substring(0, pos > 60 ? pos : Math.min(extracto.length, 180)).trim(), 180);
+      var img = (d2.thumbnail && d2.thumbnail.source) || (d2.originalimage && d2.originalimage.source) || "";
+      return [{
+        tag: "🌟 " + banda.toUpperCase() + " · " + generoDe(extracto),
+        texto: reseña,
+        img: img,
+        score: 6
+      }];
+    }catch(e){ return []; }
+  }
+
+  var IMPACTO = /falleció|muerte|muerto|asesin|tragedia|accidente|sobredosis|suicidio|polémic|demanda|separación|separó|disolvió|reunió|reencuentro|vendió|récord|grammy|hall of fame|pionero|pionera|influyente|icono|icónico|legendari|número 1|históric|escándalo/i;
+
+  async function anecdotasDelArtista(artista){
+    if (!artista || artista.length < 3) return [];
+    var clave = "sikodark-anec-" + normArtista(artista).replace(/\s+/g,"-");
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache !== null) return JSON.parse(cache);
+    }catch(e){}
+    try{
+      var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
+      if (!r.ok) throw 0;
+      var d = await r.json();
+      var extracto = (d.extract||"").trim();
+      if (!extracto) throw 0;
+      var oraciones = extracto.match(/[^.!?]+[.!?]+/g) || [extracto];
+      var buenas = [];
+      oraciones.forEach(function(o){
+        o = o.trim();
+        if (o.length < 40) return;
+        var s = IMPACTO.test(o) ? 2 : 1;
+        if (esRockPop(o)) s++;
+        buenas.push({o:o, s:s});
+      });
+      buenas.sort(function(a,b){ return b.s - a.s; });
+      var nombre = d.normalizedtitle || d.title || artista;
+      var img = (d.thumbnail && d.thumbnail.source) || (d.originalimage && d.originalimage.source) || "";
+      var items = [];
+      if (buenas.length){
+        items.push({
+          tag: "⚡ AHORA SUENA · " + nombre.toUpperCase(),
+          texto: recortar("Mientras suena " + nombre + ": " + buenas[0].o, 150),
+          img: img,
+          score: buenas[0].s >= 2 ? 7 : 4
+        });
+      }
+      if (buenas[1]){
+        items.push({
+          tag: "⚡ SUENA AHORA · DATO DE " + nombre.toUpperCase(),
+          texto: recortar("Más sobre " + nombre + ": " + buenas[1].o, 130),
+          img: img,
+          score: 5
+        });
+      }
+      try{ localStorage.setItem(clave, JSON.stringify(items)); }catch(e){}
+      return items;
+    }catch(e){ return []; }
+  }
+
+  var artistaVigia = "", buscandoAnec = "";
+  async function buscarAnecdotasEnVivo(){
+    var a = (document.getElementById("artist").textContent || "").trim();
+    if (!a || a === artistaVigia) return;
+    artistaVigia = a;
+    if (buscandoAnec === normArtista(a)) return;
+    buscandoAnec = normArtista(a);
+    var items = await anecdotasDelArtista(a);
+    buscandoAnec = "";
+    if (!items.length || modoActual !== "ticker" || !tickerItems.length) return;
+    var yaEsta = tickerItems.some(function(x){ return x.tag === items[0].tag; });
+    if (!yaEsta){
+      var pos = Math.floor(Math.random() * 3);
+      tickerItems.splice(pos, 0, items[0]);
+      if (items[1]) tickerItems.splice(Math.floor(Math.random() * 4) + 1, 0, items[1]);
+    }
+  }
+  var anecObs = new MutationObserver(function(){ setTimeout(buscarAnecdotasEnVivo, 300); });
+  anecObs.observe(document.getElementById("artist"), { childList:true, characterData:true, subtree:true });
+
+  var LS_MEMORIA = "sikodark-dj-memoria";
+  var ultimoTag = "";
+
+  function djMemoria(){ try{ return JSON.parse(localStorage.getItem(LS_MEMORIA) || "[]"); }catch(e){ return []; } }
+  function djHash(it){ return normArtista(it.tag + "|" + (it.texto||"")).slice(0, 90); }
+
+  function djEsReciente(it, mem){
+    var h = djHash(it), AHORA = Date.now(), VIDA = 12*3600*1000;
+    for (var i = 0; i < mem.length; i++){
+      if (mem[i].c === h && (AHORA - mem[i].t) < VIDA) return true;
+    }
+    return false;
+  }
+
+  function djElegir(){
+    var mem = djMemoria();
+    var frescas = tickerItems.filter(function(it){ return !djEsReciente(it, mem); });
+    if (!frescas.length){
+      try{ localStorage.removeItem(LS_MEMORIA); }catch(e){}
+      frescas = tickerItems.slice();
+    }
+    var variadas = frescas.filter(function(it){ return it.tag !== ultimoTag; });
+    if (variadas.length) frescas = variadas;
+    var total = 0;
+    frescas.forEach(function(it){ total += (it.score || 1); });
+    var r = Math.random() * total;
+    for (var k = 0; k < frescas.length; k++){
+      r -= (frescas[k].score || 1);
+      if (r <= 0) return frescas[k];
+    }
+    return frescas[frescas.length - 1];
+  }
+
+  function djRecordar(it){
+    ultimoTag = it.tag;
+    try{
+      var mem = djMemoria();
+      mem.push({ c: djHash(it), t: Date.now() });
+      localStorage.setItem(LS_MEMORIA, JSON.stringify(mem.slice(-40)));
+    }catch(e){}
+  }
+
+  async function construirPool(){
+    var d = new Date();
+    var bloque = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()+"-"+Math.floor(d.getHours()/3);
+    var clave = "sikodark-tick-" + bloque;
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache) return JSON.parse(cache);
+    }catch(e){}
+
+    var efem = [], clas = [], banda = [], anecs = [];
+    try{ efem = await efemeridesDeHoy(); }catch(e){}
+    try{ clas = await clasicosEternos(); }catch(e){}
+    try{ banda = await bandaDelDia(); }catch(e){}
+    var artActual = (document.getElementById("artist").textContent || "").trim();
+    try{ anecs = await anecdotasDelArtista(artActual); }catch(e){}
+
+    var pool = banda.concat(anecs, efem, clas);
+    for (var i = pool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    try{ localStorage.setItem(clave, JSON.stringify(pool)); }catch(e){}
+    return pool;
+  }
+
+  function salirTicker(){
+    if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = null; }
+    tickCard.classList.remove("saliendo");
+  }
+
+  async function modoTicker(){
+    if (modoActual === "ticker") return;
+    modoActual = "ticker";
+    salirTicker();
+    box.classList.remove("con-img");
+    spDiv.style.display = "none"; spDiv.innerHTML = "";
+    btn.style.display = "none";
+    box.classList.add("modo-ticker");
+    box.classList.remove("hidden");
+    tickTexto.textContent = "Cargando…";
+    tickTag.textContent = "🎸 SIKODARK";
+    tickCard.classList.remove("con-img", "hidden");
+    tickIco.textContent = "🎸";
+
+    var pool = await construirPool();
+    if (!pool.length){
+      pool = [{ tag:"🎸 SIKODARK", texto:"Tu música, tu mundo", img:"" }];
+    }
+    tickerItems = pool;
+
+    function rotar(){
+      if (modoActual !== "ticker") return;
+      var it = djElegir();
+      djRecordar(it);
+      tickCard.classList.add("saliendo");
+      setTimeout(function(){
+        if (modoActual !== "ticker") return;
+        tickTag.textContent = it.tag;
+        tickTexto.textContent = it.texto;
+        if (it.img){
+          tickImg.onerror = function(){ tickCard.classList.remove("con-img"); tickIco.textContent = ICONOS[Math.floor(Math.random()*ICONOS.length)]; };
+          tickImg.onload  = function(){ tickCard.classList.add("con-img"); };
+          tickImg.src = it.img;
+        } else {
+          tickCard.classList.remove("con-img");
+          tickIco.textContent = ICONOS[Math.floor(Math.random()*ICONOS.length)];
+        }
+        tickCard.classList.remove("saliendo");
+      }, 400);
+    }
+    rotar();
+    tickerTimer = setInterval(rotar, 9000);
+  }
+
+  function pintar(a){
+    a = a || {};
+    var tiene = (a.activo !== false) && (a.imagen || (a.texto||"").trim() || a.spotify);
+    if (tiene) mostrarPubli(a);
+    else modoTicker();
+  }
+
+  try{
+    dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
+      pintar(snap.exists ? (snap.data().anuncio || {}) : {});
+    }, function(e){ console.log("[warn] Publicidad: " + e.message); });
+  }catch(e){}
+})();
+</script>
+
+<!-- ===== ⭐⬆️ Volver arriba ===== -->
+<button id="btnTop" aria-label="Volver arriba">
+  <svg viewBox="0 0 24 24"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+</button>
+<script>
+(function(){
+  var b = document.getElementById("btnTop");
+  if (!b) return;
+  function chequear(){
+    if (window.scrollY > 250) b.classList.add("show");
+    else b.classList.remove("show");
+  }
+  window.addEventListener("scroll", chequear, {passive:true});
+  chequear();
+  b.addEventListener("click", function(){
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+})();
 </script>
 </body>
 </html>
