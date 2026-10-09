@@ -10,9 +10,6 @@
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
 
-<!-- Montserrat BOLD + JetBrains Mono -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
 <!-- ===== 📊 Librerías de Firebase ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -20,7 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <style>
-:root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:'JetBrains Mono',monospace;--sans:'Montserrat',Arial,Helvetica,sans-serif}
+:root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:monospace;--sans:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
 .wrap{width:100%;max-width:448px;margin:0 auto}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.55)}
 @media(min-width:640px){.card{padding:32px}}
@@ -28,7 +25,7 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 .top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
 .brand-name{font-family:var(--sans);font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:13px;margin-top:2px}
 .status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font:10px var(--mono);text-transform:uppercase;letter-spacing:.14em;background:#141419;border:1px solid var(--border);color:#cfcfd6}.status.live{color:var(--primary)}.dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}.live .dot{animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.3}}
-/* ⭐ Carátula con fallback TV: padding-hack */
+/* ⭐ Carátula con fallback TV */
 .cover{position:relative;margin-top:24px;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover::before{content:"";display:block;padding-top:100%}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
 .now{margin-top:22px;min-height:58px;text-align:center}.now .eyebrow{margin-bottom:5px}
 .title{margin:0;font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:20px;line-height:1.2;color:var(--primary)}
@@ -300,7 +297,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v24
+   CONFIGURACIÓN v25
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -401,9 +398,8 @@ btnReset.onclick = () => {
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
 /* =========================================================
-   🎵 MEDIA SESSION — v24: UNA sola asignación (el doble-set
-   cancelaba el player en la notificación), precarga del cover
-   con timeout de seguridad. El player SIEMPRE aparece.
+   🎵 MEDIA SESSION — v25: UNA sola asignación, precarga
+   del cover con timeout. El player SIEMPRE aparece.
    ========================================================= */
 function actualizarMediaSession(track, urlCaratula) {
   if (!("mediaSession" in navigator)) return;
@@ -985,7 +981,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v24 — MediaSession estable + fallback TV + DJ Brain");
+console.log("🧠 Sikodark Radio v25 — fuente del sistema + MediaSession estable + DJ Brain");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1140,8 +1136,8 @@ iniciarPush();
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
   <p style="color:#a5a6ad;font-size:13px;margin:0;max-width:300px">¿Cómo te llamas? Solo tu nombre o alias.</p>
-  <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center;font-family:'Montserrat',sans-serif">
-  <button id="btnGuardarNombre" style="background:#f59d3d;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:800;font-size:15px;font-family:'Montserrat',sans-serif;text-transform:uppercase">Entrar a la radio</button>
+  <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center">
+  <button id="btnGuardarNombre" style="background:#f59d3d;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:800;font-size:15px;text-transform:uppercase">Entrar a la radio</button>
   <button id="btnSaltarNombre" style="background:none;border:0;color:#a5a6ad;font-size:12px;cursor:pointer;text-decoration:underline">Continuar sin nombre</button>
 </div>
 <script>
