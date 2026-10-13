@@ -10,6 +10,9 @@
 <link rel="apple-touch-icon" href="apple-icon.png">
 <title>sikodark radio</title>
 
+<!-- ⭐ Fuente restaurada: Montserrat BOLD + JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
 <!-- ===== 📊 Librerías de Firebase ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -17,15 +20,15 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <style>
-:root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:monospace;--sans:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+:root{color-scheme:dark;--bg:#000;--card:#24242b;--secondary:#1a1a20;--text:#f5f5f7;--muted:#96969f;--primary:#f59d3d;--border:rgba(255,255,255,.1);--success:#34c759;--error:#ff3b30;--warning:#ffcc00;--info:#0a84ff;--mono:'JetBrains Mono',monospace;--sans:'Montserrat',Arial,Helvetica,sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans)}
 .wrap{width:100%;max-width:448px;margin:0 auto}.card{border:1px solid var(--border);background:var(--card);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.55)}
 @media(min-width:640px){.card{padding:32px}}
 main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:24px;padding:32px 16px}
 .top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
 .brand-name{font-family:var(--sans);font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:13px;margin-top:2px}
 .status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font:10px var(--mono);text-transform:uppercase;letter-spacing:.14em;background:#141419;border:1px solid var(--border);color:#cfcfd6}.status.live{color:var(--primary)}.dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}.live .dot{animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.3}}
-/* ⭐ Carátula con fallback TV */
+/* ⭐ Carátula con fallback TV: padding-hack */
 .cover{position:relative;margin-top:24px;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover::before{content:"";display:block;padding-top:100%}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
 .now{margin-top:22px;min-height:58px;text-align:center}.now .eyebrow{margin-bottom:5px}
 .title{margin:0;font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:20px;line-height:1.2;color:var(--primary)}
@@ -182,8 +185,7 @@ body::after{
 .publi-box{margin-top:18px;background:#0c0c10;border:1px solid rgba(255,204,0,.28);border-radius:16px;padding:14px;overflow:hidden}
 .publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
 .publi-img img{width:100%;display:block}
-.publi-box.con-img .publi-img{display:block}
-.publi-box.con-img .publi-img{margin:-14px -14px 10px -14px;border-radius:0 0 12px 12px}
+.publi-box.con-img .publi-img{display:block;margin:-14px -14px 10px -14px;border-radius:0 0 12px 12px}
 .publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
 .publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
 
@@ -229,7 +231,7 @@ body::after{
 <!-- ⭐📴 Banner sin conexión -->
 <div id="offBanner">📴 Sin conexión a Internet — esperando señal…</div>
 
-<!-- ⭐🆕 Banner de actualización (se muestra solo cuando hay versión nueva) -->
+<!-- ⭐🆕 Banner de actualización -->
 <div id="avisoUpdate">
   <span>🆕 Hay una nueva versión de sikodark</span>
   <button id="btnUpdate" onclick="aplicarUpdate()">ACTUALIZAR</button>
@@ -313,7 +315,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v27
+   CONFIGURACIÓN v28
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -340,6 +342,9 @@ const PROXIES = [
 
 let imagenArtistaGlobal = null;
 
+/* =========================================================
+   ELEMENTOS DOM
+   ========================================================= */
 const audio=document.getElementById("audio"), play=document.getElementById("play"), titleEl=document.getElementById("title");
 const artistEl=document.getElementById("artist"), coverEl=document.getElementById("cover"), status=document.getElementById("status");
 const statusText=document.getElementById("statusText"), volume=document.getElementById("volume"), mute=document.getElementById("mute");
@@ -411,35 +416,19 @@ btnReset.onclick = () => {
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
 /* =========================================================
-   🎵 MEDIA SESSION — v27 FIX DEFINITIVO:
-   Permite ACTUALIZAR cuando llega el cover real.
-   setTrack → asigna logo (player aparece YA)
-   fetchCover → re-asigna con el cover (la notificación se actualiza)
-   La clave comparada evita sets redundantes del MISMO contenido.
+   🎵 MEDIA SESSION — v28: PATRÓN ORIGINAL RESTAURADO
+   (doble asignación simple, sin candados ni precarga —
+   el que funcionaba antes de mis cambios)
    ========================================================= */
-var _mediaKey = "";
-
 function actualizarMediaSession(track, urlCaratula) {
   if (!("mediaSession" in navigator)) return;
   try {
-    var clave = (track.title||"") + "||" + (urlCaratula || "logo");
-    if (clave === _mediaKey) return;   /* nada cambió, no re-setear */
-    _mediaKey = clave;
-
-    var artwork;
-    if (urlCaratula && urlCaratula !== LOGO){
-      var tipo = (urlCaratula.toLowerCase().indexOf(".png") !== -1) ? "image/png" : "image/jpeg";
-      artwork = [
-        { src: urlCaratula, sizes: "512x512", type: tipo },
-        { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-        { src: LOGO, sizes: "512x512", type: "image/png" }
-      ];
-    } else {
-      artwork = [
-        { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-        { src: LOGO, sizes: "512x512", type: "image/png" }
-      ];
+    const artwork = [];
+    if (urlCaratula && urlCaratula !== LOGO) {
+      artwork.push({ src: urlCaratula, sizes: "512x512", type: "image/png" });
     }
+    artwork.push({ src: "icon-192.png", sizes: "192x192", type: "image/png" });
+    artwork.push({ src: LOGO, sizes: "512x512", type: "image/png" });
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title || "sikodark radio",
       artist: track.artist || "En vivo",
@@ -720,7 +709,7 @@ async function fetchCover(t) {
         registrarExito(e.nombre);
         cover = r.url;
         coverEl.src = cover;
-        /* ⭐ RE-ASIGNA la metadata con el cover real — ahora sí pasa el filtro */
+        /* ⭐ Re-asignación simple con el cover — el patrón que funcionaba */
         actualizarMediaSession(t, cover);
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
@@ -963,7 +952,7 @@ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPro
 install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;install.classList.add("hidden")};
 
 /* =========================================================
-   ⭐🆕 AUTO-UPDATE: detecta versión nueva → banner → aplica
+   ⭐🆕 AUTO-UPDATE
    ========================================================= */
 if("serviceWorker" in navigator)window.addEventListener("load",()=>{
   navigator.serviceWorker.register("sw.js")
@@ -998,7 +987,7 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v27 — MediaSession con cover real + auto-update + DJ Brain");
+console.log("🧠 Sikodark Radio v28 — patrón original de carátulas restaurado + Montserrat + auto-update");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1153,8 +1142,8 @@ iniciarPush();
   <div style="font-size:42px">🎧</div>
   <b style="font-size:18px;color:#f5f5f7">Bienvenido a sikodark radio</b>
   <p style="color:#a5a6ad;font-size:13px;margin:0;max-width:300px">¿Cómo te llamas? Solo tu nombre o alias.</p>
-  <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center">
-  <button id="btnGuardarNombre" style="background:#f59d3d;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:800;font-size:15px;text-transform:uppercase">Entrar a la radio</button>
+  <input id="inputNombre" maxlength="20" placeholder="Tu nombre" style="width:min(280px,90%);padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#2c2d35;color:#f5f5f7;font-size:16px;text-align:center;font-family:'Montserrat',sans-serif">
+  <button id="btnGuardarNombre" style="background:#f59d3d;color:#191919;border:0;border-radius:999px;padding:12px 32px;font-weight:800;font-size:15px;font-family:'Montserrat',sans-serif;text-transform:uppercase">Entrar a la radio</button>
   <button id="btnSaltarNombre" style="background:none;border:0;color:#a5a6ad;font-size:12px;cursor:pointer;text-decoration:underline">Continuar sin nombre</button>
 </div>
 <script>
