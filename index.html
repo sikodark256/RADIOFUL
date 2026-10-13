@@ -25,7 +25,7 @@ main{min-height:100vh;display:flex;flex-direction:column;align-items:center;just
 .top{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:9px}.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover}.eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
 .brand-name{font-family:var(--sans);font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:13px;margin-top:2px}
 .status{display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font:10px var(--mono);text-transform:uppercase;letter-spacing:.14em;background:#141419;border:1px solid var(--border);color:#cfcfd6}.status.live{color:var(--primary)}.dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}.live .dot{animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.3}}
-/* ⭐ Carátula con fallback TV: padding-hack */
+/* ⭐ Carátula con fallback TV */
 .cover{position:relative;margin-top:24px;border-radius:22px;overflow:hidden;background:var(--secondary)}.cover::before{content:"";display:block;padding-top:100%}.cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eq{position:absolute;left:0;right:0;bottom:0;height:34%;display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:32px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}.bar{width:10px;height:12px;border-radius:8px;background:var(--primary);opacity:.4}.playing .bar{opacity:1;animation:bounce .8s ease-in-out infinite alternate}.playing .bar:nth-child(2){animation-delay:.09s}.playing .bar:nth-child(3){animation-delay:.18s}.playing .bar:nth-child(4){animation-delay:.27s}.playing .bar:nth-child(5){animation-delay:.36s}.playing .bar:nth-child(6){animation-delay:.45s}.playing .bar:nth-child(7){animation-delay:.54s}.playing .bar:nth-child(8){animation-delay:.63s}.playing .bar:nth-child(9){animation-delay:.72s}@keyframes bounce{to{height:75%}}
 .now{margin-top:22px;min-height:58px;text-align:center}.now .eyebrow{margin-bottom:5px}
 .title{margin:0;font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:20px;line-height:1.2;color:var(--primary)}
@@ -183,12 +183,11 @@ body::after{
 .publi-img{display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#141419}
 .publi-img img{width:100%;display:block}
 .publi-box.con-img .publi-img{display:block}
-/* ⭐ Modo cartelera: imagen a sangre completa */
 .publi-box.con-img .publi-img{margin:-14px -14px 10px -14px;border-radius:0 0 12px 12px}
 .publi-txt{margin:0;font-family:var(--sans);font-weight:700;font-size:13.5px;line-height:1.5;color:#f5f5f7;text-align:center;word-wrap:break-word}
 .publi-btn{display:block;margin:12px auto 0;padding:9px 24px;border-radius:999px;background:#ffcc00;color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;text-transform:uppercase;text-decoration:none;text-align:center;width:max-content}
 
-/* ===== 🤘 TICKER (limpio, abreviado, sin rótulo) ===== */
+/* ===== 🤘 TICKER ===== */
 .publi-box.modo-ticker .publi-txt,
 .publi-box.modo-ticker .publi-img{display:none!important}
 .tick-card{display:flex;gap:12px;align-items:center;background:#0a0a0d;
@@ -201,7 +200,6 @@ body::after{
 #tickIco{width:64px;height:64px;flex:0 0 64px;border-radius:8px;display:grid;place-items:center;
   font-size:26px;background:linear-gradient(135deg,#3a2a12,#1a1a20);border:1px solid rgba(255,255,255,.08)}
 .tick-card.con-img #tickIco{display:none}
-/* ⭐ Título: tu fuente BOLD, naranja, sin marco */
 #tickTag{display:inline-block;color:var(--primary);
   font:800 10.5px var(--sans);text-transform:uppercase;letter-spacing:.06em;
   margin-bottom:6px}
@@ -216,11 +214,26 @@ body::after{
 #btnTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
 #btnTop:active{transform:scale(.9)}
 #btnTop svg{width:20px;height:20px;fill:currentColor}
+
+/* ===== ⭐🆕 BANNER DE ACTUALIZACIÓN ===== */
+#avisoUpdate{display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
+  background:linear-gradient(135deg,#f59d3d,#e8842c);color:#161616;
+  padding:10px 16px;justify-content:space-between;align-items:center;
+  font-family:var(--sans);font-weight:800;font-size:12.5px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#btnUpdate{background:#161616;color:#f59d3d;border:0;border-radius:999px;
+  padding:7px 16px;font-weight:800;font-size:11px;cursor:pointer;font-family:var(--sans)}
 </style>
 </head>
 <body>
 <!-- ⭐📴 Banner sin conexión -->
 <div id="offBanner">📴 Sin conexión a Internet — esperando señal…</div>
+
+<!-- ⭐🆕 Banner de actualización (se muestra solo cuando hay versión nueva) -->
+<div id="avisoUpdate">
+  <span>🆕 Hay una nueva versión de sikodark</span>
+  <button id="btnUpdate" onclick="aplicarUpdate()">ACTUALIZAR</button>
+</div>
 
 <main>
 <div class="wrap">
@@ -300,7 +313,7 @@ body::after{
 
 <script>
 /* =========================================================
-   CONFIGURACIÓN v26
+   CONFIGURACIÓN v27
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
 const MOUNT_ID = "xdkqr4btptutv";
@@ -327,9 +340,6 @@ const PROXIES = [
 
 let imagenArtistaGlobal = null;
 
-/* =========================================================
-   ELEMENTOS DOM
-   ========================================================= */
 const audio=document.getElementById("audio"), play=document.getElementById("play"), titleEl=document.getElementById("title");
 const artistEl=document.getElementById("artist"), coverEl=document.getElementById("cover"), status=document.getElementById("status");
 const statusText=document.getElementById("statusText"), volume=document.getElementById("volume"), mute=document.getElementById("mute");
@@ -401,55 +411,43 @@ btnReset.onclick = () => {
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
 /* =========================================================
-   🎵 MEDIA SESSION — UNA sola asignación, precarga con timeout
+   🎵 MEDIA SESSION — v27 FIX DEFINITIVO:
+   Permite ACTUALIZAR cuando llega el cover real.
+   setTrack → asigna logo (player aparece YA)
+   fetchCover → re-asigna con el cover (la notificación se actualiza)
+   La clave comparada evita sets redundantes del MISMO contenido.
    ========================================================= */
+var _mediaKey = "";
+
 function actualizarMediaSession(track, urlCaratula) {
   if (!("mediaSession" in navigator)) return;
   try {
-    var asignado = false;
-    function setear(artwork){
-      if (asignado) return;
-      asignado = true;
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title || "sikodark radio",
-        artist: track.artist || "En vivo",
-        album: "sikodark radio",
-        artwork: artwork
-      });
-      navigator.mediaSession.setActionHandler("play", () => startPlayback());
-      navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
-    }
+    var clave = (track.title||"") + "||" + (urlCaratula || "logo");
+    if (clave === _mediaKey) return;   /* nada cambió, no re-setear */
+    _mediaKey = clave;
+
+    var artwork;
     if (urlCaratula && urlCaratula !== LOGO){
       var tipo = (urlCaratula.toLowerCase().indexOf(".png") !== -1) ? "image/png" : "image/jpeg";
-      var timeout = setTimeout(function(){
-        setear([
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: LOGO, sizes: "512x512", type: "image/png" }
-        ]);
-      }, 4000);
-      var precarga = new Image();
-      precarga.onload = function(){
-        clearTimeout(timeout);
-        setear([
-          { src: urlCaratula, sizes: "512x512", type: tipo },
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: LOGO, sizes: "512x512", type: "image/png" }
-        ]);
-      };
-      precarga.onerror = function(){
-        clearTimeout(timeout);
-        setear([
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: LOGO, sizes: "512x512", type: "image/png" }
-        ]);
-      };
-      precarga.src = urlCaratula;
-    } else {
-      setear([
+      artwork = [
+        { src: urlCaratula, sizes: "512x512", type: tipo },
         { src: "icon-192.png", sizes: "192x192", type: "image/png" },
         { src: LOGO, sizes: "512x512", type: "image/png" }
-      ]);
+      ];
+    } else {
+      artwork = [
+        { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: LOGO, sizes: "512x512", type: "image/png" }
+      ];
     }
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title || "sikodark radio",
+      artist: track.artist || "En vivo",
+      album: "sikodark radio",
+      artwork: artwork
+    });
+    navigator.mediaSession.setActionHandler("play", () => startPlayback());
+    navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
   } catch(e) {}
 }
 
@@ -722,6 +720,7 @@ async function fetchCover(t) {
         registrarExito(e.nombre);
         cover = r.url;
         coverEl.src = cover;
+        /* ⭐ RE-ASIGNA la metadata con el cover real — ahora sí pasa el filtro */
         actualizarMediaSession(t, cover);
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
@@ -963,6 +962,9 @@ let deferredPrompt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;install.classList.remove("hidden")});
 install.onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;install.classList.add("hidden")};
 
+/* =========================================================
+   ⭐🆕 AUTO-UPDATE: detecta versión nueva → banner → aplica
+   ========================================================= */
 if("serviceWorker" in navigator)window.addEventListener("load",()=>{
   navigator.serviceWorker.register("sw.js")
     .then(reg => {
@@ -970,7 +972,7 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
         const nuevoSW = reg.installing;
         nuevoSW.addEventListener("statechange", () => {
           if (nuevoSW.state === "installed" && navigator.serviceWorker.controller) {
-            window.location.reload();
+            mostrarAvisoActualizacion();
           }
         });
       });
@@ -979,11 +981,24 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>{
     .catch(err => log("err", "Service Worker: " + err.message));
 });
 
+function mostrarAvisoActualizacion(){
+  var aviso = document.getElementById("avisoUpdate");
+  if (aviso) aviso.style.display = "flex";
+}
+
+function aplicarUpdate(){
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    Promise.all(regs.map(function(r){ return r.update(); })).catch(function(){});
+  }).finally(function(){
+    window.location.reload();
+  });
+}
+
 renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-console.log("🧠 Sikodark Radio v26 — cajita exclusiva (publi o ticker, nunca juntos)");
+console.log("🧠 Sikodark Radio v27 — MediaSession con cover real + auto-update + DJ Brain");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1640,12 +1655,11 @@ renderFavs();
   var tickerItems = [], tickerTimer = null;
   var ICONOS = ["🎸","🤘","🎤","🥁","🎹","🎼","⭐"];
 
-  /* ---------- MODO PUBLICIDAD (prioridad — el ticker se apaga por completo) ---------- */
   function mostrarPubli(a){
     salirTicker();
     modoActual = "publi";
     tickCard.classList.add("hidden");
-    box.classList.remove("modo-ticker");   /* ⭐ garantiza exclusión total */
+    box.classList.remove("modo-ticker");
 
     if (a.imagen){
       img.onerror = function(){ box.classList.remove("con-img"); };
@@ -1661,7 +1675,6 @@ renderFavs();
     } else {
       spDiv.style.display = "none"; spDiv.innerHTML = "";
     }
-    /* ⭐ texto oculto si está vacío — sin huecos cuando es solo imagen */
     var t = (a.texto || "").trim();
     txt.textContent = t;
     txt.style.display = t ? "block" : "none";
@@ -1671,7 +1684,6 @@ renderFavs();
     box.classList.remove("hidden");
   }
 
-  /* ---------- 🧠 NÚCLEO DEL ALGORITMO ---------- */
   var NUCLEO_ROCKPOP = ["rock","pop","metal","punk","guitarra","new wave","synthpop","synth pop","gótico","gotico","gothic","post-punk","post punk","dark","heavy metal","power metal","nu metal","nu rock","alternativo","alternative","beatles","rolling stones","queen","pink floyd","led zeppelin","guns n' roses","nirvana","ramones","elvis","michael jackson","madonna","david bowie","freddie mercury","john lennon","paul mccartney","ac/dc","metallica","bon jovi","bruce springsteen","the who","abba","bee gees","the cure","depeche mode","joy division","new order","duran duran","pet shop boys","the smiths","siouxsie","bauhaus","sisters of mercy","type o negative","lacrimosa","kraftwerk","eurythmics","a-ha","tears for fears"];
 
   var BANDAS_ES = ["soda stereo","git","arena hash","enanitos verdes","prisioneros","los prisioneros","charly garcía","charly garcia","spinetta","luis alberto spinetta","fito páez","fito paez","sumo","virus","suéter","sueter","babasónicos","babasonicos","divididos","la renga","patricio rey","redonditos","attaque 77","2 minutos","dos minutos","rata blanca","andrés calamaro","andres calamaro","los rodríguez","los rodriguez","héroes del silencio","heroes del silencio","caifanes","jaguares","maná","mana","café tacvba","cafe tacvba","cafe tacuba","molotov","aterciopelados","la ley","fobia","santa sabina","maldita vecindad","zoé","zoe","enjambre","los fabulosos cadillacs","cadillacs","los cafres","nonpalidece","v8","hermética","hermetica","almafuerte","pappo","vox dei","sui generis","manal","los gatos","almendra","pescado rabioso","invisible","serú girán","seru giran","nito mestre","illya kuryaki","mago de oz","extremoduro","leño","leno","rosendo","barricada","siniestro total","alaska","celtas cortos"];
