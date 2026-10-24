@@ -156,24 +156,17 @@ body::after{
 .btn-reset svg{width:18px;height:18px;color:var(--muted)}
 .btn-reset:hover svg{color:var(--error)}
 
-/* ===== ⭐📢 CARTEL DE AVISOS ===== */
+/* ===== ⭐📢 CARTEL DE AVISOS (solo imagen) ===== */
 #cartelAviso{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-24px);z-index:99995;
  max-width:430px;width:calc(100% - 28px);background:#1c1d24;border:1px solid rgba(255,138,36,.4);border-radius:18px;
  overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.35s}
 #cartelAviso.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-#cartelAviso .c-img{display:none;width:100%;max-height:240px;overflow:hidden;background:#0e0f14}
-#cartelAviso .c-img img{width:100%;height:100%;object-fit:cover;display:block}
-#cartelAviso.con-img .c-img{display:block}
-#cartelAviso .c-body{padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
-#cartelAviso .c-txt{flex:1;min-width:0;font-family:var(--sans);font-weight:700;font-size:13.5px;
- line-height:1.45;color:#f5f5f7;word-wrap:break-word}
-#cartelAviso .c-tag{font:10px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin-bottom:4px;display:block}
-#cartelAviso .c-btn{display:inline-block;margin:0 14px 13px;padding:9px 18px;border-radius:999px;
- background:var(--primary);color:#191919;font-family:var(--sans);font-weight:800;font-size:12.5px;
- text-transform:uppercase;text-decoration:none;text-align:center}
-#cartelAviso .c-close{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
- border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#f5f5f7;font-size:16px;
- line-height:1;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(6px)}
+#cartelAviso .c-img{width:100%;overflow:hidden;background:#0e0f14;border-radius:18px}
+#cartelAviso .c-img img{width:100%;height:auto;max-height:520px;object-fit:cover;display:block}
+#cartelAviso .c-close{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+ border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:#fff;font-size:18px;
+ line-height:1;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(6px);
+ -webkit-backdrop-filter:blur(6px);z-index:2}
 
 /* ===== ⭐📴 BANNER SIN INTERNET ===== */
 #offBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:99996;
@@ -1529,29 +1522,21 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== ⭐📢 CARTELES DE AVISOS ===== -->
+<!-- ===== ⭐📢 CARTEL DE AVISOS (solo imagen) ===== -->
 <div id="cartelAviso" role="alert">
   <div class="c-img"><img id="cartelImg" alt="Aviso"></div>
-  <div class="c-body">
-    <div style="flex:1;min-width:0">
-      <span class="c-tag">📢 sikodark radio</span>
-      <div class="c-txt" id="cartelTxt"></div>
-    </div>
-  </div>
-  <a id="cartelBtn" class="c-btn hidden" href="#" target="_blank" rel="noopener">Ver más</a>
   <button class="c-close" id="cartelClose" aria-label="Cerrar">×</button>
 </div>
 <script>
 (function(){
   var box = document.getElementById("cartelAviso"),
       img = document.getElementById("cartelImg"),
-      txt = document.getElementById("cartelTxt"),
-      btn = document.getElementById("cartelBtn"),
       close = document.getElementById("cartelClose");
 
-  var timer = null, freq = "sesion";
+  var timer = null;
 
-  function store(){ try{ return (freq === "siempre") ? sessionStorage : localStorage; }catch(e){ return localStorage; } }
+  /* Por defecto, 1 vez por apertura (sesión) — se guarda en localStorage */
+  function store(){ try{ return localStorage; }catch(e){ return localStorage; } }
   function yaVisto(pub){ try{ return Number(store().getItem("sikodark-aviso-visto") || 0) >= pub; }catch(e){ return true; } }
   function marcarVisto(pub){ try{ store().setItem("sikodark-aviso-visto", String(pub)); }catch(e){} }
 
@@ -1561,27 +1546,17 @@ renderFavs();
   }
 
   function mostrar(a, pub){
-    if (a.imagen){
-      img.onerror = function(){ box.classList.remove("con-img"); };
-      img.onload  = function(){ box.classList.add("con-img"); };
-      img.src = a.imagen;
-    } else {
-      box.classList.remove("con-img");
-    }
-    txt.textContent = (a.texto || "").trim();
-    if (a.textoBoton && a.enlace){
-      btn.textContent = a.textoBoton;
-      btn.href = a.enlace;
-      btn.classList.remove("hidden");
-    } else {
-      btn.classList.add("hidden");
-    }
-    if (!a.imagen && !(a.texto || "").trim()) return;
+    /* ⭐ Solo imagen: si no hay imagen, no se muestra nada */
+    if (!a.imagen) return;
+    img.src = a.imagen;
 
     box.classList.add("show");
     marcarVisto(pub);
     clearTimeout(timer);
-    timer = setTimeout(ocultar, 35000);
+    /* ⏱️ Duración configurable desde el panel (default 35 seg) */
+    var seg = Number(a.duracionSegundos) || 35;
+    if (seg < 1) seg = 35;
+    timer = setTimeout(ocultar, seg * 1000);
   }
 
   close.addEventListener("click", ocultar);
@@ -1590,7 +1565,6 @@ renderFavs();
     dbFB.collection("config").doc("avisos").onSnapshot(function(snap){
       if (!snap.exists) return;
       var a = snap.data().anuncio || {};
-      freq = a.frecuencia || "sesion";
       if (a.activo === false){ ocultar(); return; }
       var pub = Number(a.publicadoEn) || 0;
       if (!pub) return;

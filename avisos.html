@@ -66,17 +66,18 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
     <label>Imagen (se comprime sola)</label>
     <input type="file" id="anImg" accept="image/*">
     <div class="prev" id="anPrev"><img id="anPrevImg" alt=""></div>
-    <label>Texto que acompaña (opcional)</label>
-    <textarea id="anTexto" placeholder="Ej: 🎉 Viernes especial de rock nacional, desde las 22h"></textarea>
-    <label>Texto del botón (vacío = sin botón)</label>
-    <input type="text" id="anBoton" placeholder="Ver más">
-    <label>Enlace del botón (opcional)</label>
-    <input type="text" id="anEnlace" placeholder="https://...">
-    <label>Frecuencia (para quienes abran después)</label>
-    <select id="anFreq">
-      <option value="sesion">1 vez por apertura (recomendado)</option>
-      <option value="siempre">Cada vez que abren la app</option>
-    </select>
+    <label>⏱️ Duración del aviso (cuánto tiempo se ve en la app)</label>
+    <div style="display:flex;gap:8px">
+      <input type="number" id="anDuracion" min="1" value="35" style="flex:1">
+      <select id="anUnidad" style="flex:0 0 120px">
+        <option value="seg">segundos</option>
+        <option value="min">minutos</option>
+      </select>
+    </div>
+    <p style="font-size:.72rem;color:#778;margin-top:6px;line-height:1.4">
+      Pasado ese tiempo, el aviso desaparece solo de la pantalla del oyente.<br>
+      El cartel muestra <b style="color:#aab">solo la imagen</b> — sin texto ni botón encima.
+    </p>
   </div>
 
   <button class="btn" id="btnPublicar">🚀 Publicar aviso (salta YA en quienes escuchan)</button>
@@ -149,7 +150,7 @@ firebase.auth().onAuthStateChanged(u => {
 /* =========================================================
    📢 CANAL 1: AVISO ESPONTÁNEO (config/avisos)
    ========================================================= */
-let cfg = { anuncio: { activo:false, imagen:"", texto:"", enlace:"", textoBoton:"", frecuencia:"sesion", publicadoEn:0 } };
+let cfg = { anuncio: { activo:false, imagen:"", duracionSegundos:35, publicadoEn:0 } };
 let imagenBase64 = null;
 
 async function cargarAviso(){
@@ -158,15 +159,20 @@ async function cargarAviso(){
     const doc = await db.collection("config").doc("avisos").get();
     if (doc.exists && doc.data().anuncio){
       cfg = doc.data();
-      if (!cfg.anuncio.texto) cfg.anuncio.texto = "";
+      if (!cfg.anuncio.duracionSegundos) cfg.anuncio.duracionSegundos = 35;
       if (!cfg.anuncio.publicadoEn) cfg.anuncio.publicadoEn = 0;
     }
   } catch(e) { estado("⚠️ No pude leer el aviso actual"); }
   pintarEstado();
-  $("anTexto").value = cfg.anuncio.texto || "";
-  $("anBoton").value = cfg.anuncio.textoBoton || "";
-  $("anEnlace").value = cfg.anuncio.enlace || "";
-  $("anFreq").value = cfg.anuncio.frecuencia || "sesion";
+  /* ⏱️ Cargar duración: convertir segundos a número + unidad */
+  var seg = Number(cfg.anuncio.duracionSegundos) || 35;
+  if (seg >= 60 && seg % 60 === 0){
+    $("anDuracion").value = seg / 60;
+    $("anUnidad").value = "min";
+  } else {
+    $("anDuracion").value = seg;
+    $("anUnidad").value = "seg";
+  }
   if (cfg.anuncio.imagen){
     $("anPrev").style.display = "block";
     $("anPrevImg").src = cfg.anuncio.imagen;
@@ -175,8 +181,10 @@ async function cargarAviso(){
 function pintarEstado(){
   const e = $("estadoActual");
   if (cfg.anuncio.activo && cfg.anuncio.imagen){
+    var seg = Number(cfg.anuncio.duracionSegundos) || 35;
+    var txtDur = seg >= 60 ? (seg/60) + " min" : seg + " seg";
     e.className = "vigente";
-    e.textContent = "🟢 AVISO ACTIVO — cartel saltando en la radio";
+    e.textContent = "🟢 AVISO ACTIVO — cartel saltando en la radio · duración " + txtDur;
   } else {
     e.className = "vigente no";
     e.textContent = "⚪ Sin aviso activo";
@@ -201,18 +209,20 @@ function pintarEstado(){
   img.src = URL.createObjectURL(f);
 });
 
- $("anTexto").addEventListener("input", () => cfg.anuncio.texto = $("anTexto").value);
- $("anBoton").addEventListener("input", () => cfg.anuncio.textoBoton = $("anBoton").value.trim());
- $("anEnlace").addEventListener("input", () => cfg.anuncio.enlace = $("anEnlace").value.trim());
- $("anFreq").addEventListener("change", () => cfg.anuncio.frecuencia = $("anFreq").value);
+/* ⏱️ Calcular duración en segundos desde número + unidad */
+function leerDuracionSeg(){
+  var n = Math.max(1, parseInt($("anDuracion").value, 10) || 35);
+  return $("anUnidad").value === "min" ? n * 60 : n;
+}
 
  $("btnPublicar").onclick = async () => {
   if (imagenBase64) cfg.anuncio.imagen = imagenBase64;
-  if (!cfg.anuncio.imagen && !cfg.anuncio.texto){
-    estado("⚠️ Falta imagen o texto del aviso", "err"); return;
+  if (!cfg.anuncio.imagen){
+    estado("⚠️ Falta la imagen del aviso", "err"); return;
   }
   cfg.anuncio.activo = true;
   cfg.anuncio.publicadoEn = Date.now();
+  cfg.anuncio.duracionSegundos = leerDuracionSeg();
   $("btnPublicar").disabled = true;
   try {
     estado("💾 Publicando…");
