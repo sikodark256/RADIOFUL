@@ -184,17 +184,17 @@ body::after{
 
 /* ===== 🤘 MAGAZINE TICKER (estilo Metal Hammer) ===== */
 .publi-box.modo-ticker{padding:0;background:#0a0a0d;border:1px solid rgba(255,255,255,.12);
-  border-left:4px solid var(--primary);border-radius:18px;overflow:hidden}
+  border-radius:18px;overflow:hidden}
 .publi-box.modo-ticker .publi-txt,
 .publi-box.modo-ticker .publi-img{display:none!important}
 .tick-magazine{display:flex;flex-direction:column;background:#0a0a0d;color:#f5f5f7;
   border-radius:18px;overflow:hidden;transition:opacity .4s ease}
 .tick-magazine.saliendo{opacity:0}
 
-/* === HERO IMAGE 16:10 === */
+/* === HERO IMAGE 16:10 — sesgado hacia arriba para no cortar cabezas === */
 .tick-mag-hero{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;
   background:linear-gradient(135deg,#3a2a12,#1a1a20,#0a0a0d)}
-.tick-mag-hero img{width:100%;height:100%;object-fit:cover;display:block;
+.tick-mag-hero img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;
   filter:contrast(1.08) saturate(1.05) brightness(.95);
   transition:transform 6s ease}
 .tick-magazine:not(.saliendo) .tick-mag-hero img{transform:scale(1.04)}
@@ -1907,6 +1907,46 @@ renderFavs();
   var PATRON_REUNIFIC = /reunif|reunido|reunida|reunieron|volvieron|regresaron|reunión|comeback|vuelta|i tour|i tour 202|i tour 2024|i tour 2025/i;
   var PATRON_ACTIVO = /en activo|activa actualmente|actualmente en|sigue en activ|continúa en activ|continúan en activ|presente|continúa|continúan|sigue activ|aún activ|todavía activ|en gira actualmente|actualmente en gira/i;
 
+  /* ============================================================
+     🧠 TÓPICOS FANZINE (estilo Metal Hammer)
+     ============================================================ */
+  var TOPICOS = [
+    { tag: "🚌 GIRAS Y CONCIERTOS", regex: /\b(gir[ao]s?|toure?[ao]s?|conciert|festival|live|en vivo|presentaci[oó]n|presentaron|escenario|recorrieron|giraron|world tour|giras|presentando|actuaron|actuaci[oó]n|tournee)\b/i, score: 5 },
+    { tag: "📰 ANÉCDOTAS", regex: /\b(falleci[oó]|muri[oó]|muerte|accidente|pol[eé]mic|demanda|esc[aá]ndalo|controversia|curiosidad|an[eé]cdota|sobredosis|suicidio|asesin|rompieron|pelearon|conflicto|problema|demand[ao]|juicio|detenid|arrest|c[aá]rcel|prisi[oó]n)\b/i, score: 6 },
+    { tag: "🏆 PREMIOS Y RÉCORDS", regex: /\b(grammy|latin grammy|premio|nominad|ganador|disco de oro|disco de platino|r[eé]cord|hall of fame|mtv|billboard|certificad|multin|exitoso|exitos|n[ºo]?\s*1|n[uú]mero uno|top\s*\d)\b/i, score: 5 },
+    { tag: "💿 DISCOGRAFÍA", regex: /\b([aá]lbum|disco|sencillo|\bEP\b|lanzaron|publicaron|editaron|grabaron|estrenaron|debuto|debutaron|produjeron|producci[oó]n|tracklist|canci[oó]n|canciones|single)\b/i, score: 4 },
+    { tag: "🎬 FORMACIÓN E HISTORIA", regex: /\b(formad[ao]s?|fundad[ao]s?|naci[oó]|nacieron|integrad|miembros|fundador|originalmente|al principio|al inicio|inicialmente|primeros a[nñ]os|comenzaron|empezaron|crearon)\b/i, score: 3 },
+    { tag: "🎤 ESTILO E INFLUENCIAS", regex: /\b(estilo|influenci|inspir|caracteriz| distintiv|sonoridad|marcaron|pioner|innovador|referente|legado)\b/i, score: 4 }
+  ];
+
+  /* ============================================================
+     📚 extractoLargoWikipedia() — trae ~6000 chars del artículo
+     ============================================================ */
+  async function extractoLargoWikipedia(artista){
+    var clave = "sikodark-extracto-largo-v1-" + normArtista(artista).replace(/\s+/g,"-");
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache){
+        var parsed = JSON.parse(cache);
+        if (parsed && parsed.texto && (Date.now() - (parsed.t || 0)) < 12*3600*1000) return parsed.texto;
+      }
+    }catch(e){}
+    try{
+      var url = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=6000&titles=" +
+                encodeURIComponent(artista) + "&origin=*";
+      var r = await fetch(url);
+      if (!r.ok) return "";
+      var d = await r.json();
+      var pages = d.query && d.query.pages;
+      if (!pages) return "";
+      var firstKey = Object.keys(pages)[0];
+      var texto = (pages[firstKey].extract || "").trim();
+      if (!texto) return "";
+      try{ localStorage.setItem(clave, JSON.stringify({texto: texto, t: Date.now()})); }catch(e){}
+      return texto;
+    }catch(e){ return ""; }
+  }
+
   /* ===========================================================
      🧠 infoBanda() — algoritmo inteligente de enriquecimiento
      ===========================================================
@@ -2027,8 +2067,18 @@ renderFavs();
   }
 
   /* ===========================================================
-     🧠 anecdotasDelArtista() — ahora usa infoBanda()
-     Devuelve items RICOS con headline, estado, meta, wikiUrl
+     🧠 anecdotasDelArtista() — versión fanzine Metal Hammer
+     ===========================================================
+     Para la banda ACTUALMENTE SONANDO devuelve items por tópico:
+       • ⚡ RESEÑA          — 3 mejores oraciones del intro
+       • 🚌 GIRAS Y CONCIERTOS
+       • 📰 ANÉCDOTAS
+       • 🏆 PREMIOS Y RÉCORDS
+       • 💿 DISCOGRAFÍA
+       • 🎬 FORMACIÓN E HISTORIA
+       • 🎤 ESTILO E INFLUENCIAS
+       • 🔴 VIGENTE AHORA / 🟡 REUNIFICADOS (si aplica)
+     Cada item lleva headline, estado, meta (género·año·origen), wikiUrl
      =========================================================== */
   async function anecdotasDelArtista(artista){
     if (!artista || artista.length < 3) return [];
@@ -2036,27 +2086,32 @@ renderFavs();
     if (!info || !info.extracto) return [];
 
     var nombre = info.nombre;
-    var oraciones = info.extracto.match(/[^.!?]+[.!?]+/g) || [info.extracto];
-    var buenas = [];
-    oraciones.forEach(function(o){
-      o = o.trim();
-      if (o.length < 40) return;
-      var s = IMPACTO.test(o) ? 2 : 1;
-      if (esRockPop(o)) s++;
-      buenas.push({o:o, s:s});
-    });
-    buenas.sort(function(a,b){ return b.s - a.s; });
+
+    /* Traer extracto largo (~6000 chars) para tener material rico */
+    var extractoLargo = await extractoLargoWikipedia(artista);
+    var combined = (extractoLargo || info.extracto);
+    if (info.bioLarga) combined += " " + info.bioLarga;
+
+    /* Split en oraciones (>=40 chars) */
+    function splitOraciones(texto){
+      if (!texto) return [];
+      var arr = texto.match(/[^.!?]+[.!?]+/g) || [texto];
+      return arr.map(function(o){ return o.trim(); })
+                .filter(function(o){ return o.length >= 40 && o.length <= 500; });
+    }
+
+    var introOraciones = splitOraciones(info.extracto);
+    var todasOraciones = splitOraciones(combined);
 
     var items = [];
 
-    /* Item 1: RESEÑA — 2-3 mejores oraciones (texto rico tipo Metal Hammer) */
-    if (buenas.length){
-      var reseña = buenas.slice(0, 3).map(function(b){ return b.o; }).join(" ");
-      reseña = recortar(reseña, 320);
+    /* ⚡ RESEÑA — 3 mejores oraciones del intro */
+    if (introOraciones.length){
+      var reseña = introOraciones.slice(0, 3).join(" ");
       items.push({
-        tag: "⚡ AHORA SUENA",
+        tag: "⚡ RESEÑA",
         headline: nombre.toUpperCase(),
-        texto: reseña,
+        texto: recortar(reseña, 320),
         img: info.img,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
@@ -2067,23 +2122,35 @@ renderFavs();
       });
     }
 
-    /* Item 2: DATO IMPACTANTE — solo si hay oración con impacto */
-    if (buenas[0] && buenas[0].s >= 2){
+    /* 🎬 FORMACIÓN — primera oración que mencione formación/nacimiento (suele ser la 1ra) */
+    TOPICOS.forEach(function(topico){
+      var matches = todasOraciones.filter(function(o){ return topico.regex.test(o); });
+      if (!matches.length) return;
+
+      /* Tomar las 1-2 mejores (más largas y con info) */
+      matches.sort(function(a, b){
+        var sa = IMPACTO.test(a) ? 100 : a.length;
+        var sb = IMPACTO.test(b) ? 100 : b.length;
+        return sb - sa;
+      });
+      var cantidad = topico.tag === "📰 ANÉCDOTAS" ? 2 : 1;
+      var texto = matches.slice(0, cantidad).join(" ");
+
       items.push({
-        tag: "📰 DATO DESTACADO",
+        tag: topico.tag,
         headline: nombre.toUpperCase(),
-        texto: recortar(buenas[0].o, 220),
+        texto: recortar(texto, 280),
         img: info.img,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
         genero: info.genero,
         wikiUrl: info.wikiUrl,
-        score: 6
+        score: topico.score
       });
-    }
+    });
 
-    /* Item 3: ESTADO / VIGENCIA — solo si la banda sigue activa o se reunió */
+    /* 🔴 VIGENTE AHORA / 🟡 REUNIFICADOS */
     if (info.estado === "EN ACTIVO"){
       items.push({
         tag: "🔴 VIGENTE AHORA",
@@ -2114,43 +2181,44 @@ renderFavs();
       });
     }
 
+    /* Limitar a 6 items para no saturar la rotación */
+    if (items.length > 6) items = items.slice(0, 6);
     return items;
   }
 
   var artistaVigia = "", buscandoAnec = "";
   async function buscarAnecdotasEnVivo(){
     var a = (document.getElementById("artist").textContent || "").trim();
-    if (!a || a === artistaVigia) return;
+    /* Ignorar placeholders cuando todavía no hay artista real */
+    if (!a || a === "En vivo" || a === "Conectando…" || a === "—" || a === "sikodark radio") return;
+    if (a === artistaVigia) return;
+
     artistaVigia = a;
     if (buscandoAnec === normArtista(a)) return;
     buscandoAnec = normArtista(a);
+
     var items = await anecdotasDelArtista(a);
     buscandoAnec = "";
-    if (!items.length || modoActual !== "ticker" || !tickerItems.length) return;
 
-    /* Eliminar items viejos del artista anterior (los que tengan headline = artista anterior)
-       para que el ticker no se llene de items de bandas anteriores */
-    var artistaAnteriorNorm = normArtista(artistaVigia);
-    /* No tocamos items de efemérides/clásicos/banda del día — solo los "AHORA SUENA" / "DATO" / "VIGENTE" / "REUNIFICADOS" */
-    tickerItems = tickerItems.filter(function(x){
-      if (!x.tag) return true;
-      if (/AHORA SUENA|DATO DESTACADO|VIGENTE AHORA|REUNIFICADOS/.test(x.tag)){
-        /* Si headline matchea el artista anterior (no el actual), lo sacamos */
-        if (x.headline && normArtista(x.headline) !== normArtista(a)) return false;
-      }
-      return true;
-    });
+    /* Fallback mínimo si Wikipedia no tiene info */
+    if (!items.length){
+      items = [{
+        tag: "🎸 SONANDO AHORA",
+        headline: a.toUpperCase(),
+        texto: "Sonando en sikodark radio: " + a + ". Próximamente más info sobre la banda.",
+        img: "", estado: "", anioFormacion: "", origen: "", genero: "", wikiUrl: "",
+        score: 1
+      }];
+    }
 
-    /* Insertar items nuevos en posiciones variadas */
-    items.forEach(function(it, idx){
-      var yaEsta = tickerItems.some(function(x){
-        return x.tag === it.tag && x.headline === it.headline;
-      });
-      if (!yaEsta){
-        var pos = Math.min(tickerItems.length, idx + Math.floor(Math.random() * 3));
-        tickerItems.splice(pos, 0, it);
-      }
-    });
+    if (modoActual !== "ticker") return;
+
+    /* ⭐ REEMPLAZAR todo el pool con los items de la banda actual */
+    tickerItems = items;
+
+    /* Limpiar memoria DJ para que ningún item quede filtrado */
+    try{ localStorage.removeItem(LS_MEMORIA); }catch(e){}
+    ultimoTag = "";
   }
   var anecObs = new MutationObserver(function(){ setTimeout(buscarAnecdotasEnVivo, 300); });
   anecObs.observe(document.getElementById("artist"), { childList:true, characterData:true, subtree:true });
@@ -2198,28 +2266,36 @@ renderFavs();
   }
 
   async function construirPool(){
-    var d = new Date();
-    var bloque = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()+"-"+Math.floor(d.getHours()/3);
-    var clave = "sikodark-tick-v2-" + bloque;
+    /* ⭐ Pool SOLO de la banda que está sonando ahora — sin efemérides ni clásicos */
+    var artActual = (document.getElementById("artist").textContent || "").trim();
+    if (!artActual || artActual === "En vivo" || artActual === "Conectando…" ||
+        artActual === "—" || artActual === "sikodark radio"){
+      return [];
+    }
+    var clave = "sikodark-tick-v3-" + normArtista(artActual).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
-      if (cache) return JSON.parse(cache);
+      if (cache){
+        var parsed = JSON.parse(cache);
+        if (parsed && parsed.items && (Date.now() - (parsed.t || 0)) < 12*3600*1000){
+          return parsed.items;
+        }
+      }
     }catch(e){}
 
-    var efem = [], clas = [], banda = [], anecs = [];
-    try{ efem = await efemeridesDeHoy(); }catch(e){}
-    try{ clas = await clasicosEternos(); }catch(e){}
-    try{ banda = await bandaDelDia(); }catch(e){}
-    var artActual = (document.getElementById("artist").textContent || "").trim();
-    try{ anecs = await anecdotasDelArtista(artActual); }catch(e){}
-
-    var pool = banda.concat(anecs, efem, clas);
-    for (var i = pool.length - 1; i > 0; i--){
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    var items = [];
+    try{ items = await anecdotasDelArtista(artActual); }catch(e){}
+    if (!items.length){
+      items = [{
+        tag: "🎸 SONANDO AHORA",
+        headline: artActual.toUpperCase(),
+        texto: "Sonando en sikodark radio: " + artActual + ".",
+        img: "", estado: "", anioFormacion: "", origen: "", genero: "", wikiUrl: "",
+        score: 1
+      }];
     }
-    try{ localStorage.setItem(clave, JSON.stringify(pool)); }catch(e){}
-    return pool;
+    try{ localStorage.setItem(clave, JSON.stringify({items: items, t: Date.now()})); }catch(e){}
+    return items;
   }
 
   function salirTicker(){
