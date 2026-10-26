@@ -112,6 +112,48 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
   <button class="btn amarillo" id="btnPublicarPubli">📦 Publicar publicidad (aparece en la cajita YA)</button>
   <button class="btn rojo" id="btnQuitarPubli">🗑️ Quitar la publicidad de la caja</button>
 
+  <!-- ================= SECCIÓN 3: ENCUESTA VERSUS / ESPECIAL 4PM ================= -->
+  <h1 style="margin-top:26px">🗳️ Encuesta Versus / Especial 4PM</h1>
+  <p class="sub">Aparece como tarjeta especial en la ventanita de reseñas — los oyentes votan su banda favorita</p>
+
+  <div class="vigente no" id="estadoEncuesta">—</div>
+
+  <div class="card" style="border-color:rgba(255,138,36,.4)">
+    <div class="seccion" style="color:var(--primary)">🗳️ Encuesta en vivo</div>
+    <label>Tipo de especial</label>
+    <select id="enTipo">
+      <option value="especial4pm">🎸 Especial de las 4 PM</option>
+      <option value="versus">⚔️ Versus (banda vs banda)</option>
+    </select>
+    <label>Pregunta / título (opcional)</label>
+    <input type="text" id="enPregunta" placeholder="Ej: ¿Qué banda querés que suene hoy a las 16h?">
+    <label>Opciones (escribí entre 2 y 6 bandas)</label>
+    <input type="text" id="enOp1" placeholder="Banda 1 · ej: Metallica" style="margin-bottom:6px">
+    <input type="text" id="enOp2" placeholder="Banda 2 · ej: Megadeth" style="margin-bottom:6px">
+    <input type="text" id="enOp3" placeholder="Banda 3 (opcional)" style="margin-bottom:6px">
+    <input type="text" id="enOp4" placeholder="Banda 4 (opcional)" style="margin-bottom:6px">
+    <input type="text" id="enOp5" placeholder="Banda 5 (opcional)" style="margin-bottom:6px">
+    <input type="text" id="enOp6" placeholder="Banda 6 (opcional)">
+  </div>
+
+  <button class="btn" id="btnPublicarEncuesta">🗳️ Publicar encuesta (sale en la ventanita YA)</button>
+  <button class="btn gris" id="btnReenviarEncuesta">🔔 Reenviar encuesta actual</button>
+  <button class="btn rojo" id="btnCerrarEncuesta">🔒 Cerrar encuesta y guardar resultados</button>
+
+  <div id="resultadosEncuesta" style="display:none;margin-top:14px"></div>
+
+  <!-- ================= SECCIÓN 4: PEDIDOS DE TEMAS ================= -->
+  <h1 style="margin-top:26px">🎸 Pedidos de temas (de los oyentes)</h1>
+  <p class="sub">Lista en tiempo real — los oyentes mandan su pedido desde el botón "🎸 Pedí tu tema"</p>
+
+  <div class="card">
+    <div class="seccion">📋 Últimos pedidos</div>
+    <div id="listaPedidos">
+      <p style="color:var(--muted);font-size:.85rem;text-align:center;padding:14px 0">Todavía no hay pedidos.</p>
+    </div>
+    <button class="btn gris" id="btnLimpiarPedidos" style="margin-top:8px">🗑️ Limpiar todos los pedidos</button>
+  </div>
+
   <button class="btn gris" id="btnSalir">🚪 Salir</button>
 </div>
 
@@ -140,6 +182,8 @@ firebase.auth().onAuthStateChanged(u => {
     $("vPanel").classList.remove("hidden");
     cargarAviso();
     cargarPubli();
+    cargarEncuesta();
+    cargarPedidos();
   } else if (u) {
     $("lErr").textContent = "Esta cuenta no es administradora";
     firebase.auth().signOut();
@@ -387,6 +431,179 @@ function pintarEstadoPubli(){
     await db.collection("config").doc("publicidad").set(cfgPubli);
     estado("🗑️ Publicidad quitada — la caja desaparece de la app", "ok");
     pintarEstadoPubli();
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+};
+
+/* =========================================================
+   🗳️ CANAL 3: ENCUESTA VERSUS / ESPECIAL 4PM (config/encuesta)
+   ========================================================= */
+let cfgEncuesta = { encuesta: { activa:false, tipo:"especial4pm", pregunta:"", opciones:[], publicadoEn:0 } };
+
+async function cargarEncuesta(){
+  try {
+    const doc = await db.collection("config").doc("encuesta").get();
+    if (doc.exists && doc.data().encuesta){
+      cfgEncuesta = doc.data();
+      if (!cfgEncuesta.encuesta.opciones) cfgEncuesta.encuesta.opciones = [];
+    }
+  } catch(e) {}
+  pintarEstadoEncuesta();
+  /* Cargar campos del formulario si hay encuesta activa */
+  if (cfgEncuesta.encuesta.opciones.length){
+    $("enTipo").value = cfgEncuesta.encuesta.tipo || "especial4pm";
+    $("enPregunta").value = cfgEncuesta.encuesta.pregunta || "";
+    for (let i = 0; i < 6; i++){
+      $("enOp" + (i+1)).value = cfgEncuesta.encuesta.opciones[i] || "";
+    }
+  }
+  /* Escuchar cambios en vivo para refrescar resultados */
+  db.collection("config").doc("encuesta").onSnapshot(function(snap){
+    if (snap.exists){
+      cfgEncuesta = snap.data();
+      pintarEstadoEncuesta();
+      pintarResultados();
+    }
+  });
+}
+function pintarEstadoEncuesta(){
+  const e = $("estadoEncuesta");
+  if (cfgEncuesta.encuesta && cfgEncuesta.encuesta.activa){
+    const total = (cfgEncuesta.encuesta.votos || []).reduce((s,v) => s + 1, 0);
+    const tipoTxt = cfgEncuesta.encuesta.tipo === "versus" ? "⚔️ VERSUS" : "🎸 ESPECIAL 4PM";
+    e.className = "vigente";
+    e.innerHTML = "🟢 ENCUESTA ACTIVA · " + tipoTxt + " · " + total + " voto(s) registrado(s)";
+  } else {
+    e.className = "vigente no";
+    e.textContent = "⚪ Sin encuesta activa";
+  }
+}
+function pintarResultados(){
+  const box = $("resultadosEncuesta");
+  if (!cfgEncuesta.encuesta || !cfgEncuesta.encuesta.activa){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+  const opciones = cfgEncuesta.encuesta.opciones || [];
+  const votos = cfgEncuesta.encuesta.votos || [];
+  /* Contar votos por opción */
+  const conteo = {};
+  opciones.forEach((op, i) => conteo[i] = 0);
+  votos.forEach(v => { if (typeof v.opcion === "number" && conteo[v.opcion] !== undefined) conteo[v.opcion]++; });
+  const total = votos.length || 1;
+  let html = '<div style="background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:12px;margin-top:10px">';
+  html += '<div class="seccion" style="color:var(--primary);margin-bottom:10px">📊 Resultados en vivo</div>';
+  opciones.forEach((op, i) => {
+    const n = conteo[i];
+    const pct = Math.round(n / total * 100);
+    html += '<div style="margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>' + (op||"—") + '</span><b style="color:var(--primary)">' + n + ' (' + pct + '%)</b></div>';
+    html += '<div style="height:8px;background:#0e0f14;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--primary);transition:width .3s"></div></div>';
+    html += '</div>';
+  });
+  html += '<p style="font-size:.75rem;color:var(--muted);margin-top:8px;text-align:center">Total: ' + votos.length + ' voto(s)</p>';
+  html += '</div>';
+  box.style.display = "block";
+  box.innerHTML = html;
+}
+
+ $("btnPublicarEncuesta").onclick = async () => {
+  const tipo = $("enTipo").value;
+  const pregunta = $("enPregunta").value.trim();
+  const opciones = [];
+  for (let i = 1; i <= 6; i++){
+    const v = $("enOp" + i).value.trim();
+    if (v) opciones.push(v);
+  }
+  if (opciones.length < 2){
+    estado("⚠️ Escribí al menos 2 opciones de banda", "err"); return;
+  }
+  cfgEncuesta.encuesta = {
+    activa: true,
+    tipo: tipo,
+    pregunta: pregunta,
+    opciones: opciones,
+    votos: [],
+    publicadoEn: Date.now()
+  };
+  $("btnPublicarEncuesta").disabled = true;
+  try {
+    estado("🗳️ Publicando encuesta…");
+    await db.collection("config").doc("encuesta").set(cfgEncuesta);
+    estado("✅ Encuesta publicada — aparece en la ventanita YA", "ok");
+    pintarEstadoEncuesta();
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+  $("btnPublicarEncuesta").disabled = false;
+};
+
+ $("btnReenviarEncuesta").onclick = async () => {
+  if (!cfgEncuesta.encuesta || !cfgEncuesta.encuesta.activa){
+    estado("⚠️ No hay encuesta activa para reenviar", "err"); return;
+  }
+  try {
+    cfgEncuesta.encuesta.publicadoEn = Date.now();
+    await db.collection("config").doc("encuesta").set(cfgEncuesta);
+    estado("✅ Encuesta reenviada — salta en todas las pantallas", "ok");
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+};
+
+ $("btnCerrarEncuesta").onclick = async () => {
+  if (!confirm("¿Cerrar la encuesta? Se guarda el resultado y desaparece de la app.")) return;
+  cfgEncuesta.encuesta.activa = false;
+  try {
+    await db.collection("config").doc("encuesta").set(cfgEncuesta);
+    estado("🔒 Encuesta cerrada", "ok");
+    pintarEstadoEncuesta();
+    $("resultadosEncuesta").style.display = "none";
+  } catch(e) { estado("❌ Error: " + e.message, "err"); }
+};
+
+/* =========================================================
+   🎸 CANAL 4: PEDIDOS DE TEMAS (colección temas_pedidos)
+   ========================================================= */
+function cargarPedidos(){
+  db.collection("temas_pedidos").orderBy("fecha","desc").limit(30)
+    .onSnapshot(function(snap){
+      const lista = $("listaPedidos");
+      if (snap.empty){
+        lista.innerHTML = '<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:14px 0">Todavía no hay pedidos.</p>';
+        return;
+      }
+      let html = '';
+      snap.forEach(function(doc){
+        const p = doc.data();
+        const f = p.fecha ? new Date(p.fecha).toLocaleString("es-AR", {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+        const nombre = p.nombre ? " · " + p.nombre : "";
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #2a2b33">';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-weight:700;font-size:.9rem;color:var(--text)">' + (p.banda || "?") + '</div>';
+        html += '<div style="font-size:.8rem;color:var(--muted)">“' + (p.tema || "—") + '”' + nombre + '</div>';
+        html += '</div>';
+        html += '<div style="text-align:right;flex-shrink:0">';
+        html += '<div style="font-size:.7rem;color:var(--muted);font-family:monospace">' + f + '</div>';
+        html += '<button class="mini" data-id="' + doc.id + '" style="margin-top:4px;padding:4px 10px;font-size:11px;background:rgba(255,59,48,.15);color:var(--err)">Borrar</button>';
+        html += '</div>';
+        html += '</div>';
+      });
+      lista.innerHTML = html;
+      /* Botones borrar */
+      lista.querySelectorAll("button[data-id]").forEach(function(b){
+        b.onclick = async function(){
+          try { await db.collection("temas_pedidos").doc(b.getAttribute("data-id")).delete(); }
+          catch(e){ estado("❌ " + e.message, "err"); }
+        };
+      });
+    }, function(e){ estado("⚠️ No pude cargar pedidos: " + e.message, "err"); });
+}
+
+ $("btnLimpiarPedidos").onclick = async () => {
+  if (!confirm("¿Borrar TODOS los pedidos? No se puede deshacer.")) return;
+  try {
+    const snap = await db.collection("temas_pedidos").get();
+    const batch = db.batch();
+    snap.forEach(function(d){ batch.delete(d.ref); });
+    await batch.commit();
+    estado("🗑️ Pedidos borrados", "ok");
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
 };
 </script>

@@ -255,6 +255,69 @@ body::after{
 .tick-mag-link:hover{text-decoration:underline}
 .tick-mag-link.oculto{display:none}
 
+/* ===== 🗳️ ENCUESTA (tarjeta de votación) ===== */
+.tick-mag-encuesta{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.tick-mag-encuesta .voto-opcion{
+  display:block;width:100%;padding:11px 13px;border-radius:11px;
+  background:#1a1a20;border:1px solid rgba(255,255,255,.14);
+  cursor:pointer;font-family:var(--sans);font-weight:700;font-size:13px;
+  color:#f5f5f7;text-align:left;transition:.2s;position:relative;overflow:hidden}
+.tick-mag-encuesta .voto-opcion:hover{border-color:var(--primary);background:#22222a}
+.tick-mag-encuesta .voto-opcion:disabled{cursor:default}
+.tick-mag-encuesta .voto-opcion.mi-voto{
+  background:rgba(255,138,36,.18);border-color:var(--primary);color:var(--primary)
+}
+.tick-mag-encuesta .voto-opcion .voto-fila{
+  display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.tick-mag-encuesta .voto-opcion .pct{
+  font-family:var(--mono);font-size:11px;color:var(--primary);font-weight:800}
+.tick-mag-encuesta .voto-barra{
+  position:absolute;left:0;top:0;bottom:0;background:rgba(255,138,36,.18);
+  transition:width .4s ease;z-index:1;border-right:1px solid rgba(255,138,36,.35)}
+.tick-mag-encuesta .voto-estado{
+  margin-top:6px;font:700 10px var(--mono);color:var(--muted);text-align:center;
+  text-transform:uppercase;letter-spacing:.06em}
+.tick-mag-encuesta .voto-estado.votado{color:var(--primary)}
+
+/* ===== 🎸 MODAL "PEDÍ TU TEMA" ===== */
+#modalPedido{position:fixed;inset:0;z-index:99998;display:none;
+  align-items:center;justify-content:center;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#modalPedido.show{display:flex}
+#modalPedido .modal-card{
+  width:calc(100% - 32px);max-width:380px;
+  background:#1c1d24;border:1px solid var(--border);border-radius:18px;
+  padding:22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.7)}
+#modalPedido h3{font-family:var(--sans);font-weight:900;font-size:18px;margin:0 0 4px;
+  text-transform:uppercase;color:var(--primary)}
+#modalPedido p.sub{color:var(--muted);font-size:12px;margin:0 0 16px;line-height:1.4}
+#modalPedido label{display:block;font:800 10px var(--mono);color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px}
+#modalPedido input,#modalPedido textarea{
+  width:100%;padding:11px;border:1px solid #333;border-radius:10px;
+  background:#0e0f14;color:#eee;font-size:14px;font-family:inherit;resize:vertical}
+#modalPedido textarea{min-height:60px}
+#modalPedido .modal-btns{display:flex;gap:8px;margin-top:14px}
+#modalPedido .modal-btns button{flex:1;padding:12px;border:0;border-radius:10px;
+  font-family:var(--sans);font-weight:800;font-size:13px;cursor:pointer;text-transform:uppercase}
+#modalPedido .btn-enviar{background:var(--primary);color:#161616}
+#modalPedido .btn-cancel{background:#2a2b33;color:#ccc}
+#modalPedido .ok-msg{display:none;background:rgba(52,199,89,.12);
+  border:1px solid rgba(52,199,89,.4);border-radius:10px;padding:14px;
+  text-align:center;color:#7df09a;font:700 13px var(--sans);margin-top:14px}
+
+/* ===== 🎸 BOTÓN FLOTANTE "PEDÍ TU TEMA" ===== */
+#btnPedidoTema{position:fixed;bottom:18px;left:16px;z-index:99997;
+  border:0;border-radius:999px;background:#1c1d24;color:var(--primary);
+  cursor:pointer;display:flex;align-items:center;gap:7px;
+  padding:11px 18px;font:800 11px var(--sans);text-transform:uppercase;
+  letter-spacing:.06em;box-shadow:0 6px 20px rgba(0,0,0,.55);
+  border:1px solid rgba(255,138,36,.5);
+  opacity:0;pointer-events:none;transform:translateY(14px);transition:.3s}
+#btnPedidoTema.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#btnPedidoTema:active{transform:scale(.92)}
+#btnPedidoTema svg{width:16px;height:16px;fill:currentColor}
+
 /* ===== ⭐⬆️ BOTÓN VOLVER ARRIBA ===== */
 #btnTop{position:fixed;bottom:18px;right:16px;z-index:99997;width:46px;height:46px;
   border:0;border-radius:50%;background:var(--primary);color:#161616;cursor:pointer;
@@ -343,6 +406,7 @@ body::after{
       <h3 class="tick-mag-headline" id="tickHeadline"></h3>
       <p class="tick-mag-texto" id="tickTexto"></p>
       <div class="tick-mag-meta" id="tickMeta"></div>
+      <div class="tick-mag-encuesta" id="tickEncuesta" style="display:none"></div>
     </div>
     <div class="tick-mag-nav">
       <span class="tick-mag-count" id="tickCount">— —</span>
@@ -360,6 +424,31 @@ body::after{
 </section>
 </div>
 <footer>sikodark radio · música en directo</footer>
+
+<!-- ===== 🎸 BOTÓN FLOTANTE "PEDÍ TU TEMA" ===== -->
+<button id="btnPedidoTema" aria-label="Pedí tu tema">
+  <svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM5 16l.7 2.1L8 19l-2.3.9L5 22l-.7-2.1L2 19l2.3-.9L5 16z"/></svg>
+  Pedí tu tema
+</button>
+
+<!-- ===== 🎸 MODAL "PEDÍ TU TEMA" ===== -->
+<div id="modalPedido" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <h3>🎸 Pedí tu tema</h3>
+    <p class="sub">Elegí una banda y un tema — el DJ lo verá en su panel al toque.</p>
+    <label>Tu nombre (opcional)</label>
+    <input type="text" id="pedNombre" placeholder="Ej: Juanchi" maxlength="20">
+    <label>Banda / Artista</label>
+    <input type="text" id="pedBanda" placeholder="Ej: Guns N' Roses" maxlength="60">
+    <label>Tema (opcional)</label>
+    <input type="text" id="pedTema" placeholder="Ej: Sweet Child O' Mine" maxlength="60">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="pedCancelar">Cancelar</button>
+      <button class="btn-enviar" id="pedEnviar">Enviar pedido</button>
+    </div>
+    <div class="ok-msg" id="pedOk">✅ ¡Pedido enviado! El DJ lo recibió al toque 🤘</div>
+  </div>
+</div>
 
 <div id="smartNotify" role="alert" aria-live="polite">
   <div class="notify-art"><img id="notifyArt" src="apple-icon.png" alt=""></div>
@@ -1673,7 +1762,8 @@ renderFavs();
       tickMeta = document.getElementById("tickMeta"),
       tickCount = document.getElementById("tickCount"),
       tickDots = document.getElementById("tickDots"),
-      tickLink = document.getElementById("tickLink");
+      tickLink = document.getElementById("tickLink"),
+      tickEncuesta = document.getElementById("tickEncuesta");
   if (!box) return;
 
   var spDiv = document.createElement("div");
@@ -1689,6 +1779,131 @@ renderFavs();
   var modoActual = null;
   var tickerItems = [], tickerTimer = null;
   var ICONOS = ["🎸","🤘","🎤","🥁","🎹","🎼","⭐"];
+
+  /* =========================================================
+     🗳️ ENCUESTA — escuchar config/encuesta en Firebase
+     ========================================================= */
+  var encuestaActiva = null;   /* Objeto encuesta activa o null */
+
+  function yaVoteEncuesta(pub){
+    try{
+      var v = localStorage.getItem("sikodark-voto-enc-" + pub);
+      return v !== null ? parseInt(v, 10) : -1;
+    }catch(e){ return -1; }
+  }
+  function marcarVotoEncuesta(pub, idx){
+    try{ localStorage.setItem("sikodark-voto-enc-" + pub, String(idx)); }catch(e){}
+  }
+
+  try{
+    dbFB.collection("config").doc("encuesta").onSnapshot(function(snap){
+      if (!snap.exists){
+        encuestaActiva = null;
+        return;
+      }
+      var d = snap.data();
+      if (d && d.encuesta && d.encuesta.activa){
+        encuestaActiva = d.encuesta;
+        /* Inyectar como item en el ticker pool */
+        inyectarEncuestaEnPool(encuestaActiva);
+      } else {
+        encuestaActiva = null;
+        /* Sacar items de encuesta del pool */
+        tickerItems = tickerItems.filter(function(it){ return it.tipo !== "encuesta"; });
+      }
+    }, function(e){ console.log("[warn] Encuesta: " + e.message); });
+  }catch(e){}
+
+  /* Convierte la encuesta en un item del ticker */
+  function inyectarEncuestaEnPool(enc){
+    if (!enc || !enc.opciones || enc.opciones.length < 2) return;
+    /* Sacar items de encuesta viejos */
+    tickerItems = tickerItems.filter(function(it){ return it.tipo !== "encuesta"; });
+    var tipoTxt = enc.tipo === "versus" ? "⚔️ VERSUS" : "🎸 ESPECIAL 4PM";
+    var item = {
+      tipo: "encuesta",
+      tag: "🗳️ " + tipoTxt,
+      headline: (enc.pregunta || "¿Qué banda querés que suene?").toUpperCase(),
+      texto: "Elegí tu favorita — tocá una opción para votar:",
+      img: "",
+      estado: "",
+      anioFormacion: "",
+      origen: "",
+      genero: "",
+      wikiUrl: "",
+      encuesta: enc,
+      score: 10  /* Score máximo — aparece seguido en la rotación */
+    };
+    /* Poner al principio para que aparezca pronto */
+    tickerItems.unshift(item);
+    /* Limpiar memoria DJ para que no se filtre */
+    try{ localStorage.removeItem("sikodark-dj-memoria"); }catch(e){}
+  }
+
+  /* Pinta la encuesta dentro del ticker */
+  function pintarEncuesta(enc){
+    tickEncuesta.innerHTML = "";
+    tickEncuesta.style.display = "flex";
+    var pub = Number(enc.publicadoEn) || 0;
+    var miVoto = yaVoteEncuesta(pub);
+    var votos = enc.votos || [];
+    var conteo = {};
+    enc.opciones.forEach(function(_, i){ conteo[i] = 0; });
+    votos.forEach(function(v){
+      if (typeof v.opcion === "number" && conteo[v.opcion] !== undefined) conteo[v.opcion]++;
+    });
+    var total = votos.length || 1;
+
+    enc.opciones.forEach(function(op, i){
+      var n = conteo[i];
+      var pct = Math.round(n / total * 100);
+      var btn = document.createElement("button");
+      btn.className = "voto-opcion" + (miVoto === i ? " mi-voto" : "");
+      btn.disabled = (miVoto !== -1);
+      var barraStyle = miVoto !== -1 ? ' style="width:' + pct + '%"' : ' style="width:0%"';
+      btn.innerHTML = '<span class="voto-barra"' + barraStyle + '></span>' +
+                      '<span class="voto-fila">' +
+                        '<span>' + esc(op) + (miVoto === i ? ' ✓' : '') + '</span>' +
+                        (miVoto !== -1 ? '<span class="pct">' + pct + '% · ' + n + ' voto' + (n===1?'':'s') + '</span>' : '') +
+                      '</span>';
+      btn.onclick = function(){
+        if (miVoto !== -1) return;
+        if (!usuarioUID){
+          if (typeof toast === "function") toast("Esperá un seg, estás conectando…");
+          return;
+        }
+        marcarVotoEncuesta(pub, i);
+        /* Guardar voto en Firebase de forma atómica con arrayUnion */
+        try{
+          dbFB.collection("config").doc("encuesta").update({
+            "encuesta.votos": firebase.firestore.FieldValue.arrayUnion({
+              uid: usuarioUID,
+              opcion: i,
+              fecha: Date.now()
+            })
+          }).catch(function(e){ console.log("[warn] voto: " + e.message); });
+        }catch(e){}
+        /* Refrescar UI */
+        miVoto = i;
+        if (encuestaActiva){
+          if (!encuestaActiva.votos) encuestaActiva.votos = [];
+          encuestaActiva.votos.push({ uid: usuarioUID, opcion: i, fecha: Date.now() });
+          pintarEncuesta(encuestaActiva);
+        }
+        if (typeof toast === "function") toast("🗳️ ¡Voto registrado!");
+      };
+      tickEncuesta.appendChild(btn);
+    });
+
+    var estado = document.createElement("div");
+    estado.className = "voto-estado" + (miVoto !== -1 ? " votado" : "");
+    estado.textContent = miVoto !== -1
+      ? "✓ Votaste · " + votos.length + " voto" + (votos.length===1?'':'s') + " total" + (votos.length===0?'':'es')
+      : (votos.length === 0 ? "Sé el primero en votar" : votos.length + " voto" + (votos.length===1?'':'s') + " hasta ahora");
+    tickEncuesta.appendChild(estado);
+  }
+
+  /* Votar desde fuera (por si el usuario quiere cambiar de voto — opcional, no implementado) */
 
   function mostrarPubli(a){
     salirTicker();
@@ -1908,6 +2123,74 @@ renderFavs();
   var PATRON_ACTIVO = /en activo|activa actualmente|actualmente en|sigue en activ|continúa en activ|continúan en activ|presente|continúa|continúan|sigue activ|aún activ|todavía activ|en gira actualmente|actualmente en gira/i;
 
   /* ============================================================
+     🔑 CONFIGURACIÓN DE APIs EXTERNAS
+     ============================================================
+     • TheAudioDB    → funciona con clave de prueba "2" (sin registro)
+     • Bandsintown   → funciona con cualquier app_id (sin registro)
+     • Last.fm       → requiere API key GRATIS: https://www.last.fm/api/accounts
+                       (pegala abajo entre las comillas)
+     Si Last.fm no tiene key, simplemente se omite (degradación elegante).
+     ============================================================ */
+  var API_CONFIG = {
+    THEAUDIODB_KEY: "2",
+    BANDSINTOWN_APP_ID: "sikodark_radio",
+    LASTFM_API_KEY: ""  // ← Pegá tu Last.fm API key aquí (opcional)
+  };
+
+  /* Quita etiquetas HTML de las bios de Last.fm */
+  function limpiarHTML(t){
+    return (t||"").replace(/<[^>]*>/g, "").replace(/Read more on Last\.fm/gi, "").replace(/\s+/g, " ").trim();
+  }
+
+  /* Formatea fecha ISO → "12 ENE 2026" */
+  function formatearFecha(fechaISO){
+    try{
+      var f = new Date(fechaISO);
+      var mes = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+      return f.getUTCDate() + " " + mes[f.getUTCMonth()] + " " + f.getUTCFullYear();
+    }catch(e){ return ""; }
+  }
+
+  /* ============================================================
+     🌐 3 FETCHES PARALELOS — adaptado del algoritmo del usuario
+     ============================================================ */
+  async function fetchAudioDBSearch(artista){
+    try{
+      var url = "https://www.theaudiodb.com/api/v1/json/" + API_CONFIG.THEAUDIODB_KEY +
+                "/search.php?s=" + encodeURIComponent(artista);
+      var r = await fetch(url);
+      if (!r.ok) return null;
+      var d = await r.json();
+      return (d.artists && d.artists[0]) || null;
+    }catch(e){ return null; }
+  }
+
+  async function fetchBandsintown(artista){
+    if (!API_CONFIG.BANDSINTOWN_APP_ID) return [];
+    try{
+      var url = "https://rest.bandsintown.com/artists/" + encodeURIComponent(artista) +
+                "/events?app_id=" + encodeURIComponent(API_CONFIG.BANDSINTOWN_APP_ID);
+      var r = await fetch(url);
+      if (!r.ok) return [];
+      var d = await r.json();
+      return Array.isArray(d) ? d.slice(0, 5) : [];
+    }catch(e){ return []; }
+  }
+
+  async function fetchLastfm(artista){
+    if (!API_CONFIG.LASTFM_API_KEY) return null;
+    try{
+      var url = "https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=" +
+                encodeURIComponent(artista) + "&api_key=" + API_CONFIG.LASTFM_API_KEY +
+                "&format=json";
+      var r = await fetch(url);
+      if (!r.ok) return null;
+      var d = await r.json();
+      return d.artist || null;
+    }catch(e){ return null; }
+  }
+
+  /* ============================================================
      🧠 TÓPICOS FANZINE (estilo Metal Hammer)
      ============================================================ */
   var TOPICOS = [
@@ -1950,19 +2233,19 @@ renderFavs();
   /* ===========================================================
      🧠 infoBanda() — algoritmo inteligente de enriquecimiento
      ===========================================================
-     Para cada artista detecta:
-       • Bio rica (Wikipedia + TheAudioDB)
-       • Imagen de alta calidad (orig + thumb + AudioDB)
-       • Estado: EN ACTIVO / DISUELTO / REUNIFICADOS
-       • Año de formación (regex sobre el extracto + AudioDB)
-       • Origen geográfico
-       • Género musical
-       • URL a Wikipedia para "Ver más"
+     Versión 3: integra 4 fuentes EN PARALELO (estilo algoritmo
+     del usuario, pero adaptado a browser con fetch):
+       1. Wikipedia ES → extracto + imagen + URL
+       2. Wikipedia EN → fallback del extracto
+       3. TheAudioDB search.php → bio + fanart + año + género +
+          país + strDisbanded (estado preciso, no regex)
+       4. Bandsintown → próximas giras/conciertos reales
+       5. Last.fm (opcional) → bio.summary + tags
      Cachea en localStorage por nombre normalizado (12h).
      =========================================================== */
   async function infoBanda(artista){
     if (!artista || artista.length < 3) return null;
-    var clave = "sikodark-info-v2-" + normArtista(artista).replace(/\s+/g,"-");
+    var clave = "sikodark-info-v3-" + normArtista(artista).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -1980,66 +2263,110 @@ renderFavs();
       estado: "",
       origen: "",
       genero: "",
-      wikiUrl: ""
+      wikiUrl: "",
+      eventos: [],
+      tags: []
     };
 
-    /* 1️⃣ Wikipedia REST (extracto + imagen + URL) */
-    try{
-      var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
-      if (r.ok){
-        var d = await r.json();
-        info.nombre = d.normalizedtitle || d.title || artista;
-        info.extracto = (d.extract || "").trim();
-        info.img = (d.originalimage && d.originalimage.source)
-                || (d.thumbnail && d.thumbnail.source) || "";
-        if (d.content_urls && d.content_urls.desktop){
-          info.wikiUrl = d.content_urls.desktop.page;
-        }
-      }
-    }catch(e){}
-
-    if (!info.extracto){
+    /* === PARALELO: Wikipedia + 3 APIs === */
+    var wikiPromise = (async function(){
       try{
-        var r2 = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
-        if (r2.ok){
-          var d2 = await r2.json();
-          info.extracto = (d2.extract || "").trim();
-          info.img = (d2.originalimage && d2.originalimage.source)
-                  || (d2.thumbnail && d2.thumbnail.source) || "";
-          if (d2.content_urls && d2.content_urls.desktop){
-            info.wikiUrl = d2.content_urls.desktop.page;
-          }
+        var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
+        if (r.ok){
+          var d = await r.json();
+          info.nombre = d.normalizedtitle || d.title || artista;
+          info.extracto = (d.extract || "").trim();
+          info.img = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || "";
+          if (d.content_urls && d.content_urls.desktop) info.wikiUrl = d.content_urls.desktop.page;
         }
       }catch(e){}
-    }
+      if (!info.extracto){
+        try{
+          var r2 = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
+          if (r2.ok){
+            var d2 = await r2.json();
+            info.extracto = (d2.extract || "").trim();
+            if (!info.img) info.img = (d2.originalimage && d2.originalimage.source) || (d2.thumbnail && d2.thumbnail.source) || "";
+            if (!info.wikiUrl && d2.content_urls && d2.content_urls.desktop) info.wikiUrl = d2.content_urls.desktop.page;
+          }
+        }catch(e){}
+      }
+    })();
 
-    /* 2️⃣ TheAudioDB para biografía + imagen + año + género + país */
-    try{
-      var rA = await fetch("https://www.theaudiodb.com/api/v1/json/2/artist.php?s=" + encodeURIComponent(artista));
-      if (rA.ok){
-        var dA = await rA.json();
-        var art = dA.artists && dA.artists[0];
-        if (art){
-          if (!info.img && art.strArtistThumb) info.img = art.strArtistThumb;
-          if (art.intFormedYear) info.anioFormacion = String(art.intFormedYear);
-          if (art.strGenre) info.genero = art.strGenre;
-          if (art.strCountry) info.origen = art.strCountry;
-          if (art.strBiographyES) info.bioLarga = art.strBiographyES;
-          else if (art.strBiographyEN) info.bioLarga = art.strBiographyEN;
+    var audiodbPromise = fetchAudioDBSearch(artista).then(function(art){
+      if (!art) return;
+      /* Imagen: priorizar fanart (más grande y bonita) si existe */
+      if (!info.img && art.strArtistFanart) info.img = art.strArtistFanart;
+      else if (!info.img && art.strArtistThumb) info.img = art.strArtistThumb;
+      if (art.intFormedYear) info.anioFormacion = String(art.intFormedYear);
+      if (art.strGenre) info.genero = art.strGenre;
+      if (art.strCountry) info.origen = art.strCountry;
+      if (art.strBiographyES) info.bioLarga = art.strBiographyES;
+      else if (art.strBiographyEN) info.bioLarga = art.strBiographyEN;
+
+      /* ⭐ ESTADO PRECISO desde strDisbanded */
+      if (typeof art.strDisbanded === "string"){
+        var d = art.strDisbanded.toLowerCase().trim();
+        if (d === "yes" || d === "si" || d === "sí" || d === "true"){
+          info.estado = "DISUELTO";
+        } else if (d === "no" || d === "false" || d === ""){
+          info.estado = "EN ACTIVO";
         }
       }
-    }catch(e){}
+      if (art.intMembers && !info.estado) info.estado = "EN ACTIVO";
+    });
 
-    /* 3️⃣ Estado (vigente / disuelto / reunificado) */
-    var combined = (info.extracto + " " + info.bioLarga).toLowerCase();
-    if (PATRON_DISUELTO.test(combined)){
-      if (PATRON_REUNIFIC.test(combined)) info.estado = "REUNIFICADOS";
-      else info.estado = "DISUELTO";
-    } else if (PATRON_ACTIVO.test(combined)){
-      info.estado = "EN ACTIVO";
+    var bandsintownPromise = fetchBandsintown(artista).then(function(events){
+      if (events && events.length){
+        info.eventos = events.slice(0, 3).map(function(ev){
+          return {
+            fecha: ev.datetime ? formatearFecha(ev.datetime) : "",
+            lugar: (ev.venue && ev.venue.name) || "",
+            ciudad: (ev.venue && ev.venue.city) || "",
+            pais: (ev.venue && ev.venue.country) || "",
+            link: ev.url || ""
+          };
+        });
+      }
+    });
+
+    var lastfmPromise = fetchLastfm(artista).then(function(artist){
+      if (!artist) return;
+      if (!info.extracto && artist.bio && artist.bio.summary){
+        info.extracto = limpiarHTML(artist.bio.summary);
+      }
+      if (artist.bio && artist.bio.content){
+        info.bioLarga = limpiarHTML(artist.bio.content);
+      }
+      if (artist.tags && artist.tags.tag){
+        var tags = artist.tags.tag;
+        if (Array.isArray(tags)){
+          info.tags = tags.map(function(t){ return t.name; }).slice(0, 5);
+        } else if (tags.name){
+          info.tags = [tags.name];
+        }
+      }
+      /* Si TheAudioDB no dio género, usar primer tag de Last.fm */
+      if (!info.genero && info.tags.length) info.genero = info.tags[0];
+    });
+
+    await Promise.all([wikiPromise, audiodbPromise, bandsintownPromise, lastfmPromise]);
+
+    /* ⭐ Estado: si AudioDB no dio info, usar regex sobre extracto+bio como fallback */
+    if (!info.estado){
+      var combined = (info.extracto + " " + info.bioLarga).toLowerCase();
+      if (PATRON_DISUELTO.test(combined)){
+        info.estado = PATRON_REUNIFIC.test(combined) ? "REUNIFICADOS" : "DISUELTO";
+      } else if (PATRON_ACTIVO.test(combined)){
+        info.estado = "EN ACTIVO";
+      }
+    } else if (info.estado === "DISUELTO"){
+      /* Si AudioDB dijo disuelto pero wiki menciona reunión, marcar REUNIFICADOS */
+      var combined2 = (info.extracto + " " + info.bioLarga).toLowerCase();
+      if (PATRON_REUNIFIC.test(combined2)) info.estado = "REUNIFICADOS";
     }
 
-    /* 4️⃣ Año de formación desde el extracto */
+    /* Año de formación desde extracto (si AudioDB no lo dio) */
     if (!info.anioFormacion){
       var m = info.extracto.match(/(?:formad[ao]s?|fundad[ao]s?|cread[ao]s?|establecid[ao]s?|constituid[ao]s?|nació en|nacieron en)\s+(?:en\s+)?(el\s+)?(\d{4})/i);
       if (m) info.anioFormacion = m[2];
@@ -2053,13 +2380,13 @@ renderFavs();
       }
     }
 
-    /* 5️⃣ Origen desde el extracto (si no lo dio AudioDB) */
+    /* Origen desde extracto (si AudioDB no lo dio) */
     if (!info.origen){
       var m2 = info.extracto.match(/(?:es|son)\s+(?:una|un)\s+(?:banda|grupo|dúo|trío|cuarteto|proyecto)\s+(?:de\s+\w+\s+)?(?:originari[oa]s?\s+de|provenientes?\s+de|de)\s+([A-ZÁÉÍÓÚ][a-záéíóú]+(?:[\s,]+(?:de|la|el|los|las)\s+[A-ZÁÉÍÓÚ]?[a-záéíóú]+){0,2})/);
       if (m2) info.origen = m2[1].replace(/[\s,].*$/, "").trim();
     }
 
-    /* 6️⃣ Género desde el extracto */
+    /* Género desde el extracto (si nadie lo dio) */
     if (!info.genero) info.genero = generoDe(info.extracto);
 
     try{ localStorage.setItem(clave, JSON.stringify(info)); }catch(e){}
@@ -2119,6 +2446,32 @@ renderFavs();
         genero: info.genero,
         wikiUrl: info.wikiUrl,
         score: 8
+      });
+    }
+
+    /* 🚌 PRÓXIMOS CONCIERTOS — datos reales de Bandsintown */
+    if (info.eventos && info.eventos.length){
+      var eventosTexto = info.eventos.map(function(ev){
+        var partes = [];
+        if (ev.fecha) partes.push(ev.fecha);
+        if (ev.ciudad) partes.push(ev.ciudad);
+        if (ev.pais && ev.pais !== ev.ciudad) partes.push(ev.pais);
+        if (ev.lugar) partes.push("@ " + ev.lugar);
+        return partes.join(" · ");
+      }).join("  |  ");
+      /* Si hay un solo evento, usar su link como wikiUrl alternativa */
+      var linkEventos = info.eventos[0].link || info.wikiUrl;
+      items.push({
+        tag: "🚌 PRÓXIMOS CONCIERTOS",
+        headline: nombre.toUpperCase(),
+        texto: recortar(eventosTexto, 280),
+        img: info.img,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: linkEventos,
+        score: 9  /* Score máximo — prioridad para que aparezca primero */
       });
     }
 
@@ -2272,7 +2625,7 @@ renderFavs();
         artActual === "—" || artActual === "sikodark radio"){
       return [];
     }
-    var clave = "sikodark-tick-v3-" + normArtista(artActual).replace(/\s+/g,"-");
+    var clave = "sikodark-tick-v4-" + normArtista(artActual).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -2337,6 +2690,39 @@ renderFavs();
     var rotacionNum = 0;
 
     function pintarItem(it){
+      /* === Si es encuesta, render UI de votación === */
+      if (it.tipo === "encuesta" && it.encuesta){
+        /* Ocultar texto/meta/link normales, mostrar encuesta */
+        tickHeadline.textContent = it.headline || "";
+        tickHeadline.style.display = "block";
+        tickTexto.textContent = it.texto || "";
+        tickTexto.style.display = "block";
+        tickStatus.innerHTML = "";
+        tickMeta.innerHTML = "";
+        tickLink.classList.add("oculto");
+        /* Sin hero image para la encuesta — usar icono */
+        tickHero.classList.add("sin-img");
+        tickIco.style.display = "grid";
+        tickIco.textContent = "🗳️";
+        tickImg.removeAttribute("src");
+        /* Pintar opciones de voto */
+        pintarEncuesta(it.encuesta);
+        /* Counter + dots */
+        rotacionNum++;
+        tickCount.textContent = "#" + rotacionNum + " · " + tickerItems.length + " temas";
+        var maxDots2 = Math.min(5, Math.max(1, tickerItems.length));
+        var dotsHtml2 = "";
+        for (var j = 0; j < maxDots2; j++){
+          dotsHtml2 += '<span class="dot-b' + (j === (rotacionNum - 1) % maxDots2 ? " activo" : "") + '"></span>';
+        }
+        tickDots.innerHTML = dotsHtml2;
+        return;
+      }
+
+      /* === Item normal (banda sonando) — ocultar encuesta === */
+      tickEncuesta.innerHTML = "";
+      tickEncuesta.style.display = "none";
+
       /* TAG */
       tickTag.textContent = it.tag || "🎸 SIKODARK";
       tickTag.title = it.tag || "";
@@ -2352,6 +2738,7 @@ renderFavs();
 
       /* TEXTO */
       tickTexto.textContent = it.texto || "";
+      tickTexto.style.display = "block";
 
       /* STATUS CHIPS (EN ACTIVO / DISUELTO / REUNIFICADOS) */
       tickStatus.innerHTML = "";
@@ -2439,6 +2826,79 @@ renderFavs();
       pintar(snap.exists ? (snap.data().anuncio || {}) : {});
     }, function(e){ console.log("[warn] Publicidad: " + e.message); });
   }catch(e){}
+})();
+</script>
+
+<!-- ===== 🎸 PEDÍ TU TEMA — botón flotante + modal ===== -->
+<script>
+(function(){
+  var btn = document.getElementById("btnPedidoTema");
+  var modal = document.getElementById("modalPedido");
+  if (!btn || !modal) return;
+
+  var inpNombre = document.getElementById("pedNombre");
+  var inpBanda = document.getElementById("pedBanda");
+  var inpTema = document.getElementById("pedTema");
+  var btnEnviar = document.getElementById("pedEnviar");
+  var btnCancelar = document.getElementById("pedCancelar");
+  var okMsg = document.getElementById("pedOk");
+
+  /* Mostrar el botón flotante después de 3s (para que cargue primero la app) */
+  setTimeout(function(){ btn.classList.add("show"); }, 3000);
+
+  function abrir(){
+    modal.classList.add("show");
+    okMsg.style.display = "none";
+    inpNombre.value = "";
+    inpBanda.value = "";
+    inpTema.value = "";
+    setTimeout(function(){ inpBanda.focus(); }, 100);
+  }
+  function cerrar(){ modal.classList.remove("show"); }
+
+  btn.onclick = abrir;
+  btnCancelar.onclick = cerrar;
+  modal.onclick = function(e){ if (e.target === modal) cerrar(); };
+
+  /* Cargar nombre guardado */
+  try{
+    var n = localStorage.getItem("sikodark-ped-nombre");
+    if (n) inpNombre.value = n;
+  }catch(e){}
+
+  btnEnviar.onclick = async function(){
+    var banda = inpBanda.value.trim();
+    var tema = inpTema.value.trim();
+    var nombre = inpNombre.value.trim();
+    if (!banda){
+      inpBanda.focus();
+      if (typeof toast === "function") toast("Escribí una banda");
+      return;
+    }
+    if (!usuarioUID){
+      if (typeof toast === "function") toast("Esperá un seg, estás conectando…");
+      return;
+    }
+    btnEnviar.disabled = true;
+    btnEnviar.textContent = "Enviando…";
+    try{
+      await dbFB.collection("temas_pedidos").add({
+        banda: banda.slice(0, 60),
+        tema: tema.slice(0, 60),
+        nombre: nombre.slice(0, 20),
+        uid: usuarioUID,
+        fecha: Date.now()
+      });
+      /* Guardar nombre para la próxima */
+      if (nombre) try{ localStorage.setItem("sikodark-ped-nombre", nombre); }catch(e){}
+      okMsg.style.display = "block";
+      setTimeout(cerrar, 2200);
+    }catch(e){
+      if (typeof toast === "function") toast("❌ " + e.message);
+    }
+    btnEnviar.disabled = false;
+    btnEnviar.textContent = "Enviar pedido";
+  };
 })();
 </script>
 
