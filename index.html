@@ -212,6 +212,32 @@ body::after{
 .tick-mag-overlay{position:absolute;inset:0;
   background:linear-gradient(to top,rgba(10,10,13,.92) 0%,rgba(10,10,13,.4) 35%,transparent 65%);
   pointer-events:none}
+
+/* ⭐ CARRUSEL de imágenes — capas apiladas con fade */
+.tick-mag-carousel{position:absolute;inset:0;overflow:hidden}
+.tick-mag-carousel .carrusel-img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center top;opacity:0;transition:opacity .9s ease;
+  filter:contrast(1.08) saturate(1.05) brightness(.95)}
+.tick-mag-carousel .carrusel-img.activa{opacity:1}
+.tick-magazine:not(.saliendo) .tick-mag-carousel .carrusel-img.activa{transform:scale(1.05);
+  transition:opacity .9s ease,transform 6s ease}
+/* Overlay encima de las imágenes del carrusel (mismo degradado que el hero normal) */
+.tick-mag-carousel .carrusel-overlay{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(10,10,13,.92) 0%,rgba(10,10,13,.4) 35%,transparent 65%);
+  pointer-events:none}
+/* ⭐ Dots indicadores del carrusel (abajo centrado) */
+.tick-mag-dots-carrusel{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);
+  z-index:3;display:flex;gap:5px;align-items:center}
+.tick-mag-dots-carrusel .cd{width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,.35);transition:.3s;cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.tick-mag-dots-carrusel .cd.activa{background:var(--primary);width:18px;border-radius:3px}
+/* Contador de imágenes (ej: "3/8") — esquina arriba derecha */
+.tick-mag-img-count{position:absolute;top:12px;right:12px;z-index:3;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.22);
+  color:#fff;border-radius:999px;padding:3px 9px;
+  font:800 10px var(--mono);letter-spacing:.06em}
 .tick-mag-tag{position:absolute;top:12px;left:12px;background:var(--primary);
   color:#161616;padding:7px 14px;border-radius:999px;
   font:900 13.5px var(--sans);text-transform:uppercase;letter-spacing:.05em;
@@ -2051,6 +2077,16 @@ renderFavs();
 
   var modoActual = null;
   var tickerItems = [], tickerTimer = null;
+  var carouselTimer = null;  /* ⭐ Interval del carrusel de imágenes */
+
+  /* ⭐ Detener el carrusel actual (al cambiar de item o salir del ticker) */
+  function detenerCarrusel(){
+    if (carouselTimer){
+      clearInterval(carouselTimer);
+      carouselTimer = null;
+    }
+    window._irACarrusel = null;
+  }
   var ICONOS = ["🎸","🤘","🎤","🥁","🎹","🎼","⭐"];
 
   /* =========================================================
@@ -2763,6 +2799,145 @@ renderFavs();
     }catch(e){ return null; }
   }
 
+  /* Helper: traer los primeros N MBIDs de release-groups (para carrusel de portadas) */
+  async function fetchVariosAlbumsMBIDs(artistaMBID, n){
+    if (!artistaMBID) return [];
+    try{
+      var url = "https://musicbrainz.org/ws/2/release-group?artist=" + artistaMBID +
+                "&type=album|single|ep&limit=" + (n || 5) + "&fmt=json";
+      var r = await fetch(url, {
+        headers: { "User-Agent": "sikodark-radio/1.0 (contacto@sikodark.com)" }
+      });
+      if (!r.ok) return [];
+      var d = await r.json();
+      if (!d["release-groups"]) return [];
+      return d["release-groups"].map(function(rg){ return rg.id; }).filter(Boolean);
+    }catch(e){ return []; }
+  }
+
+  /* ============================================================
+     🖼️ Buscar MÚLTIPLES imágenes de una banda (para carrusel)
+     ============================================================
+     Junta imágenes de TODAS las fuentes en paralelo y devuelve
+     un array de URLs (sin duplicados). Sirve para hacer carrusel
+     en la tarjeta del ticker.
+     ============================================================ */
+  async function buscarImagenesBandaMultiple(nombre){
+    if (!nombre || nombre.length < 3) return [];
+    var clave = "sikodark-imgs-multi-v1-" + normArtista(nombre).replace(/\s+/g,"-");
+    try{
+      var cache = localStorage.getItem(clave);
+      if (cache){
+        var parsed = JSON.parse(cache);
+        if (parsed && parsed.urls && parsed.urls.length && (Date.now() - (parsed.t || 0)) < 12*3600*1000){
+          return parsed.urls;
+        }
+      }
+    }catch(e){}
+
+    var urls = [];
+    var vistos = {};
+
+    function agregar(url){
+      if (!url || vistos[url]) return;
+      vistos[url] = true;
+      urls.push(url);
+    }
+
+    /* Lanzar todas las fuentes en paralelo */
+    var promesas = [];
+
+    /* 1. TheAudioDB — hasta 3 fanarts + thumb + logo + banner */
+    promesas.push((async function(){
+      try{
+        var art = await fetchAudioDBSearch(nombre);
+        if (art){
+          if (art.strArtistFanart) agregar(art.strArtistFanart);
+          if (art.strArtistFanart2) agregar(art.strArtistFanart2);
+          if (art.strArtistFanart3) agregar(art.strArtistFanart3);
+          if (art.strArtistThumb) agregar(art.strArtistThumb);
+          if (art.strArtistLogo) agregar(art.strArtistLogo);
+          if (art.strArtistBanner) agregar(art.strArtistBanner);
+        }
+      }catch(e){}
+    })());
+
+    /* 2. Deezer — picture_xl + picture_big */
+    promesas.push((async function(){
+      try{
+        var dz = await fetchDeezerArtist(nombre);
+        if (dz){
+          if (dz.picture_xl) agregar(dz.picture_xl);
+          if (dz.picture_big) agregar(dz.picture_big);
+        }
+      }catch(e){}
+    })());
+
+    /* 3. Discogs — todas las imágenes del array images[] */
+    promesas.push((async function(){
+      try{
+        var dg = await fetchDiscogsArtist(nombre);
+        if (dg && dg.images && dg.images.length){
+          dg.images.slice(0, 5).forEach(function(img){
+            if (img.uri) agregar(img.uri);
+          });
+        }
+      }catch(e){}
+    })());
+
+    /* 4. Wikipedia — originalimage + thumbnail */
+    promesas.push((async function(){
+      try{
+        var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(nombre));
+        if (r.ok){
+          var d = await r.json();
+          if (d.originalimage && d.originalimage.source) agregar(d.originalimage.source);
+          if (d.thumbnail && d.thumbnail.source) agregar(d.thumbnail.source);
+        }
+      }catch(e){}
+    })());
+
+    /* 5. iTunes — artwork 600x600 */
+    promesas.push((async function(){
+      try{
+        var url = "https://itunes.apple.com/search?term=" + encodeURIComponent(nombre) +
+                  "&entity=musicArtist&limit=1";
+        var r = await fetch(url);
+        if (r.ok){
+          var d = await r.json();
+          if (d.results && d.results[0] && d.results[0].artworkUrl100){
+            agregar(d.results[0].artworkUrl100.replace("100x100", "600x600"));
+          }
+        }
+      }catch(e){}
+    })());
+
+    /* 6. Cover Art Archive — portadas de los primeros 4 álbumes */
+    promesas.push((async function(){
+      try{
+        var mb = await fetchMusicBrainz(nombre);
+        if (mb && mb.id){
+          var mbids = await fetchVariosAlbumsMBIDs(mb.id, 4);
+          /* Para cada MBID, verificar si la portada existe (HEAD request) */
+          var coverPromises = mbids.map(function(mbid){
+            return fetchCoverArtArchive(mbid).then(function(url){
+              if (url) agregar(url);
+            }).catch(function(){});
+          });
+          await Promise.all(coverPromises);
+        }
+      }catch(e){}
+    })());
+
+    await Promise.all(promesas);
+
+    /* Limitar a 8 imágenes máximo para no saturar */
+    if (urls.length > 8) urls = urls.slice(0, 8);
+
+    try{ localStorage.setItem(clave, JSON.stringify({urls: urls, t: Date.now()})); }catch(e){}
+    return urls;
+  }
+
   /* ============================================================
      🧠 TÓPICOS FANZINE (estilo Metal Hammer)
      ============================================================ */
@@ -2832,6 +3007,7 @@ renderFavs();
       extracto: "",
       bioLarga: "",
       img: "",
+      imagenes: [],  /* ⭐ Array de URLs para el carrusel */
       anioFormacion: "",
       estado: "",
       origen: "",
@@ -3066,6 +3242,18 @@ renderFavs();
     /* Género desde el extracto (si nadie lo dio) */
     if (!info.genero) info.genero = generoDe(info.extracto);
 
+    /* ⭐ Disparar búsqueda de MÚLTIPLES imágenes para el carrusel (en background,
+       no bloquea el return). Cuando lleguen, se guardan en info.imagenes. */
+    buscarImagenesBandaMultiple(artista).then(function(urls){
+      if (urls && urls.length){
+        info.imagenes = urls;
+        /* Si todavía no hay imagen única, usar la primera */
+        if (!info.img) info.img = urls[0];
+        /* Actualizar cache */
+        try{ localStorage.setItem(clave, JSON.stringify(info)); }catch(e){}
+      }
+    }).catch(function(){});
+
     try{ localStorage.setItem(clave, JSON.stringify(info)); }catch(e){}
     return info;
   }
@@ -3117,6 +3305,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(reseña, 320),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3143,6 +3332,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(eventosTexto, 280),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3171,6 +3361,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(texto, 280),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3189,6 +3380,7 @@ renderFavs();
           ? recortar(nombre + " sigue en activo (" + info.genero + (info.origen ? " · " + info.origen : "") + "). Mantente al tanto de sus giras y lanzamientos.", 220)
           : recortar(nombre + " sigue en activo. Mantente al tanto de sus giras y lanzamientos.", 200),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3202,6 +3394,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(nombre + " se separó en su momento pero volvió a reunirse. Una historia que sigue escribiendo capítulos.", 220),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3224,6 +3417,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(listaMiembros, 280),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3248,6 +3442,7 @@ renderFavs();
         headline: nombre.toUpperCase(),
         texto: recortar(nombre + ": " + datos.join(" · ") + ".", 240),
         img: info.img,
+        imagenes: info.imagenes,
         estado: info.estado,
         anioFormacion: info.anioFormacion,
         origen: info.origen,
@@ -3376,6 +3571,7 @@ renderFavs();
 
   function salirTicker(){
     if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = null; }
+    detenerCarrusel();
     tickCard.classList.remove("saliendo");
   }
 
@@ -3519,8 +3715,102 @@ renderFavs();
         tickLink.classList.add("oculto");
       }
 
-      /* HERO IMAGE */
-      if (it.img){
+      /* ⭐ LIMPIAR carrusel anterior antes de pintar nuevo */
+      detenerCarrusel();
+
+      /* HERO IMAGE / CARRUSEL — si hay múltiples imágenes, usar carrusel */
+      var imagenesCarrusel = (it.imagenes && it.imagenes.length > 1) ? it.imagenes : null;
+      /* Si solo hay 1 imagen en el array, usar como single img */
+      if (it.imagenes && it.imagenes.length === 1 && !it.img) it.img = it.imagenes[0];
+
+      if (imagenesCarrusel){
+        /* === Modo CARRUSEL: múltiples imágenes rotando === */
+        /* Limpiar hero: quitar <img id=tickImg> viejo, ocultar ico, mostrar contenedor carrusel */
+        tickImg.style.display = "none";
+        tickImg.removeAttribute("src");
+        tickHero.classList.remove("sin-img");
+        tickIco.style.display = "none";
+
+        /* Crear contenedor de carrusel si no existe */
+        var carousel = tickHero.querySelector(".tick-mag-carousel");
+        if (!carousel){
+          carousel = document.createElement("div");
+          carousel.className = "tick-mag-carousel";
+          tickHero.appendChild(carousel);
+        }
+        /* Llenar el carrusel con todas las imágenes */
+        carousel.innerHTML = "";
+        imagenesCarrusel.forEach(function(url, i){
+          var img = document.createElement("img");
+          img.className = "carrusel-img" + (i === 0 ? " activa" : "");
+          img.src = url;
+          img.alt = esc(it.headline || "") + " - imagen " + (i+1);
+          img.onerror = function(){ this.style.display = "none"; };
+          carousel.appendChild(img);
+        });
+        /* Overlay encima del carrusel */
+        var overlay = document.createElement("div");
+        overlay.className = "carrusel-overlay";
+        carousel.appendChild(overlay);
+
+        /* Dots indicadores (si hay <= 8 imágenes, mostrar dots) */
+        var dotsContainer = document.createElement("div");
+        dotsContainer.className = "tick-mag-dots-carrusel";
+        imagenesCarrusel.forEach(function(_, i){
+          var dot = document.createElement("span");
+          dot.className = "cd" + (i === 0 ? " activa" : "");
+          dot.onclick = function(e){
+            e.stopPropagation();
+            irACarrusel(i);
+          };
+          dotsContainer.appendChild(dot);
+        });
+        if (imagenesCarrusel.length <= 8) tickHero.appendChild(dotsContainer);
+
+        /* Contador "1/8" arriba a la derecha (sacar primero si ya existe) */
+        var oldCount = tickHero.querySelector(".tick-mag-img-count");
+        if (oldCount) oldCount.remove();
+        var imgCount = document.createElement("div");
+        imgCount.className = "tick-mag-img-count";
+        imgCount.textContent = "1/" + imagenesCarrusel.length;
+        tickHero.appendChild(imgCount);
+
+        /* Iniciar rotación cada 3.5 segundos */
+        var idxCarrusel = 0;
+        var imgsCarrusel = carousel.querySelectorAll(".carrusel-img");
+        var dotsCarrusel = dotsContainer.querySelectorAll(".cd");
+
+        /* Función para ir a una imagen específica */
+        window._irACarrusel = function(n){
+          if (!imgsCarrusel.length) return;
+          idxCarrusel = (n + imgsCarrusel.length) % imgsCarrusel.length;
+          imgsCarrusel.forEach(function(im, i){
+            im.classList.toggle("activa", i === idxCarrusel);
+          });
+          dotsCarrusel.forEach(function(d, i){
+            d.classList.toggle("activa", i === idxCarrusel);
+          });
+          if (imgCount) imgCount.textContent = (idxCarrusel + 1) + "/" + imgsCarrusel.length;
+        }
+        function irACarrusel(n){ if (window._irACarrusel) window._irACarrusel(n); }
+
+        /* Interval del carrusel */
+        carouselTimer = setInterval(function(){
+          if (modoActual !== "ticker") return;
+          window._irACarrusel(idxCarrusel + 1);
+        }, 3500);
+
+      } else if (it.img){
+        /* === Modo SINGLE: una sola imagen (como antes) === */
+        tickImg.style.display = "block";
+        /* Quitar carrusel y dots si quedaron */
+        var oldCarousel = tickHero.querySelector(".tick-mag-carousel");
+        if (oldCarousel) oldCarousel.remove();
+        var oldDots = tickHero.querySelector(".tick-mag-dots-carrusel");
+        if (oldDots) oldDots.remove();
+        var oldImgCount = tickHero.querySelector(".tick-mag-img-count");
+        if (oldImgCount) oldImgCount.remove();
+
         tickImg.onerror = function(){
           tickHero.classList.add("sin-img");
           tickIco.style.display = "grid";
@@ -3532,6 +3822,14 @@ renderFavs();
         };
         tickImg.src = it.img;
       } else {
+        /* === Modo sin imagen — usar icono === */
+        tickImg.style.display = "none";
+        var oldCarousel2 = tickHero.querySelector(".tick-mag-carousel");
+        if (oldCarousel2) oldCarousel2.remove();
+        var oldDots2 = tickHero.querySelector(".tick-mag-dots-carrusel");
+        if (oldDots2) oldDots2.remove();
+        var oldImgCount2 = tickHero.querySelector(".tick-mag-img-count");
+        if (oldImgCount2) oldImgCount2.remove();
         tickHero.classList.add("sin-img");
         tickIco.style.display = "grid";
         tickIco.textContent = ICONOS[Math.floor(Math.random()*ICONOS.length)];
