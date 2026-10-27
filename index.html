@@ -530,9 +530,19 @@ async function startPlayback(){
     if(!audio.src) audio.src=STREAM_URL;
     await audio.play();
     log("ok", "Audio reproduciéndose");
+    /* ⭐ Activar wake lock para evitar que la pantalla se apague mientras suena */
+    if (window.pedirWakeLock) window.pedirWakeLock();
   }catch(e){isLoading=false;setPlaying(false);ring(false);log("err","No se pudo reproducir: "+e.message)}
 }
-function stopPlayback(){registrarFinEscucha();audio.pause();setPlaying(false);isLoading=false;ring(false)}
+function stopPlayback(){
+  registrarFinEscucha();
+  audio.pause();
+  setPlaying(false);
+  isLoading=false;
+  ring(false);
+  /* ⭐ Liberar wake lock al parar */
+  if (window.liberarWakeLock) window.liberarWakeLock();
+}
 
 play.onclick=()=>isPlaying?stopPlayback():startPlayback();
 audio.onplaying=()=>{isLoading=false;setPlaying(true);ring(false)};
@@ -596,6 +606,12 @@ function setTrack(t){
   if (trackKey === ultimoTitulo && t.title !== "En vivo") return;
   ultimoTitulo = trackKey;
   log("ok", `🎵 Nueva canción: ${t.artist || "?"} - ${t.title}`);
+
+  /* ⭐ Limpiar carátula VIEJA inmediatamente — no mostrar cover anterior
+     mientras carga el nuevo. Mostrar logo como placeholder. */
+  cover = null;
+  coverEl.src = LOGO;
+
   titleEl.textContent = t.title || "En vivo";
   artistEl.textContent = t.artist || "";
   imagenArtistaGlobal = null;
@@ -609,6 +625,16 @@ function setTrack(t){
     temaActual = t;
   }
   setTimeout(() => { procesarCancionInteligente(t); }, 800);
+
+  /* ⭐ Safety net: si la carátula nueva no llega en 6s, dejar LOGO
+     (no quedarse con la vieja congelada) */
+  if (window._coverSafetyNet) clearTimeout(window._coverSafetyNet);
+  window._coverSafetyNet = setTimeout(function(){
+    if (!cover){
+      console.log("[Cover] ⚠️ Sin carátula tras 6s — usando LOGO");
+      coverEl.src = LOGO;
+    }
+  }, 6000);
 }
 
 const CORAZON_BLANCO = '<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -658,14 +684,29 @@ function renderHistory(){
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
 
 async function fetchConProxy(url, opciones = {}) {
+  /* ⭐ Cache-busting: si la URL no tiene _, le agrego ?_t=timestamp
+     para evitar que el navegador devuelva una respuesta cacheada con tema viejo */
+  const sep = url.indexOf("?") >= 0 ? "&" : "?";
+  const finalUrl = /[_&?]t=/.test(url) ? url : url + sep + "_t=" + Date.now();
+
+  /* ⭐ AbortController con timeout de 5s — si el servidor no responde, cancelo */
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const fetchOpts = Object.assign({}, opciones, { signal: controller.signal, cache: "no-store" });
+
   try {
-    const r = await fetch(url, opciones);
+    const r = await fetch(finalUrl, fetchOpts);
+    clearTimeout(timeoutId);
     if (r.ok) return r;
-  } catch(e) {}
+  } catch(e) { clearTimeout(timeoutId); }
   for (let i = 0; i < PROXIES.length; i++) {
     try {
-      const urlProxy = PROXIES[i](url);
-      const r = await fetch(urlProxy, opciones);
+      const controller2 = new AbortController();
+      const timeout2 = setTimeout(() => controller2.abort(), 5000);
+      const opts2 = Object.assign({}, opciones, { signal: controller2.signal, cache: "no-store" });
+      const urlProxy = PROXIES[i](finalUrl);
+      const r = await fetch(urlProxy, opts2);
+      clearTimeout(timeout2);
       if (r.ok) return r;
     } catch(e) { continue; }
   }
@@ -872,10 +913,15 @@ async function fetchCover(t) {
   coverEl.src = LOGO;
 }
 
+let ultimaActualizacionMs = 0;   /* timestamp del último update exitoso */
+let sseActivo = false;            /* true si SSE está recibiendo datos */
+let fastPollHasta = 0;            /* hasta cuándo hacer polling agresivo */
+
 function procesarMetadataRaw(streamTitle) {
-  if (!streamTitle) return;
+  if (!streamTitle || typeof streamTitle !== "string") return;
   const track = parseTitle(streamTitle);
   if (track.title && track.title !== "En vivo") {
+    ultimaActualizacionMs = Date.now();
     setTrack(track);
   }
 }
@@ -890,12 +936,14 @@ function intentarSSE() {
           const d = JSON.parse(e.data);
           if (d.streamTitle) {
             recibioAlgo = true;
+            sseActivo = true;
             procesarMetadataRaw(d.streamTitle);
           }
         } catch(_) {}
       };
       source.onerror = () => {
         source.close();
+        sseActivo = false;
         if (recibioAlgo) resolve(true);
         else reject(new Error("SSE bloqueado"));
       };
@@ -909,6 +957,9 @@ function intentarSSE() {
 
 async function iniciarPolling() {
   async function consultar() {
+    /* ⭐ Si SSE está activo Y actualizó hace menos de 30s, salto esta consulta */
+    if (sseActivo && (Date.now() - ultimaActualizacionMs) < 30000) return;
+
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
       const d = await r.json();
@@ -922,17 +973,71 @@ async function iniciarPolling() {
       if (streamTitle) procesarMetadataRaw(streamTitle);
     } catch(e) {}
   }
+
+  /* ⭐ Consulta inmediata + intervalo más corto (4s en lugar de 10s) */
   consultar();
   if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(consultar, 10000);
+  pollingInterval = setInterval(consultar, 4000);
+
+  /* ⭐ Detector de "stale" — si no hay update en 25s, forzar consulta YA */
+  if (window._staleDetector) clearInterval(window._staleDetector);
+  window._staleDetector = setInterval(function(){
+    if (Date.now() - ultimaActualizacionMs > 25000){
+      console.log("[Metadata] ⚠️ Stale detectado — forzando refresco");
+      sseActivo = false;  /* algo le pasó a SSE, marcar como caído */
+      consultar();
+    }
+  }, 5000);
+}
+
+/* ⭐ Activar "fast poll" — polling agresivo cada 1.5s por 20s
+   Útil para justo después de darle play o cuando vuelve internet */
+function activarFastPoll(){
+  fastPollHasta = Date.now() + 20000;
+  if (window._fastPollTimer) clearInterval(window._fastPollTimer);
+  window._fastPollTimer = setInterval(function(){
+    if (Date.now() > fastPollHasta){
+      clearInterval(window._fastPollTimer);
+      window._fastPollTimer = null;
+      return;
+    }
+    /* Hacer una consulta rápida */
+    (async function(){
+      try{
+        const r = await fetchConProxy(ZENO_REST_URL);
+        const d = await r.json();
+        let streamTitle = null;
+        if (d.streamTitle) streamTitle = d.streamTitle;
+        else if (d.mount && d.mount.streamTitle) streamTitle = d.mount.streamTitle;
+        else if (d.now_playing && d.now_playing.song) {
+          const np = d.now_playing.song;
+          streamTitle = `${np.artist || ""} - ${np.title || ""}`.trim();
+        }
+        if (streamTitle) procesarMetadataRaw(streamTitle);
+      }catch(e){}
+    })();
+  }, 1500);
 }
 
 async function conectarMetadata() {
   try {
     await intentarSSE();
+    /* ⭐ Aunque SSE funcione, igual arranco polling como respaldo
+       (SSE puede caerse silenciosamente) */
+    iniciarPolling();
     return;
   } catch(e) {}
   iniciarPolling();
+}
+
+/* ⭐ Hook: cuando el usuario le da play, activar fast poll */
+const _origPlay = audio.play?.bind(audio);
+if (_origPlay){
+  audio.play = function(){
+    const p = _origPlay();
+    activarFastPoll();
+    return p;
+  };
 }
 
 const SMART_CACHE = JSON.parse(localStorage.getItem("sikodark-smart-cache") || "{}");
@@ -1256,16 +1361,102 @@ iniciarPush();
 
   window.addEventListener("online", function(){
     if (isPlaying) reconectar();
+    /* ⭐ Al volver internet, forzar fast poll para refrescar metadata YA */
+    activarFastPoll();
   });
 
+  /* =========================================================
+     🔄 ANTI-FREEZE: cuando el celular despierta de ahorro de energía
+     =========================================================
+     El navegador pausa los timers cuando la pestaña pasa a background.
+     Al volver a ser visible (o el usuario despierta el celular):
+       1. Limpiar carátula VIEJA (mostrar LOGO) — no quedarse congelada
+       2. Resetear último título para forzar refresco aunque sea el mismo
+       3. Activar fast poll (1.5s por 25s) para obtener metadata nueva YA
+       4. Si el audio está pausado pero isPlaying=true → reconectar stream
+       5. Si el audio está sonando pero congelado → reconectar
+     ========================================================= */
+  var _ultimaVisitaVisible = Date.now();
   document.addEventListener("visibilitychange", function(){
-    if (document.visibilityState === "visible" && isPlaying){
-      setTimeout(function(){
-        var pos = audio.currentTime;
-        if (Math.abs(pos - ultimaPos) < 0.05) reconectar();
-        ultimaPos = pos;
-      }, 1500);
+    if (document.visibilityState === "visible"){
+      /* ⭐ Calcular cuánto tiempo estuvo en background */
+      var tiempoInactivo = Date.now() - _ultimaVisitaVisible;
+      console.log("[Anti-freeze] Vuelve a visible — inactivo " + Math.round(tiempoInactivo/1000) + "s");
+
+      /* Si estuvo más de 8s en background, forzar refresco completo */
+      if (tiempoInactivo > 8000){
+        /* 1. Limpiar carátula VIEJA inmediatamente — mostrar LOGO */
+        cover = null;
+        if (coverEl) coverEl.src = LOGO;
+
+        /* 2. Resetear último título para forzar setTrack aunque sea la misma canción
+              (puede que la metadata en Zeno no haya cambiado, pero queremos
+               refrescar la UI por las dudas) */
+        ultimoTitulo = "";
+
+        /* 3. Activar fast poll agresivo (1.5s por 25s) */
+        activarFastPoll();
+
+        /* 4. Si el audio está pausado pero el usuario cree que está sonando → reconectar */
+        if (isPlaying && audio.paused){
+          console.log("[Anti-freeze] Audio pausado en background — reconectando");
+          reconectar();
+        }
+        /* 5. Si el audio está sonando pero congelado (currentTime no avanza) → reconectar */
+        else if (isPlaying){
+          setTimeout(function(){
+            var pos = audio.currentTime;
+            setTimeout(function(){
+              if (document.visibilityState === "visible" && isPlaying &&
+                  Math.abs(audio.currentTime - pos) < 0.05){
+                console.log("[Anti-freeze] Audio congelado — reconectando");
+                reconectar();
+              }
+            }, 1500);
+          }, 0);
+        }
+      } else {
+        /* Si estuvo poco tiempo (< 8s) solo refrescar metadata suave */
+        if (isPlaying) activarFastPoll();
+      }
+    } else {
+      /* Marcar cuándo pasó a background */
+      _ultimaVisitaVisible = Date.now();
     }
+  });
+
+  /* ⭐ Listener adicional: 'resume' event (Page Lifecycle API)
+     para celulares que entran en ahorro de energía profundo */
+  if ("onresume" in document){
+    document.addEventListener("resume", function(){
+      console.log("[Anti-freeze] Document resume — forzando refresco");
+      ultimoTitulo = "";
+      activarFastPoll();
+    });
+  }
+
+  /* ⭐ Wake Lock API — pedir "no suspender" mientras suena la radio
+     (no siempre funciona en todos los navegadores, pero ayuda) */
+  var _wakeLock = null;
+  async function pedirWakeLock(){
+    try{
+      if ("wakeLock" in navigator && isPlaying){
+        _wakeLock = await navigator.wakeLock.request("screen");
+        console.log("[Anti-freeze] Wake lock adquirido");
+      }
+    }catch(e){ /* Silent fail — no todos los navegadores lo soportan */ }
+  }
+  async function liberarWakeLock(){
+    try{
+      if (_wakeLock){ _wakeLock.release(); _wakeLock = null; }
+    }catch(e){}
+  }
+  /* ⭐ Hacer globales para poder llamarlas desde startPlayback/stopPlayback */
+  window.pedirWakeLock = pedirWakeLock;
+  window.liberarWakeLock = liberarWakeLock;
+  /* Re-pedir wake lock cuando vuelve la visibilidad (se libera al pausar) */
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible" && isPlaying) pedirWakeLock();
   });
 
   if ("mediaSession" in navigator){
@@ -2849,12 +3040,27 @@ renderFavs();
   function abrir(){
     modal.classList.add("show");
     okMsg.style.display = "none";
+    okMsg.textContent = "";
     inpNombre.value = "";
     inpBanda.value = "";
     inpTema.value = "";
     setTimeout(function(){ inpBanda.focus(); }, 100);
   }
   function cerrar(){ modal.classList.remove("show"); }
+
+  /* Cerrar mensaje de error visual si existe */
+  function limpiarError(){
+    var errBox = document.getElementById("pedError");
+    if (errBox) errBox.remove();
+  }
+  function mostrarError(msg){
+    limpiarError();
+    var div = document.createElement("div");
+    div.id = "pedError";
+    div.style.cssText = "background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:11px;text-align:center;color:#ff9d96;font:700 12px var(--sans);margin-top:10px;line-height:1.4";
+    div.textContent = msg;
+    btnCancelar.parentNode.insertBefore(div, btnCancelar.parentNode.firstChild);
+  }
 
   btn.onclick = abrir;
   btnCancelar.onclick = cerrar;
@@ -2866,35 +3072,76 @@ renderFavs();
     if (n) inpNombre.value = n;
   }catch(e){}
 
+  /* Esperar a que Firebase Auth esté listo (hasta 8 segundos) */
+  function esperarAuth(){
+    return new Promise(function(resolve){
+      if (usuarioUID){ resolve(usuarioUID); return; }
+      var intentos = 0;
+      var iv = setInterval(function(){
+        intentos++;
+        if (usuarioUID || intentos > 16){
+          clearInterval(iv);
+          resolve(usuarioUID);
+        }
+      }, 500);
+    });
+  }
+
   btnEnviar.onclick = async function(){
+    limpiarError();
     var banda = inpBanda.value.trim();
     var tema = inpTema.value.trim();
     var nombre = inpNombre.value.trim();
     if (!banda){
       inpBanda.focus();
-      if (typeof toast === "function") toast("Escribí una banda");
+      mostrarError("Escribí una banda");
       return;
     }
-    if (!usuarioUID){
-      if (typeof toast === "function") toast("Esperá un seg, estás conectando…");
-      return;
-    }
+
     btnEnviar.disabled = true;
+    btnEnviar.textContent = "Conectando…";
+
+    /* Esperar a que se resuelva el auth anónimo */
+    var uid = usuarioUID;
+    if (!uid){
+      mostrarError("Esperando conexión con el servidor…");
+      uid = await esperarAuth();
+    }
+
+    if (!uid){
+      mostrarError("No hay conexión con Firebase. Recargá la página e intentá de nuevo.");
+      btnEnviar.disabled = false;
+      btnEnviar.textContent = "Enviar pedido";
+      return;
+    }
+
     btnEnviar.textContent = "Enviando…";
+
     try{
+      console.log("[Pedido] Enviando:", { banda: banda, tema: tema, nombre: nombre, uid: uid });
       await dbFB.collection("temas_pedidos").add({
         banda: banda.slice(0, 60),
         tema: tema.slice(0, 60),
         nombre: nombre.slice(0, 20),
-        uid: usuarioUID,
+        uid: uid,
         fecha: Date.now()
       });
+      console.log("[Pedido] ✅ Enviado OK");
       /* Guardar nombre para la próxima */
       if (nombre) try{ localStorage.setItem("sikodark-ped-nombre", nombre); }catch(e){}
+      okMsg.textContent = "✅ ¡Pedido enviado! El DJ lo recibió al toque 🤘";
       okMsg.style.display = "block";
       setTimeout(cerrar, 2200);
     }catch(e){
-      if (typeof toast === "function") toast("❌ " + e.message);
+      console.error("[Pedido] ❌ Error:", e);
+      var msg = e.message || "Error desconocido";
+      /* Mensaje más amigable para errores comunes */
+      if (/permission|denied|PERMISSION/i.test(msg)){
+        msg = "❌ Permiso denegado. El DJ tiene que habilitar la colección 'temas_pedidos' en Firebase.";
+      } else if (/network|offline|fetch/i.test(msg)){
+        msg = "❌ Sin conexión. Revisá tu internet e intentá de nuevo.";
+      }
+      mostrarError(msg);
     }
     btnEnviar.disabled = false;
     btnEnviar.textContent = "Enviar pedido";

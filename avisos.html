@@ -593,7 +593,22 @@ function cargarPedidos(){
           catch(e){ estado("❌ " + e.message, "err"); }
         };
       });
-    }, function(e){ estado("⚠️ No pude cargar pedidos: " + e.message, "err"); });
+    }, function(e){
+      /* ⚠️ Error de permisos u otro */
+      console.error("[Pedidos] Error al leer:", e);
+      const lista = $("listaPedidos");
+      var msg = e.message || "Error desconocido";
+      var esPermisos = /permission|denied|PERMISSION/i.test(msg);
+      lista.innerHTML =
+        '<div style="background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:14px;text-align:center;color:#ff9d96;font-size:.82rem;line-height:1.5">' +
+        '<div style="font-size:1.5rem;margin-bottom:6px">🔒</div>' +
+        '<b style="display:block;margin-bottom:5px">' + (esPermisos ? "Falta permiso en Firebase" : "Error al cargar pedidos") + '</b>' +
+        (esPermisos
+          ? 'Tenés que agregar la colección <code style="background:#0e0f14;padding:2px 6px;border-radius:4px">temas_pedidos</code> a las reglas de Firestore. Mirá el archivo <b>REGLAS-FIRESTORE.txt</b> que viene en el ZIP.'
+          : esc(msg)) +
+        '</div>';
+      estado("⚠️ No pude cargar pedidos: " + msg, "err");
+    });
 }
 
  $("btnLimpiarPedidos").onclick = async () => {

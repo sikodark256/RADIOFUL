@@ -1,0 +1,127 @@
+==========================================================
+   🔑 REGLAS DE FIRESTORE — sikodark radio
+==========================================================
+
+Para que funcionen los PEDIDOS DE TEMAS y la ENCUESTA,
+tenés que actualizar las reglas de seguridad en Firebase.
+
+Pasos:
+1. Entrá a https://console.firebase.google.com
+2. Elegí tu proyecto: sikodarkradio-26a07
+3. En el menú izquierdo: Firestore Database → Reglas
+4. Borrá todo lo que hay y PEGÁ esto:
+
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // === USUARIOS (lo que ya tenías) ===
+    match /usuarios/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // === VISITAS, ESCUCHAS, MEGUSTAS, TOKENS ===
+    match /visitas/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /escuchas/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /megustas/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /tokens/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // === PRESENCIA ===
+    match /presencia/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // === CONFIG (avisos, publicidad, encuesta) ===
+    // Cualquier usuario autenticado (incluido anónimo) puede LEER.
+    // Solo el admin puede ESCRIBIR.
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.token.email == "sikoradio@hotmail.com";
+      // Excepción: los votos de la encuesta los puede sumar cualquier oyente
+      // (lo hacemos via FieldValue.arrayUnion desde el cliente)
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(['encuesta']);
+    }
+
+    // === PEDIDOS DE TEMAS (¡NUEVO!) ===
+    // Cualquier usuario autenticado (incluido anónimo) puede crear pedidos.
+    // Solo el admin puede leerlos y borrarlos.
+    match /temas_pedidos/{docId} {
+      allow create: if request.auth != null
+        && request.resource.data.banda is string
+        && request.resource.data.banda.size() <= 60
+        && request.resource.data.fecha is int;
+      allow read, delete, update: if request.auth.token.email == "sikoradio@hotmail.com";
+    }
+
+    // Bloquear todo lo demás por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+5. Tocá el botón "Publicar" (arriba a la derecha).
+6. Listo. Los pedidos van a empezar a llegar al panel al toque.
+
+
+==========================================================
+   🧪 CÓMO PROBAR SI ANDA
+==========================================================
+
+A) Probá el PEDIDO desde tu celular:
+   1. Abrí la app de sikodark
+   2. Tocá el botón "🎸 Pedí tu tema" (abajo a la izquierda)
+   3. Escribí una banda y mandá el pedido
+   4. Deberías ver "✅ ¡Pedido enviado!"
+
+B) Mirá el PANEL desde una PC:
+   1. Abrí avisos.html
+   2. Loguéate como admin
+   3. Bajá a "🎸 Pedidos de temas"
+   4. Tu pedido debería aparecer al toque
+
+C) Si te tira error de permisos en la app:
+   - Vas a ver un cartel rojo con "Permiso denegado"
+   - Significa que las reglas todavía no se aplicaron
+   - Esperá 1-2 minutos y recargá
+   - Verificá que el email del admin en las reglas sea
+     EXACTAMENTE "sikoradio@hotmail.com" (con minúsculas)
+
+
+==========================================================
+   🐛 DEBUG AVANZADO
+==========================================================
+
+Si todavía no anda, abrí la CONSOLA del navegador (F12) y mirá
+los mensajes [Pedido] o el error rojo de Firebase.
+
+Errores comunes:
+
+• "Missing or insufficient permissions"
+  → Las reglas no están publicadas o el email del admin
+    no coincide.
+
+• "Firebase: Error (auth/operation-not-allowed)"
+  → Tenés que habilitar el método "Anónimo" en:
+    Firebase Console → Authentication → Sign-in method →
+    Anónimo → Habilitar → Guardar
+
+• "Cannot read property 'add' of undefined"
+  → El script de Firebase no cargó. Verificá que tenés
+    internet y que el <script> de firebase-firestore-compat.js
+    esté en el <head> del index.html.
