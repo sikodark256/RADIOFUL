@@ -45,19 +45,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .load-ring{display:none;width:28px;height:28px;margin:10px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff}
 .load-ring.show{display:block;animation:spin 1s linear infinite}
 
-/* ⭐ Indicador "Actualizando..." superpuesto a la carátula */
-.refresh-indicator{position:absolute;inset:0;display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:9px;z-index:4;
-  background:rgba(10,10,13,.78);backdrop-filter:blur(4px);
-  -webkit-backdrop-filter:blur(4px);border-radius:22px}
-.refresh-indicator.show{display:flex;animation:refreshFade .25s ease}
-.refresh-indicator span{font:800 11px var(--mono);color:var(--primary);
-  text-transform:uppercase;letter-spacing:.12em;
-  text-shadow:0 2px 8px rgba(0,0,0,.8)}
-.refresh-ring{width:30px;height:30px;border-radius:50%;
-  border:3px solid rgba(255,138,36,.25);border-top-color:var(--primary);
-  animation:spin .9s linear infinite}
-@keyframes refreshFade{from{opacity:0}to{opacity:1}}
+/* ⭐ Indicador "Actualizando..." — desactivado (display:none siempre)
+   Lo dejamos en el HTML por si se quiere reactivar, pero no se muestra */
+.refresh-indicator{display:none!important}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== ⭐ CAJITA DE PREFERIDOS ===== */
@@ -1328,15 +1318,14 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
-/* ⭐ Al cargar la página por primera vez, mostrar indicador "Actualizando..."
-   inmediatamente (la metadata va a llegar en 1-2s) */
-showRefresh(true);
+/* ⭐ Al cargar la página, limpiar metadata vieja para que no se vea
+   el artista/caratula anterior mientras llega la nueva */
+cover = null;
+if (coverEl) coverEl.src = LOGO;
+ultimoTitulo = "";
 
-/* ⭐ Safety net: si después de 8s no llegó metadata, ocultar igual el indicador
-   (puede que el servidor esté caído o la radio esté parada) */
-setTimeout(function(){
-  if (!ultimaActualizacionMs) showRefresh(false);
-}, 8000);
+/* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
+   (simplemente no hay info, el player sigue funcionando) */
 
 console.log("🧠 Sikodark Radio v28 — patrón original de carátulas restaurado + Montserrat + auto-update");
 </script>
@@ -1468,29 +1457,23 @@ iniciarPush();
      🔄 ANTI-FREEZE: cuando el celular despierta de ahorro de energía
      =========================================================
      El navegador pausa los timers cuando la pestaña pasa a background.
-     Al volver a ser visible (o el usuario despierta el celular):
+     Al volver a ser visible:
        1. Limpiar carátula VIEJA (mostrar LOGO) — no quedarse congelada
        2. Resetear último título para forzar refresco aunque sea el mismo
-       3. Activar fast poll (1.5s por 25s) para obtener metadata nueva YA
+       3. Activar fast poll para obtener metadata nueva
        4. Si el audio está pausado pero isPlaying=true → reconectar stream
-       5. Si el audio está sonando pero congelado → reconectar
-     ⭐ Umbral bajado a 3s (antes 8s) — cualquier pausa > 3s dispara refresco
      ========================================================= */
   var _ultimaVisitaVisible = Date.now();
   document.addEventListener("visibilitychange", function(){
     if (document.visibilityState === "visible"){
-      /* ⭐ Calcular cuánto tiempo estuvo en background */
       var tiempoInactivo = Date.now() - _ultimaVisitaVisible;
       console.log("[Anti-freeze] Vuelve a visible — inactivo " + Math.round(tiempoInactivo/1000) + "s");
 
-      /* Si estuvo más de 3s en background, forzar refresco completo */
-      if (tiempoInactivo > 3000){
+      /* Si estuvo más de 8s en background, forzar refresco completo */
+      if (tiempoInactivo > 8000){
         /* 1. Limpiar carátula VIEJA inmediatamente — mostrar LOGO */
         cover = null;
         if (coverEl) coverEl.src = LOGO;
-        /* ⭐ Mostrar indicador "Actualizando..." para que el usuario vea
-           que algo está pasando (no piense que se trabuco) */
-        showRefresh(true);
 
         /* 2. Resetear último título para forzar setTrack aunque sea la misma canción */
         ultimoTitulo = "";
@@ -1517,26 +1500,11 @@ iniciarPush();
           }, 0);
         }
       } else {
-        /* Si estuvo poco tiempo (< 3s) solo refrescar metadata suave */
+        /* Si estuvo poco tiempo (< 8s) solo refrescar metadata suave */
         if (isPlaying) activarFastPoll();
       }
     } else {
-      /* Marcar cuándo pasó a background */
       _ultimaVisitaVisible = Date.now();
-    }
-  });
-
-  /* ⭐ Listener 'pageshow' — se dispara cuando se restaura desde bfcache
-     (botón "atrás" del navegador o el navegador reabre la pestaña rápido) */
-  window.addEventListener("pageshow", function(event){
-    if (event.persisted){
-      console.log("[Anti-freeze] Página restaurada desde bfcache — forzando refresco");
-      cover = null;
-      if (coverEl) coverEl.src = LOGO;
-      showRefresh(true);
-      ultimoTitulo = "";
-      activarFastPoll();
-      if (isPlaying) reconectar();
     }
   });
 
@@ -1544,9 +1512,6 @@ iniciarPush();
   if ("onresume" in document){
     document.addEventListener("resume", function(){
       console.log("[Anti-freeze] Document resume — forzando refresco");
-      cover = null;
-      if (coverEl) coverEl.src = LOGO;
-      showRefresh(true);
       ultimoTitulo = "";
       activarFastPoll();
     });
