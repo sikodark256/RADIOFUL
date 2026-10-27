@@ -44,6 +44,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:transparent}
 .load-ring{display:none;width:28px;height:28px;margin:10px auto 0;border-radius:50%;border:3px solid rgba(255,255,255,.22);border-top-color:#fff}
 .load-ring.show{display:block;animation:spin 1s linear infinite}
+
+/* ⭐ Indicador "Actualizando..." superpuesto a la carátula */
+.refresh-indicator{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;z-index:4;
+  background:rgba(10,10,13,.78);backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);border-radius:22px}
+.refresh-indicator.show{display:flex;animation:refreshFade .25s ease}
+.refresh-indicator span{font:800 11px var(--mono);color:var(--primary);
+  text-transform:uppercase;letter-spacing:.12em;
+  text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.refresh-ring{width:30px;height:30px;border-radius:50%;
+  border:3px solid rgba(255,138,36,.25);border-top-color:var(--primary);
+  animation:spin .9s linear infinite}
+@keyframes refreshFade{from{opacity:0}to{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== ⭐ CAJITA DE PREFERIDOS ===== */
@@ -209,9 +223,9 @@ body::after{
   background:linear-gradient(to top,rgba(10,10,13,.92) 0%,rgba(10,10,13,.4) 35%,transparent 65%);
   pointer-events:none}
 .tick-mag-tag{position:absolute;top:12px;left:12px;background:var(--primary);
-  color:#161616;padding:5px 12px;border-radius:999px;
-  font:800 10.5px var(--sans);text-transform:uppercase;letter-spacing:.06em;
-  box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:2;max-width:70%;white-space:nowrap;
+  color:#161616;padding:7px 14px;border-radius:999px;
+  font:900 13.5px var(--sans);text-transform:uppercase;letter-spacing:.05em;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:2;max-width:75%;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .tick-mag-status{position:absolute;top:12px;right:12px;display:flex;gap:6px;
   flex-wrap:wrap;justify-content:flex-end;max-width:50%;z-index:2}
@@ -227,15 +241,12 @@ body::after{
   color:#ffe066}
 
 /* === BODY === */
-.tick-mag-body{padding:18px 18px 16px;background:#0a0a0d}
-/* ⭐ HEADLINE tipo titular de revista — GRANDE, weight 900, tight */
-.tick-mag-headline{font:900 36px/1.02 var(--sans);color:#fff;text-transform:uppercase;
-  letter-spacing:-.02em;margin:0 0 12px;
-  text-shadow:0 2px 12px rgba(0,0,0,.6);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  word-break:break-word;hyphens:auto}
+.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d}
+/* ⭐ Headline del nombre de la banda — tamaño chico como antes */
+.tick-mag-headline{font:900 19px/1.18 var(--sans);color:#fff;text-transform:uppercase;
+  letter-spacing:.01em;margin:0 0 9px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tick-mag-headline:empty{display:none}
-/* Texto del cuerpo — un toque más grande también */
 .tick-mag-texto{font:600 13.5px/1.55 var(--sans);color:#d7d8de;margin:0;
   word-wrap:break-word;
   display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
@@ -418,6 +429,11 @@ body::after{
     </button>
     <button id="btnLike" class="circle-btn" aria-label="Marcar me gusta"></button>
   </div>
+  <!-- ⭐ Indicador "Actualizando..." superpuesto cuando se busca metadata -->
+  <div id="refreshIndicator" class="refresh-indicator">
+    <div class="refresh-ring"></div>
+    <span>Actualizando…</span>
+  </div>
   <div id="eq" class="eq"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
 </div>
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
@@ -553,7 +569,12 @@ const statusText=document.getElementById("statusText"), volume=document.getEleme
 const historyEl=document.getElementById("history"), countEl=document.getElementById("count"), install=document.getElementById("install"), eq=document.getElementById("eq");
 const diagnostico=document.getElementById("diagnostico"), btnReset=document.getElementById("btnReset");
 const loadRing=document.getElementById("loadRing");
+const refreshIndicator=document.getElementById("refreshIndicator");
 function ring(v){ if(loadRing) loadRing.classList.toggle("show", v); }
+/* ⭐ Mostrar/ocultar indicador "Actualizando..." sobre la carátula */
+function showRefresh(v){
+  if (refreshIndicator) refreshIndicator.classList.toggle("show", !!v);
+}
 
 let isPlaying=false,isLoading=false,muted=false,cover=null,history=[];
 let ultimoTitulo = "", pollingInterval = null;
@@ -978,6 +999,8 @@ function procesarMetadataRaw(streamTitle) {
   if (track.title && track.title !== "En vivo") {
     ultimaActualizacionMs = Date.now();
     setTrack(track);
+    /* ⭐ Ocultar indicador "Actualizando..." cuando llega metadata */
+    showRefresh(false);
   }
 }
 
@@ -1049,11 +1072,18 @@ async function iniciarPolling() {
    Útil para justo después de darle play o cuando vuelve internet */
 function activarFastPoll(){
   fastPollHasta = Date.now() + 20000;
+  /* ⭐ Mostrar indicador "Actualizando..." apenas arranca el fast poll */
+  showRefresh(true);
   if (window._fastPollTimer) clearInterval(window._fastPollTimer);
   window._fastPollTimer = setInterval(function(){
     if (Date.now() > fastPollHasta){
       clearInterval(window._fastPollTimer);
       window._fastPollTimer = null;
+      /* Si todavía no llegó metadata tras 20s, ocultar igual el indicador
+         (no queremos que quede girando para siempre) */
+      if (Date.now() - ultimaActualizacionMs > 25000){
+        showRefresh(false);
+      }
       return;
     }
     /* Hacer una consulta rápida */
@@ -1075,14 +1105,18 @@ function activarFastPoll(){
 }
 
 async function conectarMetadata() {
-  try {
-    await intentarSSE();
-    /* ⭐ Aunque SSE funcione, igual arranco polling como respaldo
-       (SSE puede caerse silenciosamente) */
-    iniciarPolling();
-    return;
-  } catch(e) {}
+  /* ⭐ NUEVO: arrancar polling INMEDIATAMENTE (no esperar a que SSE falle).
+     Esto asegura que la metadata se actualice en cuanto se abre la web,
+     sin importar si SSE funciona o no. */
   iniciarPolling();
+  /* En paralelo, intentar SSE para updates en tiempo real.
+     Si SSE anda, el polling se salta automáticamente (gracias al check
+     de ultimaActualizacionMs reciente). */
+  intentarSSE().then(function(){
+    console.log("[Metadata] SSE conectado OK");
+  }).catch(function(e){
+    console.log("[Metadata] SSE no disponible, usando solo polling:", e.message);
+  });
 }
 
 /* ⭐ Hook: cuando el usuario le da play, activar fast poll */
@@ -1294,6 +1328,16 @@ renderHistory();
 pedirPermisoNotificaciones();
 conectarMetadata();
 
+/* ⭐ Al cargar la página por primera vez, mostrar indicador "Actualizando..."
+   inmediatamente (la metadata va a llegar en 1-2s) */
+showRefresh(true);
+
+/* ⭐ Safety net: si después de 8s no llegó metadata, ocultar igual el indicador
+   (puede que el servidor esté caído o la radio esté parada) */
+setTimeout(function(){
+  if (!ultimaActualizacionMs) showRefresh(false);
+}, 8000);
+
 console.log("🧠 Sikodark Radio v28 — patrón original de carátulas restaurado + Montserrat + auto-update");
 </script>
 
@@ -1430,6 +1474,7 @@ iniciarPush();
        3. Activar fast poll (1.5s por 25s) para obtener metadata nueva YA
        4. Si el audio está pausado pero isPlaying=true → reconectar stream
        5. Si el audio está sonando pero congelado → reconectar
+     ⭐ Umbral bajado a 3s (antes 8s) — cualquier pausa > 3s dispara refresco
      ========================================================= */
   var _ultimaVisitaVisible = Date.now();
   document.addEventListener("visibilitychange", function(){
@@ -1438,15 +1483,16 @@ iniciarPush();
       var tiempoInactivo = Date.now() - _ultimaVisitaVisible;
       console.log("[Anti-freeze] Vuelve a visible — inactivo " + Math.round(tiempoInactivo/1000) + "s");
 
-      /* Si estuvo más de 8s en background, forzar refresco completo */
-      if (tiempoInactivo > 8000){
+      /* Si estuvo más de 3s en background, forzar refresco completo */
+      if (tiempoInactivo > 3000){
         /* 1. Limpiar carátula VIEJA inmediatamente — mostrar LOGO */
         cover = null;
         if (coverEl) coverEl.src = LOGO;
+        /* ⭐ Mostrar indicador "Actualizando..." para que el usuario vea
+           que algo está pasando (no piense que se trabuco) */
+        showRefresh(true);
 
-        /* 2. Resetear último título para forzar setTrack aunque sea la misma canción
-              (puede que la metadata en Zeno no haya cambiado, pero queremos
-               refrescar la UI por las dudas) */
+        /* 2. Resetear último título para forzar setTrack aunque sea la misma canción */
         ultimoTitulo = "";
 
         /* 3. Activar fast poll agresivo (1.5s por 25s) */
@@ -1457,7 +1503,7 @@ iniciarPush();
           console.log("[Anti-freeze] Audio pausado en background — reconectando");
           reconectar();
         }
-        /* 5. Si el audio está sonando pero congelado (currentTime no avanza) → reconectar */
+        /* 5. Si el audio está sonando pero congelado → reconectar */
         else if (isPlaying){
           setTimeout(function(){
             var pos = audio.currentTime;
@@ -1471,7 +1517,7 @@ iniciarPush();
           }, 0);
         }
       } else {
-        /* Si estuvo poco tiempo (< 8s) solo refrescar metadata suave */
+        /* Si estuvo poco tiempo (< 3s) solo refrescar metadata suave */
         if (isPlaying) activarFastPoll();
       }
     } else {
@@ -1480,11 +1526,27 @@ iniciarPush();
     }
   });
 
-  /* ⭐ Listener adicional: 'resume' event (Page Lifecycle API)
-     para celulares que entran en ahorro de energía profundo */
+  /* ⭐ Listener 'pageshow' — se dispara cuando se restaura desde bfcache
+     (botón "atrás" del navegador o el navegador reabre la pestaña rápido) */
+  window.addEventListener("pageshow", function(event){
+    if (event.persisted){
+      console.log("[Anti-freeze] Página restaurada desde bfcache — forzando refresco");
+      cover = null;
+      if (coverEl) coverEl.src = LOGO;
+      showRefresh(true);
+      ultimoTitulo = "";
+      activarFastPoll();
+      if (isPlaying) reconectar();
+    }
+  });
+
+  /* ⭐ Listener 'resume' (Page Lifecycle API) para ahorro de energía profundo */
   if ("onresume" in document){
     document.addEventListener("resume", function(){
       console.log("[Anti-freeze] Document resume — forzando refresco");
+      cover = null;
+      if (coverEl) coverEl.src = LOGO;
+      showRefresh(true);
       ultimoTitulo = "";
       activarFastPoll();
     });
@@ -2105,7 +2167,7 @@ renderFavs();
   }
 
   async function buscarUnaImagenBanda(nombre){
-    /* Intentar primero con TheAudioDB (fanart HD) */
+    /* 1️⃣ TheAudioDB (fanart HD) — mejor calidad */
     try{
       var art = await fetchAudioDBSearch(nombre);
       if (art){
@@ -2114,26 +2176,54 @@ renderFavs();
         if (art.strArtistLogo) return art.strArtistLogo;
       }
     }catch(e){}
-    /* Fallback: iTunes Search API (artwork 100x100 → 600x600) */
+    /* 2️⃣ Deezer (picture_xl HD) — excelente para bandas hispanas */
+    try{
+      var dz = await fetchDeezerArtist(nombre);
+      if (dz){
+        if (dz.picture_xl) return dz.picture_xl;
+        if (dz.picture_big) return dz.picture_big;
+        if (dz.picture_medium) return dz.picture_medium;
+      }
+    }catch(e){}
+    /* 3️⃣ Discogs (profile pic) — gran respaldo para bandas oscuras */
+    try{
+      var dg = await fetchDiscogsArtist(nombre);
+      if (dg && dg.images && dg.images.length){
+        var primary = dg.images.find(function(i){ return i.type === "primary"; });
+        if (primary && primary.uri) return primary.uri;
+        if (dg.images[0].uri) return dg.images[0].uri;
+      }
+    }catch(e){}
+    /* 4️⃣ iTunes Search API (artwork 100x100 → 600x600) */
     try{
       var url = "https://itunes.apple.com/search?term=" + encodeURIComponent(nombre) +
                 "&entity=musicArtist&limit=1";
-      var r = await fetch(url, {timeout: 5000});
+      var r = await fetch(url);
       if (r.ok){
         var d = await r.json();
         if (d.results && d.results[0] && d.results[0].artworkUrl100){
-          /* Convertir 100x100 a 600x600 (reemplazo en la URL) */
           return d.results[0].artworkUrl100.replace("100x100", "600x600");
         }
       }
     }catch(e){}
-    /* Fallback 2: Wikipedia REST */
+    /* 5️⃣ Wikipedia REST (original image) */
     try{
       var r2 = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(nombre));
       if (r2.ok){
         var d2 = await r2.json();
         if (d2.originalimage && d2.originalimage.source) return d2.originalimage.source;
         if (d2.thumbnail && d2.thumbnail.source) return d2.thumbnail.source;
+      }
+    }catch(e){}
+    /* 6️⃣ MusicBrainz + Cover Art Archive (portada del primer álbum como último recurso) */
+    try{
+      var mb = await fetchMusicBrainz(nombre);
+      if (mb && mb.id){
+        var albumMBID = await fetchPrimerAlbumMBID(mb.id);
+        if (albumMBID){
+          var coverUrl = await fetchCoverArtArchive(albumMBID);
+          if (coverUrl) return coverUrl;
+        }
       }
     }catch(e){}
     return null;
@@ -2596,6 +2686,119 @@ renderFavs();
   }
 
   /* ============================================================
+     🆕 NUEVAS APIs gratuitas (sin key) para info más profesional
+     ============================================================ */
+
+  /* MusicBrainz — base de datos libre y colaborativa
+     Devuelve: MBID (id), tipo, area, begin-date (formación),
+     end-date (disolución), tags, membres, etc. */
+  async function fetchMusicBrainz(artista){
+    try{
+      /* Búsqueda de artista — devuelve el MBID */
+      var url = "https://musicbrainz.org/ws/2/artist/?query=artist:" +
+                encodeURIComponent(artista) + "&fmt=json&limit=1";
+      var r = await fetch(url, {
+        headers: { "User-Agent": "sikodark-radio/1.0 (contacto@sikodark.com)" }
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var art = (d.artists && d.artists[0]) || null;
+      if (!art) return null;
+      /* Traer info completa del artista (con miembros y releases) */
+      if (art.id){
+        try{
+          var url2 = "https://musicbrainz.org/ws/2/artist/" + art.id +
+                     "?inc=artist-rels+tags+annotation&fmt=json";
+          var r2 = await fetch(url2, {
+            headers: { "User-Agent": "sikodark-radio/1.0 (contacto@sikodark.com)" }
+          });
+          if (r2.ok){
+            var d2 = await r2.json();
+            return Object.assign({}, art, d2);
+          }
+        }catch(e){}
+      }
+      return art;
+    }catch(e){ return null; }
+  }
+
+  /* Deezer — API gratuita sin key, alta calidad para imágenes y bio corta */
+  async function fetchDeezerArtist(artista){
+    try{
+      var url = "https://api.deezer.com/search/artist?q=" + encodeURIComponent(artista) +
+                "&limit=1";
+      /* Deezer requiere CORS — usar proxy si hace falta */
+      var r;
+      try{
+        r = await fetch(url);
+      }catch(e){
+        /* Si CORS falla, intentar con proxy */
+        r = await fetchConProxy(url);
+      }
+      if (!r || !r.ok) return null;
+      var d = await r.json();
+      return (d.data && d.data[0]) || null;
+    }catch(e){ return null; }
+  }
+
+  /* Discogs — API gratuita (rate-limited sin key, mejor con token)
+     Devuelve: imágenes, perfil, discografía, miembros */
+  async function fetchDiscogsArtist(artista){
+    try{
+      var url = "https://api.discogs.com/database/search?q=" +
+                encodeURIComponent(artista) + "&type=artist&per_page=1";
+      /* Discogs requiere User-Agent header */
+      var r = await fetch(url, {
+        headers: { "User-Agent": "sikodark-radio/1.0", "Accept": "application/vnd.discogs.v2+json" }
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var result = (d.results && d.results[0]) || null;
+      if (!result || !result.id) return result;
+      /* Traer info completa del artista (con imágenes y perfil) */
+      try{
+        var url2 = "https://api.discogs.com/artists/" + result.id;
+        var r2 = await fetch(url2, {
+          headers: { "User-Agent": "sikodark-radio/1.0", "Accept": "application/vnd.discogs.v2+json" }
+        });
+        if (r2.ok){
+          var d2 = await r2.json();
+          return d2;
+        }
+      }catch(e){}
+      return result;
+    }catch(e){ return null; }
+  }
+
+  /* Cover Art Archive — portadas oficiales de álbumes
+     Usa el MBID del release group. Sirve como fallback de imagen de banda. */
+  async function fetchCoverArtArchive(mbid){
+    if (!mbid) return null;
+    try{
+      var url = "https://coverartarchive.org/release-group/" + mbid + "/front-500";
+      var r = await fetch(url, { method: "HEAD" });  /* Solo verificar si existe */
+      if (r.ok) return url;
+    }catch(e){}
+    return null;
+  }
+
+  /* Helper: extraer MBID del primer release-group de un artista */
+  async function fetchPrimerAlbumMBID(artistaMBID){
+    if (!artistaMBID) return null;
+    try{
+      var url = "https://musicbrainz.org/ws/2/release-group?artist=" + artistaMBID +
+                "&type=album&limit=1&fmt=json";
+      var r = await fetch(url, {
+        headers: { "User-Agent": "sikodark-radio/1.0 (contacto@sikodark.com)" }
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var rg = (d["release-groups"] && d["release-groups"][0]) || null;
+      return rg ? rg.id : null;
+    }catch(e){ return null; }
+  }
+
+  /* ============================================================
      🧠 TÓPICOS FANZINE (estilo Metal Hammer)
      ============================================================ */
   var TOPICOS = [
@@ -2608,10 +2811,10 @@ renderFavs();
   ];
 
   /* ============================================================
-     📚 extractoLargoWikipedia() — trae ~6000 chars del artículo
+     📚 extractoLargoWikipedia() — trae ~10000 chars del artículo
      ============================================================ */
   async function extractoLargoWikipedia(artista){
-    var clave = "sikodark-extracto-largo-v1-" + normArtista(artista).replace(/\s+/g,"-");
+    var clave = "sikodark-extracto-largo-v2-" + normArtista(artista).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -2620,7 +2823,7 @@ renderFavs();
       }
     }catch(e){}
     try{
-      var url = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=6000&titles=" +
+      var url = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=10000&titles=" +
                 encodeURIComponent(artista) + "&origin=*";
       var r = await fetch(url);
       if (!r.ok) return "";
@@ -2650,7 +2853,7 @@ renderFavs();
      =========================================================== */
   async function infoBanda(artista){
     if (!artista || artista.length < 3) return null;
-    var clave = "sikodark-info-v3-" + normArtista(artista).replace(/\s+/g,"-");
+    var clave = "sikodark-info-v4-" + normArtista(artista).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -2670,10 +2873,14 @@ renderFavs();
       genero: "",
       wikiUrl: "",
       eventos: [],
-      tags: []
+      tags: [],
+      /* 🆕 Campos nuevos para info más profesional */
+      miembros: [],
+      albumsPrincipales: [],
+      mbid: ""
     };
 
-    /* === PARALELO: Wikipedia + 3 APIs === */
+    /* === PARALELO: Wikipedia + 6 APIs === */
     var wikiPromise = (async function(){
       try{
         var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
@@ -2755,7 +2962,107 @@ renderFavs();
       if (!info.genero && info.tags.length) info.genero = info.tags[0];
     });
 
-    await Promise.all([wikiPromise, audiodbPromise, bandsintownPromise, lastfmPromise]);
+    /* 🆕 MusicBrainz — info estructurada y miembros */
+    var musicbrainzPromise = fetchMusicBrainz(artista).then(async function(mb){
+      if (!mb) return;
+      if (mb.id) info.mbid = mb.id;
+      /* Año de formación desde life-span.begin */
+      if (mb["life-span"]){
+        if (mb["life-span"].begin && !info.anioFormacion){
+          /* MB devuelve formato YYYY-MM-DD — tomar solo el año */
+          info.anioFormacion = mb["life-span"].begin.substring(0, 4);
+        }
+        /* Estado desde life-span.end */
+        if (!info.estado){
+          if (mb["life-span"].ended === true || mb["life-span"].end){
+            info.estado = "DISUELTO";
+          } else if (mb["life-span"].begin){
+            info.estado = "EN ACTIVO";
+          }
+        }
+      }
+      /* Origen desde area.name */
+      if (mb.area && mb.area.name && !info.origen){
+        info.origen = mb.area.name;
+      }
+      /* Género desde tags (si no lo dio AudioDB) */
+      if (!info.genero && mb.tags && mb.tags.length){
+        info.genero = mb.tags[0].name;
+      }
+      /* Agregar tags de MusicBrainz */
+      if (mb.tags && mb.tags.length){
+        var mbTags = mb.tags.slice(0, 5).map(function(t){ return t.name; });
+        info.tags = info.tags.concat(mbTags.filter(function(t){ return info.tags.indexOf(t) === -1; })).slice(0, 8);
+      }
+      /* Miembros desde relations (artist-rels con type "member of band") */
+      if (mb.relations && mb.relations.length){
+        var miembros = [];
+        mb.relations.forEach(function(rel){
+          if (rel.type === "member of band" && rel.artist && rel.artist.name){
+            var miembro = { nombre: rel.artist.name };
+            if (rel.begin) miembro.desde = rel.begin.substring(0, 4);
+            if (rel.end) miembro.hasta = rel.end.substring(0, 4);
+            miembros.push(miembro);
+          }
+        });
+        if (miembros.length) info.miembros = miembros.slice(0, 6);
+      }
+      /* ⭐ Fallback de imagen con Cover Art Archive usando MBID */
+      if (!info.img && mb.id){
+        var albumMBID = await fetchPrimerAlbumMBID(mb.id);
+        if (albumMBID){
+          var coverUrl = await fetchCoverArtArchive(albumMBID);
+          if (coverUrl) info.img = coverUrl;
+        }
+      }
+    });
+
+    /* 🆕 Deezer — imágenes HD y top tracks */
+    var deezerPromise = fetchDeezerArtist(artista).then(function(dz){
+      if (!dz) return;
+      /* Imagen HD de Deezer (picture_xl) si todavía no hay */
+      if (!info.img && dz.picture_xl) info.img = dz.picture_xl;
+      else if (!info.img && dz.picture_big) info.img = dz.picture_big;
+      /* Bio corta de Deezer si no hay extracto */
+      if (!info.extracto){
+        /* Deezer no trae bio, pero sí nombre completo */
+        info.nombre = dz.name || info.nombre;
+      }
+      /* Álbumes principales desde nb_album (sólo el count) */
+      if (dz.nb_album && !info.albumsPrincipales.length){
+        info.cantidadAlbums = dz.nb_album;
+      }
+      /* Número de fans */
+      if (dz.nb_fan) info.fansDeezer = dz.nb_fan;
+    });
+
+    /* 🆕 Discogs — imágenes alternativas + perfil */
+    var discogsPromise = fetchDiscogsArtist(artista).then(function(dg){
+      if (!dg) return;
+      /* Imagen de Discogs (profile pic o covers) si todavía no hay */
+      if (!info.img && dg.images && dg.images.length){
+        /* Preferir la primera imagen primaria */
+        var primary = dg.images.find(function(i){ return i.type === "primary"; });
+        info.img = (primary && primary.uri) || dg.images[0].uri;
+      }
+      /* Perfil extendido de Discogs si no hay bio */
+      if (!info.bioLarga && dg.profile_plaintext){
+        info.bioLarga = dg.profile_plaintext;
+      }
+      /* Lista de grupos/miembros */
+      if (dg.members && dg.members.length && !info.miembros.length){
+        info.miembros = dg.members.filter(function(m){ return m.active; })
+                                   .slice(0, 6)
+                                   .map(function(m){ return { nombre: m.name }; });
+      }
+      /* Nombre real */
+      if (dg.name && info.nombre === artista){
+        info.nombre = dg.name.replace(/\s*\(\d+\)$/, "");
+      }
+    });
+
+    await Promise.all([wikiPromise, audiodbPromise, bandsintownPromise, lastfmPromise,
+                       musicbrainzPromise, deezerPromise, discogsPromise]);
 
     /* ⭐ Estado: si AudioDB no dio info, usar regex sobre extracto+bio como fallback */
     if (!info.estado){
@@ -2939,8 +3246,54 @@ renderFavs();
       });
     }
 
-    /* Limitar a 6 items para no saturar la rotación */
-    if (items.length > 6) items = items.slice(0, 6);
+    /* 👥 MIEMBROS DE LA BANDA — desde MusicBrainz/Discogs */
+    if (info.miembros && info.miembros.length){
+      var listaMiembros = info.miembros.map(function(m){
+        var partes = [m.nombre];
+        if (m.desde) partes.push("desde " + m.desde);
+        if (m.hasta) partes.push("hasta " + m.hasta);
+        return partes.join(" ");
+      }).join(" · ");
+      items.push({
+        tag: "👥 MIEMBROS",
+        headline: nombre.toUpperCase(),
+        texto: recortar(listaMiembros, 280),
+        img: info.img,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.wikiUrl,
+        score: 5
+      });
+    }
+
+    /* 📊 DATOS Y CIFRAS — info de Deezer/Discogs (cantidad álbumes, fans) */
+    if (info.cantidadAlbums || info.fansDeezer){
+      var datos = [];
+      if (info.cantidadAlbums) datos.push(info.cantidadAlbums + " álbumes publicados");
+      if (info.fansDeezer){
+        var fansTxt = info.fansDeezer > 1000 ? (info.fansDeezer/1000).toFixed(1) + "K fans" : info.fansDeezer + " fans";
+        datos.push(fansTxt + " en Deezer");
+      }
+      if (info.miembros && info.miembros.length) datos.push(info.miembros.length + " miembros actuales");
+      if (info.origen) datos.push("Originarios de " + info.origen);
+      items.push({
+        tag: "📊 DATOS Y CIFRAS",
+        headline: nombre.toUpperCase(),
+        texto: recortar(nombre + ": " + datos.join(" · ") + ".", 240),
+        img: info.img,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.wikiUrl,
+        score: 4
+      });
+    }
+
+    /* Limitar a 7 items para no saturar la rotación */
+    if (items.length > 7) items = items.slice(0, 7);
     return items;
   }
 
@@ -3030,7 +3383,7 @@ renderFavs();
         artActual === "—" || artActual === "sikodark radio"){
       return [];
     }
-    var clave = "sikodark-tick-v4-" + normArtista(artActual).replace(/\s+/g,"-");
+    var clave = "sikodark-tick-v5-" + normArtista(artActual).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
