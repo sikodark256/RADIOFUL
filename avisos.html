@@ -39,6 +39,30 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
 .vigente.no{background:rgba(255,255,255,.04);border-color:#2a2b33;color:var(--muted)}
 .vigente.publi{background:rgba(255,204,0,.08);border-color:rgba(255,204,0,.35)}
 .o-separador{text-align:center;font-size:.7rem;color:#778;margin:8px 0 2px}
+
+/* === Fila de opción de encuesta con imagen === */
+.op-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.op-row .op-thumb{flex:0 0 56px;width:56px;height:56px;border-radius:10px;
+  background:#0e0f14;border:1px solid #333;overflow:hidden;
+  display:grid;place-items:center;font-size:9px;color:#556;
+  text-transform:uppercase;letter-spacing:.04em;position:relative}
+.op-row .op-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.op-row .op-thumb.auto::after{content:"AUTO";position:absolute;
+  bottom:2px;left:0;right:0;text-align:center;font-size:8px;color:#aab;
+  background:rgba(0,0,0,.55);padding:1px 0;font-weight:800}
+.op-row .op-inputs{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.op-row .op-inputs input[type=text]{width:100%;padding:8px 10px;
+  border:1px solid #333;border-radius:8px;background:#0e0f14;color:#eee;
+  font-size:.9rem}
+.op-row .op-inputs input[type=text].op-url{font-size:.75rem;padding:6px 9px}
+.op-row .op-btns{display:flex;gap:5px}
+.op-row .op-btn{flex:0 0 auto;padding:7px 10px;border:1px solid #333;
+  border-radius:8px;background:#1a1a20;color:#ccc;font-size:11px;
+  font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px}
+.op-row .op-btn:hover{background:#262630;color:#fff}
+.op-row .op-btn.danger{color:#ff7d7d;border-color:rgba(255,59,48,.4)}
+.op-row .op-btn.danger:hover{background:rgba(255,59,48,.15);color:#ff9d96}
+.op-row .op-btn input[type=file]{display:none}
 </style>
 </head>
 <body>
@@ -128,12 +152,11 @@ input[type=file]{width:100%;font-size:.75rem;color:#99a;margin-top:4px}
     <label>Pregunta / título (opcional)</label>
     <input type="text" id="enPregunta" placeholder="Ej: ¿Qué banda querés que suene hoy a las 16h?">
     <label>Opciones (escribí entre 2 y 6 bandas)</label>
-    <input type="text" id="enOp1" placeholder="Banda 1 · ej: Metallica" style="margin-bottom:6px">
-    <input type="text" id="enOp2" placeholder="Banda 2 · ej: Megadeth" style="margin-bottom:6px">
-    <input type="text" id="enOp3" placeholder="Banda 3 (opcional)" style="margin-bottom:6px">
-    <input type="text" id="enOp4" placeholder="Banda 4 (opcional)" style="margin-bottom:6px">
-    <input type="text" id="enOp5" placeholder="Banda 5 (opcional)" style="margin-bottom:6px">
-    <input type="text" id="enOp6" placeholder="Banda 6 (opcional)">
+    <p style="font-size:.72rem;color:#778;margin:2px 0 8px;line-height:1.4">
+      💡 Opcional: podés subir una foto para cada banda. Si no subís ninguna,
+      se busca automáticamente (TheAudioDB / iTunes / Wikipedia).
+    </p>
+    <div id="opcionesEncuesta"></div>
   </div>
 
   <button class="btn" id="btnPublicarEncuesta">🗳️ Publicar encuesta (sale en la ventanita YA)</button>
@@ -437,7 +460,165 @@ function pintarEstadoPubli(){
 /* =========================================================
    🗳️ CANAL 3: ENCUESTA VERSUS / ESPECIAL 4PM (config/encuesta)
    ========================================================= */
-let cfgEncuesta = { encuesta: { activa:false, tipo:"especial4pm", pregunta:"", opciones:[], publicadoEn:0 } };
+let cfgEncuesta = { encuesta: { activa:false, tipo:"especial4pm", pregunta:"", opciones:[], opcionesImg:[], publicadoEn:0 } };
+
+/* Imágenes por opción — store local mientras se edita.
+   Estructura: { 1: "data:image/jpeg;base64,...", 2: "https://...", ... } */
+let imagenesOpciones = {};
+
+/* === Construir las 6 filas de opción dinámicamente === */
+function construirFilasOpciones(){
+  const cont = $("opcionesEncuesta");
+  if (!cont) return;
+  let html = "";
+  for (let i = 1; i <= 6; i++){
+    const esObligatoria = i <= 2;
+    html += `
+      <div class="op-row" data-idx="${i}">
+        <div class="op-thumb auto" id="opThumb${i}" title="Sin imagen — se usa búsqueda automática">
+          <span style="font-size:22px">🎸</span>
+        </div>
+        <div class="op-inputs">
+          <input type="text" id="enOp${i}" placeholder="Banda ${i}${esObligatoria ? '' : ' (opcional)'} · ej: Metallica">
+          <input type="text" id="enOpUrl${i}" class="op-url" placeholder="URL de imagen (opcional) — deja vacío para automática">
+        </div>
+        <div class="op-btns">
+          <label class="op-btn" title="Subir imagen desde tu PC">
+            📷<input type="file" id="enOpFile${i}" accept="image/*">
+          </label>
+          <button class="op-btn danger" id="enOpClear${i}" title="Quitar imagen (usar automática)">✕</button>
+        </div>
+      </div>`;
+  }
+  cont.innerHTML = html;
+
+  /* Bind events para cada fila */
+  for (let i = 1; i <= 6; i++){
+    bindEventosFila(i);
+  }
+}
+
+/* === Bind de eventos para una fila de opción === */
+function bindEventosFila(i){
+  /* File upload */
+  const fileInput = $("enOpFile" + i);
+  if (fileInput){
+    fileInput.addEventListener("change", function(e){
+      const f = e.target.files[0];
+      if (!f) return;
+      estado("📷 Procesando imagen de banda " + i + "…");
+      const img = new Image();
+      img.onload = function(){
+        /* Comprimir a 600x600 max, JPEG 0.82 */
+        const esc = Math.min(1, 600 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * esc);
+        c.height = Math.round(img.height * esc);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        const b64 = c.toDataURL("image/jpeg", 0.82);
+        imagenesOpciones[i] = b64;
+        /* Limpiar URL porque ya hay imagen subida */
+        $("enOpUrl" + i).value = "";
+        actualizarThumb(i);
+        estado("✅ Imagen lista (" + Math.round(b64.length/1024) + " KB)");
+      };
+      img.onerror = function(){
+        estado("❌ No pude leer esa imagen", "err");
+      };
+      img.src = URL.createObjectURL(f);
+    });
+  }
+
+  /* URL input */
+  const urlInput = $("enOpUrl" + i);
+  if (urlInput){
+    urlInput.addEventListener("input", function(e){
+      const url = e.target.value.trim();
+      if (!url){
+        delete imagenesOpciones[i];
+        actualizarThumb(i);
+        return;
+      }
+      /* Validar que cargue */
+      const probe = new Image();
+      probe.onload = function(){
+        imagenesOpciones[i] = url;
+        actualizarThumb(i);
+        estado("✅ Imagen por URL lista para banda " + i);
+      };
+      probe.onerror = function(){
+        delete imagenesOpciones[i];
+        actualizarThumb(i);
+        estado("⚠️ Esa URL no carga como imagen (banda " + i + ")", "err");
+      };
+      probe.src = url;
+    });
+  }
+
+  /* Clear button */
+  const clearBtn = $("enOpClear" + i);
+  if (clearBtn){
+    clearBtn.addEventListener("click", function(){
+      delete imagenesOpciones[i];
+      $("enOpUrl" + i).value = "";
+      $("enOpFile" + i).value = "";
+      actualizarThumb(i);
+      estado("🗑️ Imagen quitada — banda " + i + " usa automática");
+    });
+  }
+}
+
+/* === Actualizar mini-thumb de una fila === */
+function actualizarThumb(i){
+  const thumb = $("opThumb" + i);
+  if (!thumb) return;
+  const url = imagenesOpciones[i];
+  if (url){
+    thumb.classList.remove("auto");
+    thumb.innerHTML = '<img src="' + url + '" alt="Banda ' + i + '">';
+    thumb.title = "Imagen personalizada — click ✕ para usar automática";
+  } else {
+    thumb.classList.add("auto");
+    thumb.innerHTML = '<span style="font-size:22px">🎸</span>';
+    thumb.title = "Sin imagen — se usa búsqueda automática";
+  }
+}
+
+/* === Cargar valores en las filas desde cfgEncuesta === */
+function cargarValoresOpciones(){
+  $("enTipo").value = cfgEncuesta.encuesta.tipo || "especial4pm";
+  $("enPregunta").value = cfgEncuesta.encuesta.pregunta || "";
+  const opciones = cfgEncuesta.encuesta.opciones || [];
+  const opcionesImg = cfgEncuesta.encuesta.opcionesImg || [];
+  imagenesOpciones = {};
+  for (let i = 0; i < 6; i++){
+    $("enOp" + (i+1)).value = opciones[i] || "";
+    if (opcionesImg[i]){
+      imagenesOpciones[i+1] = opcionesImg[i];
+      /* Si es URL externa (no data:), también ponerla en el input URL */
+      if (opcionesImg[i].indexOf("data:") !== 0){
+        $("enOpUrl" + (i+1)).value = opcionesImg[i];
+      }
+    } else {
+      $("enOpUrl" + (i+1)).value = "";
+    }
+    actualizarThumb(i+1);
+  }
+}
+
+/* === Leer valores de las filas hacia cfgEncuesta === */
+function leerValoresOpciones(){
+  const opciones = [];
+  const opcionesImg = [];
+  for (let i = 1; i <= 6; i++){
+    const v = $("enOp" + i).value.trim();
+    if (v){
+      opciones.push(v);
+      opcionesImg.push(imagenesOpciones[i] || "");
+    }
+  }
+  return { opciones, opcionesImg };
+}
 
 async function cargarEncuesta(){
   try {
@@ -445,16 +626,13 @@ async function cargarEncuesta(){
     if (doc.exists && doc.data().encuesta){
       cfgEncuesta = doc.data();
       if (!cfgEncuesta.encuesta.opciones) cfgEncuesta.encuesta.opciones = [];
+      if (!cfgEncuesta.encuesta.opcionesImg) cfgEncuesta.encuesta.opcionesImg = [];
     }
   } catch(e) {}
   pintarEstadoEncuesta();
-  /* Cargar campos del formulario si hay encuesta activa */
+  /* Cargar campos del formulario si hay encuesta */
   if (cfgEncuesta.encuesta.opciones.length){
-    $("enTipo").value = cfgEncuesta.encuesta.tipo || "especial4pm";
-    $("enPregunta").value = cfgEncuesta.encuesta.pregunta || "";
-    for (let i = 0; i < 6; i++){
-      $("enOp" + (i+1)).value = cfgEncuesta.encuesta.opciones[i] || "";
-    }
+    cargarValoresOpciones();
   }
   /* Escuchar cambios en vivo para refrescar resultados */
   db.collection("config").doc("encuesta").onSnapshot(function(snap){
@@ -485,8 +663,8 @@ function pintarResultados(){
     return;
   }
   const opciones = cfgEncuesta.encuesta.opciones || [];
+  const opcionesImg = cfgEncuesta.encuesta.opcionesImg || [];
   const votos = cfgEncuesta.encuesta.votos || [];
-  /* Contar votos por opción */
   const conteo = {};
   opciones.forEach((op, i) => conteo[i] = 0);
   votos.forEach(v => { if (typeof v.opcion === "number" && conteo[v.opcion] !== undefined) conteo[v.opcion]++; });
@@ -496,10 +674,15 @@ function pintarResultados(){
   opciones.forEach((op, i) => {
     const n = conteo[i];
     const pct = Math.round(n / total * 100);
-    html += '<div style="margin-bottom:10px">';
+    const img = opcionesImg[i];
+    html += '<div style="display:flex;gap:9px;align-items:center;margin-bottom:9px">';
+    if (img){
+      html += '<img src="' + img + '" style="width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0">';
+    }
+    html += '<div style="flex:1;min-width:0">';
     html += '<div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>' + (op||"—") + '</span><b style="color:var(--primary)">' + n + ' (' + pct + '%)</b></div>';
     html += '<div style="height:8px;background:#0e0f14;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--primary);transition:width .3s"></div></div>';
-    html += '</div>';
+    html += '</div></div>';
   });
   html += '<p style="font-size:.75rem;color:var(--muted);margin-top:8px;text-align:center">Total: ' + votos.length + ' voto(s)</p>';
   html += '</div>';
@@ -510,19 +693,22 @@ function pintarResultados(){
  $("btnPublicarEncuesta").onclick = async () => {
   const tipo = $("enTipo").value;
   const pregunta = $("enPregunta").value.trim();
-  const opciones = [];
-  for (let i = 1; i <= 6; i++){
-    const v = $("enOp" + i).value.trim();
-    if (v) opciones.push(v);
-  }
+  const { opciones, opcionesImg } = leerValoresOpciones();
   if (opciones.length < 2){
     estado("⚠️ Escribí al menos 2 opciones de banda", "err"); return;
+  }
+  /* ⚠️ Validar tamaño total de imágenes (Firestore tiene límite de 1MB por doc) */
+  let tamanoTotal = JSON.stringify(opcionesImg).length;
+  if (tamanoTotal > 900000){
+    estado("⚠️ Las imágenes pesan demasiado (" + Math.round(tamanoTotal/1024) + " KB). Usá URLs o menos imágenes.", "err");
+    return;
   }
   cfgEncuesta.encuesta = {
     activa: true,
     tipo: tipo,
     pregunta: pregunta,
     opciones: opciones,
+    opcionesImg: opcionesImg,
     votos: [],
     publicadoEn: Date.now()
   };
@@ -557,6 +743,9 @@ function pintarResultados(){
     $("resultadosEncuesta").style.display = "none";
   } catch(e) { estado("❌ Error: " + e.message, "err"); }
 };
+
+/* Construir las filas apenas carga el panel */
+construirFilasOpciones();
 
 /* =========================================================
    🎸 CANAL 4: PEDIDOS DE TEMAS (colección temas_pedidos)
