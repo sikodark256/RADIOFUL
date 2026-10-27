@@ -188,8 +188,11 @@ body::after{
 .publi-box.modo-ticker .publi-txt,
 .publi-box.modo-ticker .publi-img{display:none!important}
 .tick-magazine{display:flex;flex-direction:column;background:#0a0a0d;color:#f5f5f7;
-  border-radius:18px;overflow:hidden;transition:opacity .4s ease}
-.tick-magazine.saliendo{opacity:0}
+  border-radius:18px;overflow:hidden;
+  transition:opacity .35s ease,transform .35s cubic-bezier(.22,.85,.3,1)}
+/* ⭐ ANIMACIÓN CARRUSEL — slide lateral en vez de fade */
+.tick-magazine.saliendo{opacity:0;transform:translateX(-40px)}
+.tick-magazine.entrando{opacity:0;transform:translateX(40px);transition:none}
 
 /* === HERO IMAGE 16:10 — sesgado hacia arriba para no cortar cabezas === */
 .tick-mag-hero{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;
@@ -224,36 +227,24 @@ body::after{
   color:#ffe066}
 
 /* === BODY === */
-.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d}
-.tick-mag-headline{font:900 19px/1.18 var(--sans);color:#fff;text-transform:uppercase;
-  letter-spacing:.01em;margin:0 0 9px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tick-mag-body{padding:18px 18px 16px;background:#0a0a0d}
+/* ⭐ HEADLINE tipo titular de revista — GRANDE, weight 900, tight */
+.tick-mag-headline{font:900 36px/1.02 var(--sans);color:#fff;text-transform:uppercase;
+  letter-spacing:-.02em;margin:0 0 12px;
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  word-break:break-word;hyphens:auto}
 .tick-mag-headline:empty{display:none}
-.tick-mag-texto{font:600 13.5px/1.55 var(--sans);color:#d7d8de;margin:0 0 14px;
+/* Texto del cuerpo — un toque más grande también */
+.tick-mag-texto{font:600 13.5px/1.55 var(--sans);color:#d7d8de;margin:0;
   word-wrap:break-word;
   display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.tick-mag-meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;
-  font:700 10px var(--mono);color:#9a9ba4;text-transform:uppercase;
-  letter-spacing:.07em;padding-top:11px;border-top:1px solid rgba(255,255,255,.08)}
-.tick-mag-meta .m-part{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.tick-mag-meta .m-part b{color:var(--primary);font-weight:800}
-.tick-mag-meta .m-sep{width:3px;height:3px;border-radius:50%;background:#555}
-.tick-mag-meta:empty{display:none}
+/* ⭐ META row OCULTO — sacamos género/año/origen (estaba marcado con X) */
+.tick-mag-meta{display:none!important}
 
-/* === NAV FOOTER === */
-.tick-mag-nav{display:flex;justify-content:space-between;align-items:center;
-  padding:10px 16px 14px;gap:10px;background:#070708;
-  border-top:1px solid rgba(255,255,255,.06)}
-.tick-mag-count{font:700 10px var(--mono);color:#7a7b85;text-transform:uppercase;
-  letter-spacing:.08em}
-.tick-mag-dots{display:flex;gap:5px;align-items:center}
-.tick-mag-dots .dot-b{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.18);
-  transition:.35s}
-.tick-mag-dots .dot-b.activo{background:var(--primary);width:20px;border-radius:3px}
-.tick-mag-link{color:var(--primary);text-decoration:none;font:800 10px var(--mono);
-  text-transform:uppercase;letter-spacing:.08em;display:inline-flex;align-items:center;gap:4px}
-.tick-mag-link:hover{text-decoration:underline}
-.tick-mag-link.oculto{display:none}
+/* === NAV FOOTER — OCULTO para items normales ===
+   (counter "#X · N temas" + dots + "Ver más" estaban marcados con X) */
+.tick-mag-nav{display:none!important}
 
 /* ===== ❌ BOTÓN CERRAR ENCUESTA ===== */
 .tick-mag-close-enc{position:absolute;top:10px;right:10px;z-index:5;
@@ -3134,18 +3125,11 @@ renderFavs();
           /* Quitar la encuesta del pool y seguir rotando */
           it._visible = false;
           tickerItems = tickerItems.filter(function(x){ return x !== it; });
-          /* Forzar rotación inmediata al siguiente item */
+          /* ⭐ Forzar rotación inmediata al siguiente item con animación carrusel */
           setTimeout(function(){
             if (modoActual === "ticker"){
               var itNext = djElegir();
-              if (itNext){
-                tickCard.classList.add("saliendo");
-                setTimeout(function(){
-                  if (modoActual !== "ticker") return;
-                  pintarItem(itNext);
-                  tickCard.classList.remove("saliendo");
-                }, 400);
-              }
+              if (itNext) transicionCarrusel(itNext);
             }
           }, 50);
         };
@@ -3247,7 +3231,28 @@ renderFavs();
       tickDots.innerHTML = dotsHtml;
     }
 
-    function rotar(){
+  /* ⭐ Transición tipo carrusel: slide lateral en vez de fade.
+     Recibe el item a pintar y lo anima entrando desde la derecha. */
+  function transicionCarrusel(it){
+    /* 1. Sacar clase 'entrando' si quedó de antes */
+    tickCard.classList.remove("entrando");
+    /* 2. Marcar como saliendo (sale por la izquierda con fade) */
+    tickCard.classList.add("saliendo");
+    /* 3. Después de 350ms (cuando termina la salida), pintar nuevo item */
+    setTimeout(function(){
+      if (modoActual !== "ticker") return;
+      pintarItem(it);
+      /* 4. Quitar 'saliendo' y agregar 'entrando' (posición inicial: derecha) */
+      tickCard.classList.remove("saliendo");
+      tickCard.classList.add("entrando");
+      /* 5. Forzar reflow para que el browser aplique el estado 'entrando' */
+      void tickCard.offsetWidth;
+      /* 6. Quitar 'entrando' → anima a posición final (translateX(0), opacity 1) */
+      tickCard.classList.remove("entrando");
+    }, 350);
+  }
+
+  function rotar(){
       if (modoActual !== "ticker") return;
       /* ⭐ Si el item ACTUALMENTE visible es la encuesta, NO rotar —
          se queda fija hasta que el usuario la cierre o vote.
@@ -3262,12 +3267,7 @@ renderFavs();
       djRecordar(it);
       /* ⭐ Marcar el item como visible (para que rotar() no lo pise) */
       if (it.tipo === "encuesta") it._visible = true;
-      tickCard.classList.add("saliendo");
-      setTimeout(function(){
-        if (modoActual !== "ticker") return;
-        pintarItem(it);
-        tickCard.classList.remove("saliendo");
-      }, 400);
+      transicionCarrusel(it);
     }
     rotar();
     /* ⏱️ Cada 12 segundos — más tiempo para leer contenido rico.
