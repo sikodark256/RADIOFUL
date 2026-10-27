@@ -255,6 +255,18 @@ body::after{
 .tick-mag-link:hover{text-decoration:underline}
 .tick-mag-link.oculto{display:none}
 
+/* ===== ❌ BOTÓN CERRAR ENCUESTA ===== */
+.tick-mag-close-enc{position:absolute;top:10px;right:10px;z-index:5;
+  width:34px;height:34px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.6);
+  color:#fff;font-size:20px;line-height:1;cursor:pointer;
+  display:grid;place-items:center;backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);transition:.2s;
+  box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.tick-mag-close-enc:hover{background:rgba(255,59,48,.85);border-color:rgba(255,59,48,.7);
+  transform:scale(1.08)}
+.tick-mag-close-enc:active{transform:scale(.92)}
+
 /* ===== 🗳️ ENCUESTA (tarjeta de votación) ===== */
 .tick-mag-encuesta{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .tick-mag-encuesta .voto-opcion{
@@ -2898,6 +2910,38 @@ renderFavs();
         tickImg.removeAttribute("src");
         /* Pintar opciones de voto */
         pintarEncuesta(it.encuesta);
+        /* ⭐ Agregar botón X de cerrar arriba a la derecha del hero */
+        var closeBtn = document.createElement("button");
+        closeBtn.className = "tick-mag-close-enc";
+        closeBtn.setAttribute("aria-label", "Cerrar encuesta");
+        closeBtn.innerHTML = "×";
+        closeBtn.title = "Cerrar encuesta";
+        var self = this;
+        closeBtn.onclick = function(e){
+          e.stopPropagation();
+          e.preventDefault();
+          /* Quitar la encuesta del pool y seguir rotando */
+          it._visible = false;
+          tickerItems = tickerItems.filter(function(x){ return x !== it; });
+          /* Forzar rotación inmediata al siguiente item */
+          setTimeout(function(){
+            if (modoActual === "ticker"){
+              var itNext = djElegir();
+              if (itNext){
+                tickCard.classList.add("saliendo");
+                setTimeout(function(){
+                  if (modoActual !== "ticker") return;
+                  pintarItem(itNext);
+                  tickCard.classList.remove("saliendo");
+                }, 400);
+              }
+            }
+          }, 50);
+        };
+        /* Quitar botones X anteriores si los hay */
+        var existingClose = tickHero.querySelector(".tick-mag-close-enc");
+        if (existingClose) existingClose.remove();
+        tickHero.appendChild(closeBtn);
         /* Counter + dots */
         rotacionNum++;
         tickCount.textContent = "#" + rotacionNum + " · " + tickerItems.length + " temas";
@@ -2913,6 +2957,9 @@ renderFavs();
       /* === Item normal (banda sonando) — ocultar encuesta === */
       tickEncuesta.innerHTML = "";
       tickEncuesta.style.display = "none";
+      /* Quitar botón X de cerrar si quedó de la encuesta anterior */
+      var oldClose = tickHero.querySelector(".tick-mag-close-enc");
+      if (oldClose) oldClose.remove();
 
       /* TAG */
       tickTag.textContent = it.tag || "🎸 SIKODARK";
@@ -2991,8 +3038,19 @@ renderFavs();
 
     function rotar(){
       if (modoActual !== "ticker") return;
+      /* ⭐ Si el item ACTUALMENTE visible es la encuesta, NO rotar —
+         se queda fija hasta que el usuario la cierre o vote.
+         (después de votar puede seguir visible si quiere cerrarla con la X) */
+      var itemActual = tickerItems[tickerItems.length > 0 ? 0 : -1];
+      if (itemActual && itemActual.tipo === "encuesta" && itemActual._visible){
+        /* La encuesta está visible — no avanzar */
+        return;
+      }
       var it = djElegir();
+      if (!it) return;
       djRecordar(it);
+      /* ⭐ Marcar el item como visible (para que rotar() no lo pise) */
+      if (it.tipo === "encuesta") it._visible = true;
       tickCard.classList.add("saliendo");
       setTimeout(function(){
         if (modoActual !== "ticker") return;
@@ -3001,7 +3059,8 @@ renderFavs();
       }, 400);
     }
     rotar();
-    /* ⏱️ Cada 12 segundos — más tiempo para leer contenido rico */
+    /* ⏱️ Cada 12 segundos — más tiempo para leer contenido rico.
+       (la encuesta se salta automáticamente gracias al check _visible) */
     tickerTimer = setInterval(rotar, 12000);
   }
 
