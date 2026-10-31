@@ -232,17 +232,13 @@ body::after{
   background:rgba(255,255,255,.35);transition:.3s;cursor:pointer;
   box-shadow:0 1px 4px rgba(0,0,0,.6)}
 .tick-mag-dots-carrusel .cd.activa{background:var(--primary);width:18px;border-radius:3px}
-/* Contador de imágenes (ej: "3/8") — esquina arriba derecha */
-.tick-mag-img-count{position:absolute;top:12px;right:12px;z-index:3;
-  background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.22);
-  color:#fff;border-radius:999px;padding:3px 9px;
-  font:800 10px var(--mono);letter-spacing:.06em}
-.tick-mag-tag{position:absolute;top:12px;left:12px;background:var(--primary);
-  color:#161616;padding:7px 14px;border-radius:999px;
-  font:900 13.5px var(--sans);text-transform:uppercase;letter-spacing:.05em;
-  box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:2;max-width:75%;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
+/* Contador de imágenes (ej: "3/8") — esquina arriba derecha
+   ⭐ OCULTO (estaba marcado con X en la captura)
+   Los dots de abajo ya indican la posición del carrusel. */
+.tick-mag-img-count{display:none!important}
+/* ⭐ Tag naranja de categoría — OCULTO (estaba marcado con X en la captura)
+   El headline + texto ya identifican el contenido, no hace falta el tag. */
+.tick-mag-tag{display:none!important}
 .tick-mag-status{position:absolute;top:12px;right:12px;display:flex;gap:6px;
   flex-wrap:wrap;justify-content:flex-end;max-width:50%;z-index:2}
 .tick-mag-status .chip{background:rgba(0,0,0,.7);backdrop-filter:blur(8px);
@@ -484,9 +480,9 @@ body::after{
   <div id="tickerCard" class="tick-magazine hidden">
     <div class="tick-mag-hero" id="tickHero">
       <img id="tickImg" alt="">
-      <div id="tickIco" style="display:none"></div>
+      <div id="tickIco" style="display:none">🎸</div>
       <div class="tick-mag-overlay"></div>
-      <span class="tick-mag-tag" id="tickTag">UN DÍA COMO HOY</span>
+      <span class="tick-mag-tag" id="tickTag">📜 UN DÍA COMO HOY</span>
       <div class="tick-mag-status" id="tickStatus"></div>
     </div>
     <div class="tick-mag-body">
@@ -506,23 +502,23 @@ body::after{
 </section>
 
 <section class="card history" aria-labelledby="history-title">
-<div class="history-head"><div><h2 id="history-title"> &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
+<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 </div>
 <footer>sikodark radio · música en directo</footer>
 
 <!-- ===== 🎸 BOTÓN FLOTANTE "PEDÍ TU TEMA" ===== -->
-<button id="btnPedidoTema" aria-label="Programa un tema">
+<button id="btnPedidoTema" aria-label="Pedí tu tema">
   <svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM5 16l.7 2.1L8 19l-2.3.9L5 22l-.7-2.1L2 19l2.3-.9L5 16z"/></svg>
-  Programa un tema 
+  Pedí tu tema
 </button>
 
-<!-- ===== MODAL "PEDÍ TU TEMA" ===== -->
+<!-- ===== 🎸 MODAL "PEDÍ TU TEMA" ===== -->
 <div id="modalPedido" role="dialog" aria-modal="true">
   <div class="modal-card">
-    <h3> programa un grupo</h3>
-    <p class="sub">Elegí una banda y un tema.</p>
+    <h3>🎸 Pedí tu tema</h3>
+    <p class="sub">Elegí una banda y un tema — el DJ lo verá en su panel al toque.</p>
     <label>Tu nombre (opcional)</label>
     <input type="text" id="pedNombre" placeholder="Ej: Juanchi" maxlength="20">
     <label>Banda / Artista</label>
@@ -664,6 +660,27 @@ btnReset.onclick = () => {
 
 function parseTitle(raw){raw=(raw||"").trim();if(!raw)return{title:"En vivo",artist:null};let i=raw.indexOf(" - ");return i>0?{artist:raw.slice(0,i).trim(),title:raw.slice(i+3).trim()}:{title:raw,artist:null}}
 
+/* ⭐ Limpiar título para matching de carátulas.
+   Saca sufijos comunes que rompen el matching:
+     "(Remastered 2007)", "(Live)", "(Radio Edit)", "(2024 Remaster)",
+     "(Single Version)", "(Album Version)", "(Mono)", "(Stereo)", etc.
+   También saca "Remastered", "Remasterizado", "Live at..." al final. */
+function limpiarTitulo(t){
+  if (!t) return "";
+  var limpio = t;
+  /* 1. Sacar todo lo que esté entre paréntesis o corchetes */
+  limpio = limpio.replace(/\s*[\(\[].*?[\)\]]/g, "").trim();
+  /* 2. Sacar sufijos comunes sin paréntesis (al final del título) */
+  limpio = limpio.replace(/\s*[-–—]\s*(remaster\w*|remasterizad\w*|live|en vivo|radio edit|single version|album version|mono|stereo|acoustic|acústico|demo|instrumental)\b.*$/i, "").trim();
+  /* 3. Sacar "Remastered YYYY" o "YYYY Remaster" sueltos */
+  limpio = limpio.replace(/\b(remaster\w*|remasterizad\w*)\s*\d*/gi, "").trim();
+  limpio = limpio.replace(/\b\d{4}\s*(remaster\w*|remasterizad\w*)\b/gi, "").trim();
+  /* 4. Múltiples espacios → uno solo */
+  limpio = limpio.replace(/\s+/g, " ").trim();
+  /* 5. Si quedó vacío (raro), devolver el original */
+  return limpio || t;
+}
+
 /* =========================================================
    🎵 MEDIA SESSION — v28: PATRÓN ORIGINAL RESTAURADO
    (doble asignación simple, sin candados ni precarga —
@@ -695,15 +712,17 @@ function actualizarMediaSession(track, urlCaratula) {
 function setTrack(t){
   if (!t || !t.title) return;
   const trackKey = `${t.artist||""}||${t.title}`;
-  if (trackKey === ultimoTitulo && t.title !== "En vivo") return;
+  if (trackKey === ultimoTitulo && t.title !== "En vivo") {
+    console.log("[setTrack] Mismo tema, salto:", trackKey);
+    return;
+  }
+  console.log("%c[setTrack] ✏️ Actualizando:", "color:#34c759;font-weight:bold", "viejo:", ultimoTitulo, "→ nuevo:", trackKey);
   ultimoTitulo = trackKey;
   log("ok", `🎵 Nueva canción: ${t.artist || "?"} - ${t.title}`);
 
-  /* ⭐ Limpiar carátula VIEJA inmediatamente — no mostrar cover anterior
-     mientras carga el nuevo. Mostrar logo como placeholder. */
-  cover = null;
-  coverEl.src = LOGO;
-
+  /* ⭐ NO limpiar la carátula vieja acá — se reemplaza naturalmente
+     cuando fetchCover trae la nueva. Esto evita el parpadeo a LOGO
+     que estaba rompiendo el player. */
   titleEl.textContent = t.title || "En vivo";
   artistEl.textContent = t.artist || "";
   imagenArtistaGlobal = null;
@@ -717,16 +736,6 @@ function setTrack(t){
     temaActual = t;
   }
   setTimeout(() => { procesarCancionInteligente(t); }, 800);
-
-  /* ⭐ Safety net: si la carátula nueva no llega en 6s, dejar LOGO
-     (no quedarse con la vieja congelada) */
-  if (window._coverSafetyNet) clearTimeout(window._coverSafetyNet);
-  window._coverSafetyNet = setTimeout(function(){
-    if (!cover){
-      console.log("[Cover] ⚠️ Sin carátula tras 6s — usando LOGO");
-      coverEl.src = LOGO;
-    }
-  }, 6000);
 }
 
 const CORAZON_BLANCO = '<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
@@ -853,17 +862,20 @@ function artistaCoincide(a1,a2){
 
 async function cover_Deezer_cancion(t) {
   if (!t.artist || !t.title) return null;
+  /* ⭐ Limpiar título para matching */
+  var tituloLimpio = limpiarTitulo(t.title);
   try {
-    const q = encodeURIComponent(`${t.artist} ${t.title}`);
+    const q = encodeURIComponent(`${t.artist} ${tituloLimpio}`);
     const r = await fetchConProxy(`${DEEZER_URL}?limit=10&q=${q}`);
     const d = await r.json();
     if (d.data && d.data.length) {
       let mejor=null, mejorP=0;
       for (const tr of d.data) {
         const nombreArtista = (tr.artist&&tr.artist.name)||"";
-        const pt = parecido(t.title, tr.title||"");
+        const pt = parecido(tituloLimpio, tr.title||"");
         const pa = parecido(t.artist, nombreArtista);
-        if (pt < 0.6) continue;
+        /* ⭐ Bajar threshold a 0.5 para títulos limpios */
+        if (pt < 0.5) continue;
         if (!artistaCoincide(t.artist, nombreArtista)) continue;
         const p = Math.min(pt, pa);
         if (p > mejorP){ mejorP=p; mejor=tr; }
@@ -879,16 +891,28 @@ async function cover_Deezer_cancion(t) {
 
 async function cover_iTunes_cancion(t) {
   if (!t.artist || !t.title) return null;
+  /* ⭐ Limpiar título para matching: "Nada Personal (Remasterizado 2007)" → "Nada Personal" */
+  var tituloLimpio = limpiarTitulo(t.title);
+  console.log("[Cover/iTunes] Título original:", t.title, "→ limpio:", tituloLimpio);
   try {
-    const term = encodeURIComponent(`${t.artist} ${t.title}`);
-    const r = await fetchConProxy(`${ITUNES_URL}?term=${term}&media=music&limit=25&entity=song`);
+    const term = encodeURIComponent(`${t.artist} ${tituloLimpio}`);
+    const url = `${ITUNES_URL}?term=${term}&media=music&limit=25&entity=song`;
+    console.log("[Cover/iTunes] GET", url.substring(0, 100) + "...");
+    const r = await fetchConProxy(url);
+    if (!r || !r.ok){
+      console.warn("[Cover/iTunes] Respuesta no OK:", r ? r.status : "sin respuesta");
+      return null;
+    }
     const d = await r.json();
+    console.log("[Cover/iTunes] resultCount:", d.resultCount);
     if (d.resultCount > 0) {
       let mejor=null, mejorP=0;
       for (const res of d.results) {
-        const pt = parecido(t.title, res.trackName||"");
+        /* Comparar el título LIMPIO contra el resultado de iTunes */
+        const pt = parecido(tituloLimpio, res.trackName||"");
         const pa = parecido(t.artist, res.artistName||"");
-        if (pt < 0.6) continue;
+        /* ⭐ Bajar threshold a 0.5 para títulos limpios (más permisivo) */
+        if (pt < 0.5) continue;
         if (!artistaCoincide(t.artist, res.artistName||"")) continue;
         if (pa < 0.5) continue;
         const p = Math.min(pt, pa);
@@ -896,10 +920,20 @@ async function cover_iTunes_cancion(t) {
       }
       if (mejor) {
         let img = mejor.artworkUrl100 || mejor.artworkUrl60 || "";
-        return { url: img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb"), fuente: "iTunes" };
+        const finalUrl = img.replace("100x100bb","600x600bb").replace("60x60bb","600x600bb");
+        console.log("[Cover/iTunes] Mejor match:", mejor.trackName, "-", mejor.artistName, "→", finalUrl.substring(0, 80));
+        return { url: finalUrl, fuente: "iTunes" };
+      } else {
+        console.log("[Cover/iTunes] Hubo", d.resultCount, "resultados pero ninguno matcheó (parecido < 0.5)");
+        /* Loguear los primeros 3 para debug */
+        d.results.slice(0, 3).forEach(function(res, i){
+          console.log("  [" + i + "]", res.artistName, "-", res.trackName, "(parecido:", parecido(tituloLimpio, res.trackName||"").toFixed(2) + ")");
+        });
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn("[Cover/iTunes] Error:", e.message);
+  }
   return null;
 }
 
@@ -966,30 +1000,173 @@ async function cover_iTunes_soloTitulo(t) {
   return null;
 }
 
+/* 🆕 Wikipedia imagen — usar la imagen del artículo de Wikipedia de la banda.
+   Muy confiable, gratis, sin límites. Usa la API REST summary. */
+async function cover_Wikipedia_imagen(t) {
+  if (!t.artist) return null;
+  /* Probar sufijos de desambiguación para evitar "Boston" (ciudad) */
+  var sufijos = [" (banda)", " (cantante)", " (músico)", " (grupo)", " (artista)", ""];
+  for (var i = 0; i < sufijos.length; i++){
+    var titulo = t.artist + sufijos[i];
+    try{
+      var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(titulo));
+      if (!r.ok) continue;
+      var d = await r.json();
+      if (d.type === "disambiguation") continue;
+      var extracto = (d.extract || "").trim();
+      if (!extracto) continue;
+      /* Validar que hable de música (mismo patrón que infoBanda) */
+      var patronesMusicales = /\b(banda|cantante|músico|musico|álbum|album|canción|cancion|gira|concierto|rock|pop|metal|punk|reggae|blues|jazz|guitarrista|baterista|vocalista|solista|cantautor|songwriter|tour|grammy|billboard)\b/i;
+      var patronesNoMusicales = /\b(duna|arena|desierto|montaña|cordillera|río|rio|laguna|lago|océano|oceano|mar|ciudad|capital|estado|país|pais|provincia|departamento|región|region|geolog|geograf|cuenca|caudal|afluente|embalse|pres|represa|corriente|flujo|erosión|sedimento|mineral|roca|piedra|cristal)\b/i;
+      /* Solo validar si el sufijo es vacío; los sufijos ya están desambiguados */
+      if (sufijos[i] === "" && (!patronesMusicales.test(extracto) || patronesNoMusicales.test(extracto))){
+        continue; /* no es artículo musical, probar siguiente sufijo */
+      }
+      /* Si pasa, devolver la imagen */
+      if (d.originalimage && d.originalimage.source){
+        console.log("[Cover/Wikipedia] ✅ Imagen encontrada para:", titulo);
+        return { url: d.originalimage.source, fuente: "Wikipedia" };
+      }
+      if (d.thumbnail && d.thumbnail.source){
+        console.log("[Cover/Wikipedia] ✅ Thumbnail encontrado para:", titulo);
+        return { url: d.thumbnail.source, fuente: "Wikipedia (thumb)" };
+      }
+    }catch(e){ continue; }
+  }
+  return null;
+}
+
+/* 🆕 TheAudioDB artista — usar fanart/thumb de TheAudioDB.
+   Gratis (key "2"), sin rate limits reales, alta calidad. */
+async function cover_AudioDB_artista(t) {
+  if (!t.artist) return null;
+  /* fetchAudioDBSearch está dentro del IIFE del ticker — usar versión global si existe */
+  var fetchADB = window._sikodarkFetchAudioDBSearch;
+  if (!fetchADB) return null;
+  try{
+    var art = await fetchADB(t.artist);
+    if (!art) return null;
+    /* Priorizar fanart (HD), luego thumb, luego logo */
+    if (art.strArtistFanart){
+      console.log("[Cover/AudioDB] ✅ Fanart encontrado para:", t.artist);
+      return { url: art.strArtistFanart, fuente: "TheAudioDB (fanart)" };
+    }
+    if (art.strArtistThumb){
+      console.log("[Cover/AudioDB] ✅ Thumb encontrado para:", t.artist);
+      return { url: art.strArtistThumb, fuente: "TheAudioDB (thumb)" };
+    }
+    if (art.strArtistLogo){
+      console.log("[Cover/AudioDB] ✅ Logo encontrado para:", t.artist);
+      return { url: art.strArtistLogo, fuente: "TheAudioDB (logo)" };
+    }
+  }catch(e){}
+  return null;
+}
+
 async function cover_imagenArtista() {
   if (imagenArtistaGlobal) return { url: imagenArtistaGlobal, fuente: "Foto artista" };
   return null;
 }
 
+/* 🆕 Deezer por artista — si no encuentra el tema exacto, traer una
+   imagen del artista (al menos algo relacionado, no LOGO) */
+async function cover_Deezer_artista(t) {
+  if (!t.artist) return null;
+  try {
+    const q = encodeURIComponent(t.artist);
+    /* Deezer artist search */
+    let r;
+    try { r = await fetch(`https://api.deezer.com/search/artist?q=${q}&limit=1`); }
+    catch(e) { r = await fetchConProxy(`https://api.deezer.com/search/artist?q=${q}&limit=1`); }
+    if (!r || !r.ok) return null;
+    const d = await r.json();
+    if (d.data && d.data[0]) {
+      const img = d.data[0].picture_xl || d.data[0].picture_big || d.data[0].picture_medium;
+      if (img) return { url: img, fuente: "Deezer (artista)" };
+    }
+  } catch(e) {}
+  return null;
+}
+
+/* 🆕 Spotify track — buscar el tema exacto en Spotify y traer la portada
+   del álbum. Requiere Spotify API configurada. */
+async function cover_Spotify_track(t) {
+  if (!t.artist || !t.title) return null;
+  /* Usar API_CONFIG y _spotifyGetToken expuestos al window desde el IIFE del ticker */
+  var cfg = window._sikodarkAPI_CONFIG;
+  var getToken = window._sikodarkSpotifyGetToken;
+  if (!cfg || !getToken || !cfg.SPOTIFY_CLIENT_ID || !cfg.SPOTIFY_CLIENT_SECRET) return null;
+  /* ⭐ Limpiar título para matching */
+  var tituloLimpio = limpiarTitulo(t.title);
+  try {
+    var token = await getToken();
+    if (!token) return null;
+    var q = encodeURIComponent(`track:${tituloLimpio} artist:${t.artist}`);
+    var r = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!r.ok) return null;
+    var d = await r.json();
+    if (d.tracks && d.tracks.items && d.tracks.items[0]) {
+      var track = d.tracks.items[0];
+      if (track.album && track.album.images && track.album.images.length) {
+        /* Preferir la imagen más grande */
+        var img = track.album.images[0].url;
+        return { url: img, fuente: "Spotify" };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+/* 🆕 Spotify por artista — fallback: si no encuentra el tema exacto,
+   traer una imagen del artista desde Spotify (siempre HD y oficial) */
+async function cover_Spotify_artista(t) {
+  if (!t.artist) return null;
+  /* Usar fetchSpotifyArtist expuesto al window */
+  var fetchSP = window._sikodarkFetchSpotifyArtist;
+  if (!fetchSP) return null;
+  try {
+    var sp = await fetchSP(t.artist);
+    if (sp && sp.imagenes && sp.imagenes.length) {
+      return { url: sp.imagenes[0], fuente: "Spotify (artista)" };
+    }
+  } catch(e) {}
+  return null;
+}
+
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
+  console.log("%c[Cover] Buscando carátula para: " + (t.artist||"?") + " - " + t.title, "color:#ff8a24;font-weight:bold");
+  /* ⭐ NUEVO ORDEN sin Deezer (CORS bloqueado en browser, API con rate limits):
+     1. iTunes track (gratis, sin límites, CORS-friendly)
+     2. Spotify track (si configurado, HD oficial)
+     3. Cover Art Archive (portadas álbumes via MBID)
+     4. Last.fm (si configurado)
+     5. iTunes solo título (fallback)
+     6. Wikipedia imagen (gratis, confiable)
+     7. TheAudioDB artista (fanart HD, gratis)
+     8. Spotify artista (si configurado)
+     9. Foto artista cache */
   const estrategias = [
-    { fn: cover_Deezer_cancion,    nombre: "Deezer" },
-    { fn: cover_iTunes_cancion,    nombre: "iTunes" },
-    { fn: cover_LastFM,            nombre: "Last.fm" },
-    { fn: cover_CoverArtArchive,   nombre: "Cover Art Archive" },
-    { fn: cover_iTunes_soloTitulo, nombre: "iTunes (solo título)" },
-    { fn: cover_imagenArtista,     nombre: "Foto artista" }
+    { fn: cover_iTunes_cancion,      nombre: "iTunes (track)" },
+    { fn: cover_Spotify_track,       nombre: "Spotify (track)" },
+    { fn: cover_CoverArtArchive,     nombre: "Cover Art Archive" },
+    { fn: cover_LastFM,              nombre: "Last.fm" },
+    { fn: cover_iTunes_soloTitulo,   nombre: "iTunes (solo título)" },
+    { fn: cover_Wikipedia_imagen,    nombre: "Wikipedia (imagen)" },
+    { fn: cover_AudioDB_artista,     nombre: "TheAudioDB (artista)" },
+    { fn: cover_Spotify_artista,     nombre: "Spotify (artista)" },
+    { fn: cover_imagenArtista,       nombre: "Foto artista (cache)" }
   ];
   for (const e of estrategias) {
-    if (!fuenteDisponible(e.nombre)) continue;
     try {
+      console.log("[Cover] 🔍 Probando " + e.nombre + "...");
       const r = await e.fn(t);
       if (r && r.url) {
-        registrarExito(e.nombre);
+        console.log("%c[Cover] ✅ " + e.nombre + " encontró carátula", "color:#34c759", r.url.substring(0, 100));
         cover = r.url;
         coverEl.src = cover;
-        /* ⭐ Re-asignación simple con el cover — el patrón que funcionaba */
         actualizarMediaSession(t, cover);
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
@@ -997,10 +1174,14 @@ async function fetchCover(t) {
           renderHistory();
         }
         return;
+      } else {
+        console.log("[Cover] ⚠️  " + e.nombre + " no encontró (sin resultado)");
       }
-    } catch(err) {}
-    registrarFallo(e.nombre);
+    } catch(err) {
+      console.warn("[Cover] ❌ " + e.nombre + " falló:", err.message || err);
+    }
   }
+  console.error("%c[Cover] 🚫 NINGUNA estrategia encontró carátula — usando LOGO", "color:#ff3b30;font-weight:bold");
   cover = null;
   coverEl.src = LOGO;
 }
@@ -1012,6 +1193,7 @@ let fastPollHasta = 0;            /* hasta cuándo hacer polling agresivo */
 function procesarMetadataRaw(streamTitle) {
   if (!streamTitle || typeof streamTitle !== "string") return;
   const track = parseTitle(streamTitle);
+  console.log("[Metadata] Procesando:", streamTitle, "→ artist:", track.artist, "title:", track.title);
   if (track.title && track.title !== "En vivo") {
     ultimaActualizacionMs = Date.now();
     setTrack(track);
@@ -1051,11 +1233,17 @@ function intentarSSE() {
 
 async function iniciarPolling() {
   async function consultar() {
-    /* ⭐ Si SSE está activo Y actualizó hace menos de 30s, salto esta consulta */
-    if (sseActivo && (Date.now() - ultimaActualizacionMs) < 30000) return;
+    /* ⭐ NUNCA saltar el polling — siempre consultar.
+       SSE es solo un bonus para updates instantáneos, pero el polling
+       es la fuente confiable. Si saltamos el polling cuando SSE está
+       "activo", podemos perder cambios de tema si SSE se queda silencioso. */
 
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
+      if (!r || !r.ok){
+        console.warn("[Poll] Respuesta no OK de Zeno:", r ? r.status : "sin respuesta");
+        return;
+      }
       const d = await r.json();
       let streamTitle = null;
       if (d.streamTitle) streamTitle = d.streamTitle;
@@ -1064,24 +1252,32 @@ async function iniciarPolling() {
         const np = d.now_playing.song;
         streamTitle = `${np.artist || ""} - ${np.title || ""}`.trim();
       }
-      if (streamTitle) procesarMetadataRaw(streamTitle);
-    } catch(e) {}
+      if (streamTitle){
+        console.log("[Poll] streamTitle recibido:", streamTitle);
+        procesarMetadataRaw(streamTitle);
+      } else {
+        console.warn("[Poll] Respuesta sin streamTitle:", JSON.stringify(d).substring(0, 200));
+      }
+    } catch(e) {
+      console.warn("[Poll] Error fetch:", e.message);
+    }
   }
 
-  /* ⭐ Consulta inmediata + intervalo más corto (4s en lugar de 10s) */
+  /* ⭐ Consulta inmediata + intervalo de 3 segundos (más agresivo) */
   consultar();
   if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(consultar, 4000);
+  pollingInterval = setInterval(consultar, 3000);
 
-  /* ⭐ Detector de "stale" — si no hay update en 25s, forzar consulta YA */
+  /* ⭐ Stale detector cada 3s — si no hay update en 15s, forzar consulta.
+     (antes era 25s, muy lento si la canción cambia) */
   if (window._staleDetector) clearInterval(window._staleDetector);
   window._staleDetector = setInterval(function(){
-    if (Date.now() - ultimaActualizacionMs > 25000){
-      console.log("[Metadata] ⚠️ Stale detectado — forzando refresco");
-      sseActivo = false;  /* algo le pasó a SSE, marcar como caído */
+    if (Date.now() - ultimaActualizacionMs > 15000){
+      console.log("[Metadata] ⚠️ Stale (>15s sin update) — forzando refresco");
+      sseActivo = false;
       consultar();
     }
-  }, 5000);
+  }, 3000);
 }
 
 /* ⭐ Activar "fast poll" — polling agresivo cada 1.5s por 20s
@@ -1484,10 +1680,15 @@ iniciarPush();
      =========================================================
      El navegador pausa los timers cuando la pestaña pasa a background.
      Al volver a ser visible:
-       1. Limpiar carátula VIEJA (mostrar LOGO) — no quedarse congelada
-       2. Resetear último título para forzar refresco aunque sea el mismo
-       3. Activar fast poll para obtener metadata nueva
-       4. Si el audio está pausado pero isPlaying=true → reconectar stream
+       - Activar fast poll para refrescar metadata
+       - Si el audio está pausado pero isPlaying=true → reconectar stream
+       - Si el audio está congelado → reconectar
+
+     ⭐ IMPORTANTE: NO limpiar la carátula ni resetear ultimoTitulo.
+     Si la canción no cambió mientras estuviste en background, la carátula
+     actual sigue siendo válida y no hay razón de borrarla. Si la canción
+     SÍ cambió, el polling lo detecta naturalmente y setTrack reemplaza
+     la carátula vieja con la nueva (sin parpadeo a LOGO).
      ========================================================= */
   var _ultimaVisitaVisible = Date.now();
   document.addEventListener("visibilitychange", function(){
@@ -1495,24 +1696,19 @@ iniciarPush();
       var tiempoInactivo = Date.now() - _ultimaVisitaVisible;
       console.log("[Anti-freeze] Vuelve a visible — inactivo " + Math.round(tiempoInactivo/1000) + "s");
 
-      /* Si estuvo más de 8s en background, forzar refresco completo */
+      /* Si estuvo más de 8s en background, forzar refresco de metadata */
       if (tiempoInactivo > 8000){
-        /* 1. Limpiar carátula VIEJA inmediatamente — mostrar LOGO */
-        cover = null;
-        if (coverEl) coverEl.src = LOGO;
-
-        /* 2. Resetear último título para forzar setTrack aunque sea la misma canción */
-        ultimoTitulo = "";
-
-        /* 3. Activar fast poll agresivo (1.5s por 25s) */
+        /* ⭐ NO tocar cover ni ultimoTitulo — solo activar fast poll.
+           El polling trae la metadata nueva y setTrack la procesa solo
+           si la canción cambió. */
         activarFastPoll();
 
-        /* 4. Si el audio está pausado pero el usuario cree que está sonando → reconectar */
+        /* Si el audio está pausado pero el usuario cree que está sonando → reconectar */
         if (isPlaying && audio.paused){
           console.log("[Anti-freeze] Audio pausado en background — reconectando");
           reconectar();
         }
-        /* 5. Si el audio está sonando pero congelado → reconectar */
+        /* Si el audio está sonando pero congelado → reconectar */
         else if (isPlaying){
           setTimeout(function(){
             var pos = audio.currentTime;
@@ -1538,7 +1734,7 @@ iniciarPush();
   if ("onresume" in document){
     document.addEventListener("resume", function(){
       console.log("[Anti-freeze] Document resume — forzando refresco");
-      ultimoTitulo = "";
+      /* ⭐ Mismo principio: no tocar cover ni ultimoTitulo */
       activarFastPoll();
     });
   }
@@ -1932,7 +2128,12 @@ renderFavs();
       if (typeof actualizarEstadoLike === "function") setTimeout(actualizarEstadoLike, 200);
     }
     var cv = localStorage.getItem(LS_COVER);
-    if (cv) coverEl.src = cv;
+    /* ⭐ NO restaurar la carátula cacheada al cargar la página.
+       Eso causaba que se viera la carátula del TEMA ANTERIOR hasta que
+       llegara la metadata nueva. La notificación no tiene este problema
+       porque Android controla su propio caché de MediaSession.
+       Mejor mostrar LOGO y dejar que fetchCover traiga la correcta. */
+    if (cv) console.log("[Cover] Carátula cacheada ignorada (esperando fetchCover):", cv.substring(0, 80));
   }catch(e){}
 
   new MutationObserver(function(){
@@ -1951,8 +2152,17 @@ renderFavs();
     try{
       if (coverEl.src && coverEl.src.indexOf("apple-icon") === -1){
         localStorage.setItem(LS_COVER, coverEl.src);
+        console.log("[Cover] ✅ Imagen cargada OK en player:", coverEl.src.substring(0, 80));
       }
     }catch(e){}
+  });
+
+  /* ⭐ Si la imagen falla al cargar en el player, mostrar LOGO.
+     Esto pasa cuando la URL es válida (la notificación la descarga bien)
+     pero el <img> del HTML falla por mixed content, CORS, o caché corrupta. */
+  coverEl.addEventListener("error", function(){
+    console.warn("[Cover] ❌ Error cargando imagen en player, usando LOGO. URL fallida:", coverEl.src.substring(0, 80));
+    coverEl.src = LOGO;
   });
 
   window.addEventListener("load", function(){
@@ -2630,8 +2840,18 @@ renderFavs();
   var API_CONFIG = {
     THEAUDIODB_KEY: "2",
     BANDSINTOWN_APP_ID: "sikodark_radio",
-    LASTFM_API_KEY: ""  // ← Pegá tu Last.fm API key aquí (opcional)
+    LASTFM_API_KEY: "",          // ← Pegá tu Last.fm API key aquí (opcional)
+    /* 🆕 4 nuevas APIs para info más profesional (todas gratis) */
+    SETLISTFM_KEY: "",           // ← Pegá tu Setlist.fm API key (https://api.setlist.fm/docs/registration.html)
+    SPOTIFY_CLIENT_ID: "",       // ← Spotify Client ID (https://developer.spotify.com/dashboard)
+    SPOTIFY_CLIENT_SECRET: "",   // ← Spotify Client Secret (mismo lugar que Client ID)
+    GENIUS_ACCESS_TOKEN: ""      // ← Genius Access Token (https://genius.com/api-clients)
   };
+  /* ⭐ Exponer API_CONFIG al scope global para que fetchCover pueda usarlo */
+  window._sikodarkAPI_CONFIG = API_CONFIG;
+
+  /* 🆕 Cache en memoria del token de Spotify (se renueva cada 1h) */
+  var _spotifyTokenCache = { token: null, expira: 0 };
 
   /* Quita etiquetas HTML de las bios de Last.fm */
   function limpiarHTML(t){
@@ -2660,6 +2880,8 @@ renderFavs();
       return (d.artists && d.artists[0]) || null;
     }catch(e){ return null; }
   }
+  /* ⭐ Exponer al scope global para que fetchCover pueda usarlo */
+  window._sikodarkFetchAudioDBSearch = fetchAudioDBSearch;
 
   async function fetchBandsintown(artista){
     if (!API_CONFIG.BANDSINTOWN_APP_ID) return [];
@@ -2692,19 +2914,33 @@ renderFavs();
 
   /* MusicBrainz — base de datos libre y colaborativa
      Devuelve: MBID (id), tipo, area, begin-date (formación),
-     end-date (disolución), tags, membres, etc. */
+     end-date (disolución), tags, membres, etc.
+
+     ⭐ FILTRO ANTI-CONFUSIÓN: prioriza resultados de tipo "Group" o "Person"
+     sobre "Other" (que suele ser programa de radio, película, marca, etc.)
+     Esto arregla el bug de "Tiësto's Club Life" siendo confundido con
+     la banda "Club Nouveau". */
   async function fetchMusicBrainz(artista){
     try{
-      /* Búsqueda de artista — devuelve el MBID */
+      /* Búsqueda ampliada a 5 resultados para poder filtrar por tipo */
       var url = "https://musicbrainz.org/ws/2/artist/?query=artist:" +
-                encodeURIComponent(artista) + "&fmt=json&limit=1";
+                encodeURIComponent(artista) + "&fmt=json&limit=5";
       var r = await fetch(url, {
         headers: { "User-Agent": "sikodark-radio/1.0 (contacto@sikodark.com)" }
       });
       if (!r.ok) return null;
       var d = await r.json();
-      var art = (d.artists && d.artists[0]) || null;
+      if (!d.artists || !d.artists.length) return null;
+
+      /* ⭐ Filtrar por tipo: preferir "Group" (banda) o "Person" (solista)
+         Descartar "Other" (programa de radio, película, marca) y null */
+      var candidatosValidos = d.artists.filter(function(a){
+        return a.type === "Group" || a.type === "Person" ||
+               a.type === "Orchestra" || a.type === "Choir";
+      });
+      var art = (candidatosValidos.length ? candidatosValidos[0] : d.artists[0]) || null;
       if (!art) return null;
+
       /* Traer info completa del artista (con miembros y releases) */
       if (art.id){
         try{
@@ -2816,6 +3052,240 @@ renderFavs();
   }
 
   /* ============================================================
+     🆕 Setlist.fm — conciertos HISTÓRICOS + setlists reales
+     ============================================================
+     Requiere API key gratis: https://api.setlist.fm/docs/registration.html
+     Sin key, se omite (degradación elegante).
+     Devuelve los últimos 3 conciertos con: fecha, venue, ciudad, setlist.
+     ============================================================ */
+  async function fetchSetlistfm(artistaMBID){
+    if (!API_CONFIG.SETLISTFM_KEY || !artistaMBID) return [];
+    try{
+      /* Setlist.fm usa MBID para buscar el artista */
+      var url = "https://api.setlist.fm/rest/1.0/artist/" + artistaMBID + "/setlists?p=1";
+      var r = await fetch(url, {
+        headers: {
+          "x-api-key": API_CONFIG.SETLISTFM_KEY,
+          "Accept": "application/json"
+        }
+      });
+      if (!r.ok) return [];
+      var d = await r.json();
+      if (!d.setlist || !d.setlist.length) return [];
+      /* Tomar los últimos 3 conciertos */
+      return d.setlist.slice(0, 3).map(function(s){
+        var setlist = [];
+        if (s.sets && s.sets.set){
+          s.sets.set.forEach(function(set){
+            if (set.song){
+              set.song.forEach(function(song){
+                if (song.name) setlist.push(song.name);
+              });
+            }
+          });
+        }
+        return {
+          fecha: s.eventDate ? formatearFechaSetlist(s.eventDate) : "",
+          venue: (s.venue && s.venue.name) || "",
+          ciudad: (s.venue && s.venue.city && s.venue.city.name) || "",
+          pais: (s.venue && s.venue.city && s.venue.city.country && s.venue.city.country.name) || "",
+          setlist: setlist.slice(0, 5)  /* primeros 5 temas del show */
+        };
+      });
+    }catch(e){ return []; }
+  }
+
+  /* Helper: Setlist.fm usa formato DD-MM-YYYY → "12 ENE 2026" */
+  function formatearFechaSetlist(s){
+    if (!s) return "";
+    try{
+      var partes = s.split("-");
+      if (partes.length !== 3) return s;
+      var dia = partes[0], mes = partes[1], anio = partes[2];
+      var meses = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+      var mesIdx = parseInt(mes, 10) - 1;
+      return dia + " " + (meses[mesIdx] || mes) + " " + anio;
+    }catch(e){ return s; }
+  }
+
+  /* ============================================================
+     🆕 Spotify Web API — imágenes HD + top tracks + related artists
+     ============================================================
+     Requiere Client ID + Client Secret (gratis, sin usuario).
+     Pedí los tuyos en: https://developer.spotify.com/dashboard
+     ============================================================ */
+
+  /* Obtener token de acceso via Client Credentials flow */
+  async function _spotifyGetToken(){
+    if (!API_CONFIG.SPOTIFY_CLIENT_ID || !API_CONFIG.SPOTIFY_CLIENT_SECRET){
+      return null;
+    }
+    /* Si tenemos token cacheado y válido, usarlo */
+    if (_spotifyTokenCache.token && Date.now() < _spotifyTokenCache.expira){
+      return _spotifyTokenCache.token;
+    }
+    try{
+      var credentials = btoa(API_CONFIG.SPOTIFY_CLIENT_ID + ":" + API_CONFIG.SPOTIFY_CLIENT_SECRET);
+      var r = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Authorization": "Basic " + credentials,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "grant_type=client_credentials"
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      if (d.access_token){
+        /* Expira en 1h (3600s) — guardamos con 5min de margen */
+        _spotifyTokenCache.token = d.access_token;
+        _spotifyTokenCache.expira = Date.now() + (d.expires_in - 300) * 1000;
+        return d.access_token;
+      }
+    }catch(e){}
+    return null;
+  }
+  /* ⭐ Exponer al scope global */
+  window._sikodarkSpotifyGetToken = _spotifyGetToken;
+
+  async function fetchSpotifyArtist(artista){
+    var token = await _spotifyGetToken();
+    if (!token) return null;
+    try{
+      /* Buscar artista por nombre */
+      var url = "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artista) +
+                "&type=artist&limit=1";
+      var r = await fetch(url, {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var art = (d.artists && d.artists.items && d.artists.items[0]) || null;
+      if (!art) return null;
+
+      /* Resultado base con imágenes, géneros, popularidad, seguidores */
+      var resultado = {
+        id: art.id,
+        nombre: art.name,
+        imagenes: (art.images || []).map(function(i){ return i.url; }),
+        generos: art.genres || [],
+        popularidad: art.popularity || 0,
+        seguidores: (art.followers && art.followers.total) || 0,
+        topTracks: [],
+        relatedArtists: []
+      };
+
+      /* En paralelo: top tracks + related artists */
+      var [topRes, relatedRes] = await Promise.all([
+        fetch("https://api.spotify.com/v1/artists/" + art.id + "/top-tracks?market=AR", {
+          headers: { "Authorization": "Bearer " + token }
+        }).catch(function(){ return null; }),
+        fetch("https://api.spotify.com/v1/artists/" + art.id + "/related-artists", {
+          headers: { "Authorization": "Bearer " + token }
+        }).catch(function(){ return null; })
+      ]);
+
+      if (topRes && topRes.ok){
+        var td = await topRes.json();
+        if (td.tracks){
+          resultado.topTracks = td.tracks.slice(0, 5).map(function(t){
+            return {
+              nombre: t.name,
+              album: (t.album && t.album.name) || "",
+              duracion: t.duration_ms ? Math.round(t.duration_ms/1000) : 0,
+              popularidad: t.popularity || 0
+            };
+          });
+        }
+      }
+
+      if (relatedRes && relatedRes.ok){
+        var rd = await relatedRes.json();
+        if (rd.artists){
+          resultado.relatedArtists = rd.artists.slice(0, 4).map(function(a){
+            return {
+              nombre: a.name,
+              imagen: (a.images && a.images.length) ? a.images[0].url : ""
+            };
+          });
+        }
+      }
+
+      return resultado;
+    }catch(e){ return null; }
+  }
+
+  /* ============================================================
+     🆕 Genius API — anécdotas sobre letras, samples, meanings
+     ============================================================
+     Requiere Access Token gratis: https://genius.com/api-clients
+     ============================================================ */
+  /* ⭐ Exponer fetchSpotifyArtist al scope global */
+  window._sikodarkFetchSpotifyArtist = fetchSpotifyArtist;
+  async function fetchGeniusArtista(artista){
+    if (!API_CONFIG.GENIUS_ACCESS_TOKEN) return null;
+    try{
+      /* Buscar artista por nombre */
+      var url = "https://api.genius.com/search?q=" + encodeURIComponent(artista);
+      var r = await fetch(url, {
+        headers: { "Authorization": "Bearer " + API_CONFIG.GENIUS_ACCESS_TOKEN }
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var hits = (d.response && d.response.hits) || [];
+      if (!hits.length) return null;
+
+      /* Tomar el primer hit que sea del artista correcto */
+      var hit = hits.find(function(h){
+        return h.result && h.result.primary_artist &&
+               h.result.primary_artist.name &&
+               normArtista(h.result.primary_artist.name) === normArtista(artista);
+      }) || hits[0];
+
+      if (!hit || !hit.result || !hit.result.primary_artist) return null;
+
+      var artist = hit.result.primary_artist;
+      var resultado = {
+        id: artist.id,
+        nombre: artist.name,
+        imagen: artist.image_url || "",
+        url: artist.url || "",
+        descripcion: "",
+        canciones: []
+      };
+
+      /* Traer info detallada del artista (descripción, etc.) */
+      try{
+        var url2 = "https://api.genius.com/artists/" + artist.id;
+        var r2 = await fetch(url2, {
+          headers: { "Authorization": "Bearer " + API_CONFIG.GENIUS_ACCESS_TOKEN }
+        });
+        if (r2.ok){
+          var d2 = await r2.json();
+          if (d2.response && d2.response.artist){
+            var a2 = d2.response.artist;
+            if (a2.description && a2.description.plain){
+              resultado.descripcion = limpiarHTML(a2.description.plain);
+            }
+            if (a2.image_url && !resultado.imagen) resultado.imagen = a2.image_url;
+          }
+        }
+      }catch(e){}
+
+      /* Tomar las canciones de los hits */
+      resultado.canciones = hits.slice(0, 5).map(function(h){
+        return {
+          titulo: h.result ? h.result.title : "",
+          url: h.result ? h.result.url : "",
+          artista: h.result && h.result.primary_artist ? h.result.primary_artist.name : ""
+        };
+      }).filter(function(c){ return c.titulo; });
+
+      return resultado;
+    }catch(e){ return null; }
+  }
+
+  /* ============================================================
      🖼️ Buscar MÚLTIPLES imágenes de una banda (para carrusel)
      ============================================================
      Junta imágenes de TODAS las fuentes en paralelo y devuelve
@@ -2824,7 +3294,7 @@ renderFavs();
      ============================================================ */
   async function buscarImagenesBandaMultiple(nombre){
     if (!nombre || nombre.length < 3) return [];
-    var clave = "sikodark-imgs-multi-v1-" + normArtista(nombre).replace(/\s+/g,"-");
+    var clave = "sikodark-imgs-multi-v2-" + normArtista(nombre).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -2929,6 +3399,24 @@ renderFavs();
       }catch(e){}
     })());
 
+    /* 🆕 7. Spotify Web API — imágenes oficiales HD (muy confiables) */
+    promesas.push((async function(){
+      try{
+        var sp = await fetchSpotifyArtist(nombre);
+        if (sp && sp.imagenes && sp.imagenes.length){
+          sp.imagenes.forEach(function(url){ agregar(url); });
+        }
+      }catch(e){}
+    })());
+
+    /* 🆕 8. Genius — imagen del artista */
+    promesas.push((async function(){
+      try{
+        var gn = await fetchGeniusArtista(nombre);
+        if (gn && gn.imagen) agregar(gn.imagen);
+      }catch(e){}
+    })());
+
     await Promise.all(promesas);
 
     /* Limitar a 8 imágenes máximo para no saturar */
@@ -2952,9 +3440,11 @@ renderFavs();
 
   /* ============================================================
      📚 extractoLargoWikipedia() — trae ~10000 chars del artículo
+     ⭐ Con desambiguación musical: prueba "Artista (banda)", "(cantante)",
+        "(músico)" antes del nombre plano, y valida que el texto hable de música.
      ============================================================ */
   async function extractoLargoWikipedia(artista){
-    var clave = "sikodark-extracto-largo-v2-" + normArtista(artista).replace(/\s+/g,"-");
+    var clave = "sikodark-extracto-largo-v5-" + normArtista(artista).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -2962,20 +3452,98 @@ renderFavs();
         if (parsed && parsed.texto && (Date.now() - (parsed.t || 0)) < 12*3600*1000) return parsed.texto;
       }
     }catch(e){}
-    try{
-      var url = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=10000&titles=" +
-                encodeURIComponent(artista) + "&origin=*";
-      var r = await fetch(url);
-      if (!r.ok) return "";
-      var d = await r.json();
-      var pages = d.query && d.query.pages;
-      if (!pages) return "";
-      var firstKey = Object.keys(pages)[0];
-      var texto = (pages[firstKey].extract || "").trim();
-      if (!texto) return "";
-      try{ localStorage.setItem(clave, JSON.stringify({texto: texto, t: Date.now()})); }catch(e){}
-      return texto;
-    }catch(e){ return ""; }
+
+    /* Sufijos a probar — el primero que devuelva texto musical es el bueno */
+    var sufijos = [" (banda)", " (cantante)", " (músico)", " (grupo)", " (artista)",
+                   " (banda peruana)", " (banda argentina)", " (banda mexicana)",
+                   " (banda española)", " (banda colombiana)", " (banda chilena)"];
+    var sufijosEn = [" (band)", " (singer)", " (musician)"];
+    /* ⭐ Patrones estrictos: sacamos "grupo" y "disco" + agregamos negativos */
+    var patronesMusicales = /\b(banda|cantante|músico|musico|álbum|album|canción|cancion|gira|concierto|rock|pop|metal|punk|reggae|blues|jazz|guitarrista|baterista|vocalista|solista|cantautor|songwriter|tour|grammy|billboard)\b/i;
+    var patronesNoMusicales = /\b(duna|arena|desierto|montaña|cordillera|río|rio|laguna|lago|océano|oceano|mar|ciudad|capital|estado|país|pais|provincia|departamento|región|region|geolog|geograf|cuenca|caudal|afluente|embalse|pres|represa|corriente|flujo|erosión|sedimento|mineral|roca|piedra|cristal)\b/i;
+
+    /* ⭐ Generar variantes del nombre: sacar prefijos comunes de bandas hispanas */
+    var variantes = [artista];
+    var sinPrefijo = artista.replace(/^(grupo|los|las|el|la|the|orquesta|coro)\s+/i, "").trim();
+    if (sinPrefijo && sinPrefijo !== artista) variantes.push(sinPrefijo);
+
+    /* Probar español primero con todas las variantes */
+    for (var vi = 0; vi < variantes.length; vi++){
+      var artistaBase = variantes[vi];
+      for (var i = 0; i < sufijos.length; i++){
+        var titulo = artistaBase + sufijos[i];
+        try{
+          var url = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=10000&titles=" +
+                    encodeURIComponent(titulo) + "&origin=*";
+          var r = await fetch(url);
+          if (!r.ok) continue;
+          var d = await r.json();
+          var pages = d.query && d.query.pages;
+          if (!pages) continue;
+          var firstKey = Object.keys(pages)[0];
+          if (firstKey === "-1" || !pages[firstKey] || pages[firstKey].missing !== undefined) continue;
+          var texto = (pages[firstKey].extract || "").trim();
+          if (!texto) continue;
+          /* Si el sufijo NO es vacío, aceptar sin validar (ya está desambiguado) */
+          try{ localStorage.setItem(clave, JSON.stringify({texto: texto, t: Date.now()})); }catch(e){}
+          console.log("[WikiLargo] ✅ Encontrado (ES, sufijo '" + sufijos[i] + "' variante '" + artistaBase + "'):", titulo);
+          return texto;
+        }catch(e){ continue; }
+      }
+    }
+
+    /* ⭐ Nombre plano con validación ESTRICTA (musical Y no-geográfico) */
+    for (var vn = 0; vn < variantes.length; vn++){
+      var artistaPlano = variantes[vn];
+      try{
+        var urlPlano = "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=10000&titles=" +
+                       encodeURIComponent(artistaPlano) + "&origin=*";
+        var rPlano = await fetch(urlPlano);
+        if (!rPlano.ok) continue;
+        var dPlano = await rPlano.json();
+        var pagesPlano = dPlano.query && dPlano.query.pages;
+        if (!pagesPlano) continue;
+        var firstKeyPlano = Object.keys(pagesPlano)[0];
+        if (firstKeyPlano === "-1" || !pagesPlano[firstKeyPlano] || pagesPlano[firstKeyPlano].missing !== undefined) continue;
+        var textoPlano = (pagesPlano[firstKeyPlano].extract || "").trim();
+        if (!textoPlano) continue;
+        if (patronesMusicales.test(textoPlano) && !patronesNoMusicales.test(textoPlano)){
+          try{ localStorage.setItem(clave, JSON.stringify({texto: textoPlano, t: Date.now()})); }catch(e){}
+          console.log("[WikiLargo] ✅ Encontrado (ES, nombre plano validado estricto, variante '" + artistaPlano + "'):", artistaPlano);
+          return textoPlano;
+        }
+      }catch(e){ continue; }
+    }
+
+    /* Si nada funcionó en español, probar inglés con variantes */
+    var patronesMusicalesEn = /\b(band|singer|musician|album|song|rock|pop|metal|punk|guitarist|drummer|vocalist|songwriter|tour|grammy|billboard)\b/i;
+    var patronesNoMusicalesEn = /\b(dune|sand|desert|mountain|river|lake|ocean|sea|city|capital|state|country|province|region|geolog|geograf|basin|flow|mineral|rock|stone|crystal|erosion|sediment)\b/i;
+    for (var vj = 0; vj < variantes.length; vj++){
+      var artistaBaseEn = variantes[vj];
+      for (var j = 0; j < sufijosEn.length; j++){
+        var tituloEn = artistaBaseEn + sufijosEn[j];
+        try{
+          var urlEn = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&explaintext=true&exsectionformat=plain&exchars=10000&titles=" +
+                      encodeURIComponent(tituloEn) + "&origin=*";
+          var rEn = await fetch(urlEn);
+          if (!rEn.ok) continue;
+          var dEn = await rEn.json();
+          var pagesEn = dEn.query && dEn.query.pages;
+          if (!pagesEn) continue;
+          var firstKeyEn = Object.keys(pagesEn)[0];
+          if (firstKeyEn === "-1" || !pagesEn[firstKeyEn] || pagesEn[firstKeyEn].missing !== undefined) continue;
+          var textoEn = (pagesEn[firstKeyEn].extract || "").trim();
+          if (!textoEn) continue;
+          if (patronesMusicalesEn.test(textoEn) && !patronesNoMusicalesEn.test(textoEn)){
+            try{ localStorage.setItem(clave, JSON.stringify({texto: textoEn, t: Date.now()})); }catch(e){}
+            console.log("[WikiLargo] ✅ Encontrado (EN, sufijo '" + sufijosEn[j] + "' variante '" + artistaBaseEn + "'):", tituloEn);
+            return textoEn;
+          }
+        }catch(e){ continue; }
+      }
+    }
+    console.warn("[WikiLargo] ⚠️ No se encontró artículo musical extendido para:", artista);
+    return "";
   }
 
   /* ===========================================================
@@ -2993,7 +3561,7 @@ renderFavs();
      =========================================================== */
   async function infoBanda(artista){
     if (!artista || artista.length < 3) return null;
-    var clave = "sikodark-info-v4-" + normArtista(artista).replace(/\s+/g,"-");
+    var clave = "sikodark-info-v8-" + normArtista(artista).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
@@ -3022,27 +3590,217 @@ renderFavs();
     };
 
     /* === PARALELO: Wikipedia + 6 APIs === */
-    var wikiPromise = (async function(){
-      try{
-        var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
-        if (r.ok){
+    /* ⭐ Helper: buscar resumen de Wikipedia con desambiguación musical.
+       Orden de estrategias (CAMBIADO para priorizar Search API):
+       1. Search API con keywords "banda|cantante|música" — encuentra la banda directamente
+       2. Sufijos "(banda)", "(cantante)", etc.
+       3. Nombre plano con validación ESTRICTA (múltiples keywords musicales + sin keywords geográficos)
+    */
+    async function _fetchWikiMusical(nombre){
+      if (!nombre) return null;
+
+      /* ⭐ Keywords musicales — sacamos "grupo" y "disco" (demasiado genéricos).
+         "grupo" aparece en "grupo de dunas", "disco" puede ser disco de freno. */
+      var patronesMusicales = /\b(banda|cantante|músico|musico|álbum|album|canción|cancion|gira|concierto|rock|pop|metal|punk|reggae|blues|jazz|guitarrista|baterista|vocalista|solista|cantautor|songwriter|tour|grammy|billboard)\b/i;
+
+      /* ⭐ Keywords NEGATIVOS — si el extracto tiene estos, NO es una banda.
+         Resuelve "Duna" (arena), "Río" (agua), "Boston" (ciudad), etc. */
+      var patronesNoMusicales = /\b(duna|arena|desierto|montaña|cordillera|río|rio|laguna|lago|océano|oceano|mar|ciudad|capital|estado|país|pais|provincia|departamento|región|region|geolog|geograf|cuenca|caudal|afluente|embalse|pres|represa|corriente|flujo|erosión|sedimento|mineral|roca|piedra|cristal|formación geol|accidente geograf)\b/i;
+
+      /* ESTRATEGIA 1 (NUEVA PRIORIDAD): Search API con keywords musicales
+         Esto resuelve "Duna" → busca "Duna banda" → encuentra la banda directamente
+         en vez de "Duna" (acumulación de arena) */
+      console.log("[Wiki] Probando Search API primero para:", nombre);
+      var resultadoSearch = await _wikiSearchMusical(nombre);
+      if (resultadoSearch){
+        console.log("[Wiki] ✅ Encontrado por Search API:", resultadoSearch.nombre);
+        return resultadoSearch;
+      }
+
+      /* ESTRATEGIA 2: Sufijos de desambiguación */
+      var sufijos = [
+        " (banda)",
+        " (cantante)",
+        " (músico)",
+        " (grupo)",
+        " (artista)",
+        " (banda peruana)",
+        " (banda argentina)",
+        " (banda mexicana)",
+        " (banda española)",
+        " (banda colombiana)",
+        " (banda chilena)"
+      ];
+      for (var i = 0; i < sufijos.length; i++){
+        var tituloBusqueda = nombre + sufijos[i];
+        try{
+          var r = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(tituloBusqueda));
+          if (!r.ok) continue;
           var d = await r.json();
-          info.nombre = d.normalizedtitle || d.title || artista;
-          info.extracto = (d.extract || "").trim();
-          info.img = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || "";
-          if (d.content_urls && d.content_urls.desktop) info.wikiUrl = d.content_urls.desktop.page;
+          if (d.type === "disambiguation") continue;
+          var extracto = (d.extract || "").trim();
+          if (!extracto) continue;
+          /* Si el sufijo NO es vacío, aceptar sin validar (ya está desambiguado) */
+          console.log("[Wiki] ✅ Encontrado por sufijo '" + sufijos[i] + "':", d.title);
+          return {
+            nombre: d.normalizedtitle || d.title || nombre,
+            extracto: extracto,
+            img: (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || "",
+            wikiUrl: (d.content_urls && d.content_urls.desktop) ? d.content_urls.desktop.page : ""
+          };
+        }catch(e){ continue; }
+      }
+
+      /* ESTRATEGIA 3: Nombre plano con validación ESTRICTA
+         - Debe tener keywords musicales
+         - NO debe tener keywords geográficos/no-musicales */
+      try{
+        var rPlain = await fetch("https://es.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(nombre));
+        if (rPlain.ok){
+          var dPlain = await rPlain.json();
+          if (dPlain.type !== "disambiguation"){
+            var extractoPlain = (dPlain.extract || "").trim();
+            if (extractoPlain){
+              /* ⭐ Validación ESTRICTA: debe ser musical Y NO ser geográfico */
+              if (patronesMusicales.test(extractoPlain) && !patronesNoMusicales.test(extractoPlain)){
+                console.log("[Wiki] ✅ Encontrado (nombre plano validado estricto):", dPlain.title);
+                return {
+                  nombre: dPlain.normalizedtitle || dPlain.title || nombre,
+                  extracto: extractoPlain,
+                  img: (dPlain.originalimage && dPlain.originalimage.source) || (dPlain.thumbnail && dPlain.thumbnail.source) || "",
+                  wikiUrl: (dPlain.content_urls && dPlain.content_urls.desktop) ? dPlain.content_urls.desktop.page : ""
+                };
+              } else {
+                console.warn("[Wiki] ❌ Nombre plano rechazado por validación estricta. Musical:", patronesMusicales.test(extractoPlain), "No-musical:", patronesNoMusicales.test(extractoPlain));
+              }
+            }
+          }
         }
       }catch(e){}
-      if (!info.extracto){
+
+      /* ESTRATEGIA 4: Search API en inglés */
+      var resultadoSearchEn = await _wikiSearchMusical(nombre, "en");
+      if (resultadoSearchEn) return resultadoSearchEn;
+
+      /* ESTRATEGIA 5: Sufijos en inglés */
+      var sufijosEn = [" (band)", " (singer)", " (musician)"];
+      for (var j = 0; j < sufijosEn.length; j++){
+        var tituloEn = nombre + sufijosEn[j];
         try{
-          var r2 = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(artista));
-          if (r2.ok){
-            var d2 = await r2.json();
-            info.extracto = (d2.extract || "").trim();
-            if (!info.img) info.img = (d2.originalimage && d2.originalimage.source) || (d2.thumbnail && d2.thumbnail.source) || "";
-            if (!info.wikiUrl && d2.content_urls && d2.content_urls.desktop) info.wikiUrl = d2.content_urls.desktop.page;
-          }
-        }catch(e){}
+          var r2 = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(tituloEn));
+          if (!r2.ok) continue;
+          var d2 = await r2.json();
+          if (d2.type === "disambiguation") continue;
+          var extracto2 = (d2.extract || "").trim();
+          if (!extracto2) continue;
+          console.log("[Wiki] ✅ Encontrado (EN, sufijo '" + sufijosEn[j] + "'):", d2.title);
+          return {
+            nombre: d2.normalizedtitle || d2.title || nombre,
+            extracto: extracto2,
+            img: (d2.originalimage && d2.originalimage.source) || (d2.thumbnail && d2.thumbnail.source) || "",
+            wikiUrl: (d2.content_urls && d2.content_urls.desktop) ? d2.content_urls.desktop.page : ""
+          };
+        }catch(e){ continue; }
+      }
+
+      console.warn("[Wiki] ⚠️ No se encontró artículo musical para:", nombre);
+      return null;
+    }
+
+    /* ⭐ Search API de Wikipedia con keywords musicales.
+       Busca "Nombre banda" o "Nombre cantante" y devuelve el primer resultado
+       cuyo extracto valide como música. Resuelve "Grupo Río" → encuentra
+       la banda peruana en vez del río de agua. */
+    async function _wikiSearchMusical(nombre, lang){
+      lang = lang || "es";
+      /* ⭐ Patrones estrictos: sacamos "grupo" y "disco" (demasiado genéricos) */
+      var patronesMusicales = /\b(banda|cantante|músico|musico|álbum|album|canción|cancion|gira|concierto|rock|pop|metal|punk|reggae|blues|jazz|guitarrista|baterista|vocalista|solista|cantautor|songwriter|tour|grammy|billboard)\b/i;
+      var patronesMusicalesEn = /\b(band|singer|musician|album|song|rock|pop|metal|punk|guitarist|drummer|vocalist|songwriter|tour|grammy|billboard)\b/i;
+      /* ⭐ Keywords NEGATIVOS — rechazar artículos geográficos/científicos */
+      var patronesNoMusicales = /\b(duna|arena|desierto|montaña|cordillera|río|rio|laguna|lago|océano|oceano|mar|ciudad|capital|estado|país|pais|provincia|departamento|región|region|geolog|geograf|cuenca|caudal|afluente|embalse|pres|represa|corriente|flujo|erosión|sedimento|mineral|roca|piedra|cristal)\b/i;
+      var patronesNoMusicalesEn = /\b(dune|sand|desert|mountain|river|lake|ocean|sea|city|capital|state|country|province|region|geolog|geograf|basin|flow|mineral|rock|stone|crystal|erosion|sediment)\b/i;
+
+      /* ⭐ Generar variantes del nombre: sacar prefijos comunes de bandas hispanas
+         "Grupo Río" → también probar "Río"
+         "Los Redondos" → también probar "Redondos"
+         "Las Pelotas" → también probar "Pelotas"
+         "El Tri" → también probar "Tri" */
+      var variantes = [nombre];
+      var sinPrefijo = nombre.replace(/^(grupo|los|las|el|la|the|orquesta|coro)\s+/i, "").trim();
+      if (sinPrefijo && sinPrefijo !== nombre) variantes.push(sinPrefijo);
+
+      /* Para cada variante, probar varias queries con keywords musicales */
+      var keywords = (lang === "es")
+        ? [" banda", " cantante", " músico", " artista", " rock", " (banda)", " grupo musical"]
+        : [" band", " singer", " musician", " rock", " (band)"];
+
+      for (var v = 0; v < variantes.length; v++){
+        var nombreBase = variantes[v];
+        for (var q = 0; q < keywords.length; q++){
+          var queryCompleta = nombreBase + keywords[q];
+          try{
+            var url = "https://" + lang + ".wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=" +
+                      encodeURIComponent(queryCompleta) + "&srlimit=5&origin=*";
+            var r = await fetch(url);
+            if (!r.ok) continue;
+            var d = await r.json();
+            if (!d.query || !d.query.search || !d.query.search.length) continue;
+
+            /* Iterar los primeros 5 resultados y validar cuál es musical */
+            for (var i = 0; i < d.query.search.length; i++){
+              var result = d.query.search[i];
+              var titulo = result.title;
+              var snippet = (result.snippet || "").replace(/<[^>]*>/g, "");
+
+              /* Saltar páginas de desambiguación */
+              if (/\(desambiguaci\|disambiguation\)/i.test(titulo)) continue;
+              /* Saltar "Lista de..." */
+              if (/^Lista de|^List of/i.test(titulo)) continue;
+
+              /* Validar que el snippet tenga palabras musicales */
+              var patrones = (lang === "es") ? patronesMusicales : patronesMusicalesEn;
+              var patronesNeg = (lang === "es") ? patronesNoMusicales : patronesNoMusicalesEn;
+              if (!patrones.test(snippet)) continue;
+              /* ⭐ Validación negativa: si tiene keywords geográficos, rechazar */
+              if (patronesNeg.test(snippet)) continue;
+
+              /* Si pasa la validación, traer el summary completo */
+              try{
+                var r2 = await fetch("https://" + lang + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(titulo));
+                if (!r2.ok) continue;
+                var d2 = await r2.json();
+                if (d2.type === "disambiguation") continue;
+                var extracto = (d2.extract || "").trim();
+                if (!extracto) continue;
+                /* Doble validación con el extracto completo:
+                   - Debe tener keywords musicales
+                   - NO debe tener keywords geográficos/no-musicales */
+                if (!patrones.test(extracto)) continue;
+                if (patronesNeg.test(extracto)) continue;
+                return {
+                  nombre: d2.normalizedtitle || d2.title || nombre,
+                  extracto: extracto,
+                  img: (d2.originalimage && d2.originalimage.source) || (d2.thumbnail && d2.thumbnail.source) || "",
+                  wikiUrl: (d2.content_urls && d2.content_urls.desktop) ? d2.content_urls.desktop.page : ""
+                };
+              }catch(e){ continue; }
+            }
+          }catch(e){ continue; }
+        }
+      }
+      return null;
+    }
+
+    var wikiPromise = (async function(){
+      var wikiData = await _fetchWikiMusical(artista);
+      if (wikiData){
+        info.nombre = wikiData.nombre;
+        info.extracto = wikiData.extracto;
+        info.img = wikiData.img;
+        info.wikiUrl = wikiData.wikiUrl;
+        console.log("[Wiki] ✅ Encontrado (musical):", info.nombre, "— extracto:", info.extracto.substring(0, 80) + "...");
+      } else {
+        console.warn("[Wiki] ⚠️ No se encontró artículo musical para:", artista);
       }
     })();
 
@@ -3202,8 +3960,54 @@ renderFavs();
       }
     });
 
+    /* 🆕 Setlist.fm — giras históricas + setlists reales (requiere MBID) */
+    var setlistfmPromise = musicbrainzPromise.then(async function(mb){
+      if (!mb || !mb.id) return;
+      var setlists = await fetchSetlistfm(mb.id);
+      if (setlists && setlists.length) info.girasHistoricas = setlists;
+    });
+
+    /* 🆕 Spotify — imágenes HD + top tracks + related artists */
+    var spotifyPromise = fetchSpotifyArtist(artista).then(function(sp){
+      if (!sp) return;
+      /* Imágenes HD de Spotify (son las más confiables) — agregar al array */
+      if (sp.imagenes && sp.imagenes.length){
+        /* Si todavía no hay imagen única, usar la primera de Spotify */
+        if (!info.img) info.img = sp.imagenes[0];
+        /* Agregar todas las imágenes de Spotify al carrusel */
+        info.imagenesSpotify = sp.imagenes;
+      }
+      /* Géneros desde Spotify (más precisos que Last.fm) */
+      if (sp.generos && sp.generos.length && !info.genero){
+        info.genero = sp.generos[0];
+      }
+      /* Top tracks */
+      if (sp.topTracks && sp.topTracks.length) info.topTracks = sp.topTracks;
+      /* Related artists */
+      if (sp.relatedArtists && sp.relatedArtists.length) info.relatedArtists = sp.relatedArtists;
+      /* Popularidad y seguidores */
+      if (sp.popularidad) info.popularidad = sp.popularidad;
+      if (sp.seguidores) info.seguidoresSpotify = sp.seguidores;
+    });
+
+    /* 🆕 Genius — descripción extendida + imagen + canciones con anécdotas */
+    var geniusPromise = fetchGeniusArtista(artista).then(function(gn){
+      if (!gn) return;
+      /* Imagen de Genius si todavía no hay */
+      if (!info.img && gn.imagen) info.img = gn.imagen;
+      /* Descripción extendida (muy rica, con anécdotas) */
+      if (gn.descripcion && !info.bioLarga){
+        info.bioLarga = gn.descripcion;
+      }
+      /* Canciones con anotaciones */
+      if (gn.canciones && gn.canciones.length) info.cancionesGenius = gn.canciones;
+      /* URL oficial del artista en Genius */
+      if (gn.url) info.geniusUrl = gn.url;
+    });
+
     await Promise.all([wikiPromise, audiodbPromise, bandsintownPromise, lastfmPromise,
-                       musicbrainzPromise, deezerPromise, discogsPromise]);
+                       musicbrainzPromise, deezerPromise, discogsPromise,
+                       setlistfmPromise, spotifyPromise, geniusPromise]);
 
     /* ⭐ Estado: si AudioDB no dio info, usar regex sobre extracto+bio como fallback */
     if (!info.estado){
@@ -3452,8 +4256,98 @@ renderFavs();
       });
     }
 
-    /* Limitar a 7 items para no saturar la rotación */
-    if (items.length > 7) items = items.slice(0, 7);
+    /* 🆕 📊 ÚLTIMAS GIRAS — datos históricos de Setlist.fm */
+    if (info.girasHistoricas && info.girasHistoricas.length){
+      var girasTxt = info.girasHistoricas.map(function(g){
+        var partes = [];
+        if (g.fecha) partes.push(g.fecha);
+        if (g.ciudad) partes.push(g.ciudad);
+        if (g.pais && g.pais !== g.ciudad) partes.push(g.pais);
+        if (g.venue) partes.push("@" + g.venue);
+        if (g.setlist && g.setlist.length) partes.push("Setlist: " + g.setlist.join(", "));
+        return partes.join(" · ");
+      }).join("  |  ");
+      items.push({
+        tag: "📊 ÚLTIMAS GIRAS",
+        headline: nombre.toUpperCase(),
+        texto: recortar(girasTxt, 320),
+        img: info.img,
+        imagenes: info.imagenes,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.wikiUrl,
+        score: 6
+      });
+    }
+
+    /* 🆕 🎵 TEMAS MÁS ESCUCHADOS — top tracks de Spotify */
+    if (info.topTracks && info.topTracks.length){
+      var topTxt = info.topTracks.map(function(t, i){
+        var partes = [(i+1) + ". " + t.nombre];
+        if (t.album) partes.push("(" + t.album + ")");
+        if (t.duracion){
+          var min = Math.floor(t.duracion / 60);
+          var seg = t.duracion % 60;
+          partes.push(min + ":" + (seg < 10 ? "0" + seg : seg));
+        }
+        return partes.join(" ");
+      }).join(" · ");
+      items.push({
+        tag: "🎵 TEMAS MÁS ESCUCHADOS",
+        headline: nombre.toUpperCase(),
+        texto: recortar("Los más escuchados en Spotify: " + topTxt, 320),
+        img: info.img,
+        imagenes: info.imagenes,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.wikiUrl,
+        score: 6
+      });
+    }
+
+    /* 🆕 📰 SOBRE LA LETRA — descripción de Genius (anécdotas sobre canciones) */
+    if (info.bioLarga && info.cancionesGenius && info.cancionesGenius.length){
+      var cancionesTop = info.cancionesGenius.slice(0, 3).map(function(c){ return c.titulo; }).join(", ");
+      var descGenius = recortar(info.bioLarga, 240);
+      items.push({
+        tag: "📰 SOBRE LA LETRA",
+        headline: nombre.toUpperCase(),
+        texto: descGenius + " Canciones destacadas: " + cancionesTop + ".",
+        img: info.img,
+        imagenes: info.imagenes,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.geniusUrl || info.wikiUrl,
+        score: 5
+      });
+    }
+
+    /* 🆕 🎯 ARTISTAS RELACIONADOS — de Spotify */
+    if (info.relatedArtists && info.relatedArtists.length){
+      var relTxt = info.relatedArtists.map(function(r){ return r.nombre; }).join(", ");
+      items.push({
+        tag: "🎯 SI TE GUSTA, ESCUCHÁ",
+        headline: nombre.toUpperCase(),
+        texto: recortar("Si te gusta " + nombre + ", también te puede interesar: " + relTxt + ".", 240),
+        img: info.img,
+        imagenes: info.imagenes,
+        estado: info.estado,
+        anioFormacion: info.anioFormacion,
+        origen: info.origen,
+        genero: info.genero,
+        wikiUrl: info.wikiUrl,
+        score: 3
+      });
+    }
+
+    /* Limitar a 9 items para no saturar la rotación */
+    if (items.length > 9) items = items.slice(0, 9);
     return items;
   }
 
@@ -3543,7 +4437,7 @@ renderFavs();
         artActual === "—" || artActual === "sikodark radio"){
       return [];
     }
-    var clave = "sikodark-tick-v5-" + normArtista(artActual).replace(/\s+/g,"-");
+    var clave = "sikodark-tick-v6-" + normArtista(artActual).replace(/\s+/g,"-");
     try{
       var cache = localStorage.getItem(clave);
       if (cache){
