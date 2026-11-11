@@ -413,6 +413,11 @@ body::after{
   box-shadow:0 4px 20px rgba(0,0,0,.5)}
 #btnUpdate{background:#161616;color:#f59d3d;border:0;border-radius:999px;
   padding:7px 16px;font-weight:800;font-size:11px;cursor:pointer;font-family:var(--sans)}
+
+/* ===== 🎨 TEMA DINÁMICO — la tarjeta del player toma los colores de la carátula ===== */
+section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isolate}
+.tema-bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;opacity:0;transition:opacity .9s ease;pointer-events:none}
+.tema-bg.on{opacity:1}
 </style>
 </head>
 <body>
@@ -704,6 +709,100 @@ function actualizarMediaSession(track, urlCaratula) {
     navigator.mediaSession.setActionHandler("play", () => startPlayback());
     navigator.mediaSession.setActionHandler("pause", () => stopPlayback());
   } catch(e) {}
+}
+
+/* =========================================================
+   🎨 TEMA DINÁMICO — la tarjeta del player toma los colores
+   de la carátula (como hace Android en la notificación)
+   ========================================================= */
+const playerCard = document.querySelector('section.card[aria-label="Reproductor de radio"]');
+let capaTema = null;
+let urlTemaActual = null;
+let temaToken = 0;
+
+function quitarTemaCaratula(){
+  if (capaTema) capaTema.classList.remove("on");
+  urlTemaActual = null;
+}
+
+function oscurecer(rgb, factor, tope){
+  const n = rgb.match(/\d+/g);
+  if (!n || n.length < 3) return "rgb(22,22,28)";
+  const c = (i) => Math.min(Math.round(Number(n[i]) * (1 - factor)), tope);
+  return "rgb(" + c(0) + ", " + c(1) + ", " + c(2) + ")";
+}
+
+async function cargarImagenTema(url){
+  const cargar = (src, conCors) => new Promise((res, rej) => {
+    const im = new Image();
+    if (conCors) im.crossOrigin = "anonymous";
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("no cargó"));
+    im.src = src;
+  });
+  /* 1° intento: directa con CORS (iTunes y Wikipedia lo permiten) */
+  try { return await cargar(url, true); } catch(e) {}
+  /* 2° intento: bajar por los proxies → blob local (siempre legible) */
+  try {
+    const r = await fetchConProxy(url);
+    const blob = await r.blob();
+    const urlBlob = URL.createObjectURL(blob);
+    const img = await cargar(urlBlob, false);
+    URL.revokeObjectURL(urlBlob);
+    return img;
+  } catch(e) {}
+  return null;
+}
+
+function extraerPaleta(img){
+  try {
+    const size = 48;
+    const cv = document.createElement("canvas");
+    cv.width = size; cv.height = size;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    /* Histograma de colores agrupados — ignora pixeles casi negros/blancos */
+    const buckets = new Map();
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i+1], b = data[i+2];
+      const lum = .299 * r + .587 * g + .114 * b;
+      if (lum < 24 || lum > 232) continue;
+      const key = ((r >> 5) << 10) | ((g >> 5) << 5) | (b >> 5);
+      const bk = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+      bk.count++; bk.r += r; bk.g += g; bk.b += b;
+      buckets.set(key, bk);
+    }
+    if (!buckets.size) return null;
+    const lista = [...buckets.values()].sort((a, b) => b.count - a.count);
+    const promedio = (x) => "rgb(" + Math.round(x.r / x.count) + ", " + Math.round(x.g / x.count) + ", " + Math.round(x.b / x.count) + ")";
+    return { dominante: promedio(lista[0]), secundario: promedio(lista[1] || lista[0]) };
+  } catch(e) { return null; } /* canvas taint u otro error */
+}
+
+async function aplicarTemaCaratula(url){
+  if (!playerCard || !url || url === LOGO) return;
+  if (url === urlTemaActual) return;
+  urlTemaActual = url;
+  const miToken = ++temaToken;
+
+  const img = await cargarImagenTema(url);
+  if (!img || miToken !== temaToken) return;
+  const paleta = extraerPaleta(img);
+  if (!paleta || miToken !== temaToken) return;
+
+  if (!capaTema) {
+    capaTema = document.createElement("div");
+    capaTema.className = "tema-bg";
+    playerCard.appendChild(capaTema);
+  }
+  const c1 = oscurecer(paleta.dominante, .15, 165);
+  const c2 = oscurecer(paleta.dominante, .5, 95);
+  const c3 = oscurecer(paleta.secundario, .68, 75);
+  capaTema.style.background = "linear-gradient(150deg, " + c1 + " 0%, " + c2 + " 48%, " + c3 + " 100%)";
+  capaTema.classList.add("on");
+  console.log("[Tema] 🎨 Card pintada:", c1, "→", c3);
 }
 
 /* =========================================================
@@ -1168,6 +1267,7 @@ async function fetchCover(t) {
         cover = r.url;
         coverEl.src = cover;
         actualizarMediaSession(t, cover);
+        aplicarTemaCaratula(cover);   /* 🎨 pinta la card con los colores de la carátula */
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
           localStorage.setItem("sikodark-history", JSON.stringify(history));
@@ -1184,6 +1284,7 @@ async function fetchCover(t) {
   console.error("%c[Cover] 🚫 NINGUNA estrategia encontró carátula — usando LOGO", "color:#ff3b30;font-weight:bold");
   cover = null;
   coverEl.src = LOGO;
+  quitarTemaCaratula();   /* 🎨 sin carátula → la card vuelve a su color normal */
 }
 
 let ultimaActualizacionMs = 0;   /* timestamp del último update exitoso */
@@ -1451,12 +1552,14 @@ function cambiarFondo(urlImagen) {
   if (!urlImagen) return;
   try {
     for (let hoja of document.styleSheets) {
-      for (let regla of hoja.cssRules) {
-        if (regla.selectorText === "body::before") {
-          regla.style.backgroundImage = `url('${urlImagen}')`;
-          return;
+      try {
+        for (let regla of hoja.cssRules) {
+          if (regla.selectorText === "body::before") {
+            regla.style.backgroundImage = `url('${urlImagen}')`;
+            return;
+          }
         }
-      }
+      } catch(e) { continue; } /* hoja cross-origin (Google Fonts) — seguir con la siguiente */
     }
   } catch(e) {}
 }
@@ -1544,6 +1647,7 @@ conectarMetadata();
    el artista/caratula anterior mientras llega la nueva */
 cover = null;
 if (coverEl) coverEl.src = LOGO;
+quitarTemaCaratula();   /* 🎨 al recargar, la card arranca limpia */
 ultimoTitulo = "";
 
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
