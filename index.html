@@ -418,6 +418,36 @@ body::after{
 section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isolate}
 .tema-bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;opacity:0;transition:opacity .9s ease;pointer-events:none}
 .tema-bg.on{opacity:1}
+
+/* ===== 🎸 AUTOCOMPLETADO "PROGRAMÁ TU TEMA" + 🎧 COLA DE PEDIDOS ===== */
+#modalPedido .modal-card{max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:thin}
+.ped-sug{position:relative;margin-top:5px;display:none;max-height:228px;overflow-y:auto;border:1px solid #333;border-radius:10px;background:#0e0f14;scrollbar-width:thin}
+.ped-sug.show{display:block}
+.ped-sug .sug{display:flex;gap:10px;align-items:center;padding:7px 9px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+.ped-sug .sug:last-child{border-bottom:0}
+.ped-sug .sug:hover,.ped-sug .sug.sel{background:#1c1d24}
+.ped-sug .sug img{width:38px;height:38px;border-radius:7px;object-fit:cover;flex:0 0 38px;background:#141419}
+.ped-sug .sug .st{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.ped-sug .sug .sa{font:700 10.5px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.ped-sug .sug-vacio{padding:10px;font:700 11px var(--sans);color:var(--muted);text-align:center}
+.ped-preview{display:none;gap:10px;align-items:center;margin-top:12px;background:rgba(245,157,61,.08);border:1px solid rgba(245,157,61,.35);border-radius:10px;padding:8px 10px}
+.ped-preview.show{display:flex}
+.ped-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:0 0 44px;background:#141419}
+.ped-preview .pt-b{display:block;font:800 12.5px var(--sans);color:#f5f5f7;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ped-preview .pt-a{font:700 10.5px var(--sans);color:var(--primary)}
+.cola-lista{margin-top:16px;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;scrollbar-width:thin}
+.cola-item{display:flex;gap:11px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:8px 11px}
+.cola-item.mio{border-color:rgba(245,157,61,.45)}
+.cola-item img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:0 0 44px;background:#141419}
+.cola-item .ci-txt{flex:1;min-width:0}
+.cola-item .ci-t{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cola-item .ci-a{font:700 10.5px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.estado{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.estado.pendiente{background:rgba(255,255,255,.08);color:#cfcfd6;border:1px solid rgba(255,255,255,.15)}
+.estado.en_cola{background:rgba(245,157,61,.16);color:var(--primary);border:1px solid rgba(245,157,61,.4)}
+.estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
+.estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
+.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
 </style>
 </head>
 <body>
@@ -510,31 +540,42 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
+
+<section id="colaBox" class="card hidden" aria-label="Cola de pedidos de los oyentes">
+  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><span id="colaCount" class="count">0</span></div>
+  <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
+</section>
 </div>
 <footer>sikodark radio · música en directo</footer>
 
-<!-- ===== 🎸 BOTÓN FLOTANTE "PEDÍ TU TEMA" ===== -->
-<button id="btnPedidoTema" aria-label="Pedí tu tema">
+<!-- ===== 🎸 BOTÓN FLOTANTE "PROGRAMÁ TU TEMA" ===== -->
+<button id="btnPedidoTema" aria-label="Programá tu tema musical">
   <svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM5 16l.7 2.1L8 19l-2.3.9L5 22l-.7-2.1L2 19l2.3-.9L5 16z"/></svg>
-  Pedí tu tema
+  Programá tu tema
 </button>
 
-<!-- ===== 🎸 MODAL "PEDÍ TU TEMA" ===== -->
+<!-- ===== 🎸 MODAL "PROGRAMÁ TU TEMA MUSICAL" ===== -->
 <div id="modalPedido" role="dialog" aria-modal="true">
   <div class="modal-card">
-    <h3>🎸 Pedí tu tema</h3>
-    <p class="sub">Elegí una banda y un tema — el DJ lo verá en su panel al toque.</p>
+    <h3>🎸 Programá tu tema musical</h3>
+    <p class="sub">Escribí una banda o tema — si está en la música de la radio, entra en la cola al toque.</p>
     <label>Tu nombre (opcional)</label>
     <input type="text" id="pedNombre" placeholder="Ej: Juanchi" maxlength="20">
     <label>Banda / Artista</label>
-    <input type="text" id="pedBanda" placeholder="Ej: Guns N' Roses" maxlength="60">
+    <input type="text" id="pedBanda" placeholder="Ej: Guns N' Roses" maxlength="60" autocomplete="off">
+    <div id="pedSugBanda" class="ped-sug"></div>
     <label>Tema (opcional)</label>
-    <input type="text" id="pedTema" placeholder="Ej: Sweet Child O' Mine" maxlength="60">
+    <input type="text" id="pedTema" placeholder="Ej: Sweet Child O' Mine" maxlength="60" autocomplete="off">
+    <div id="pedSugTema" class="ped-sug"></div>
+    <div id="pedPreview" class="ped-preview">
+      <img id="pedPreviewImg" src="apple-icon.png" alt="">
+      <div><b class="pt-b" id="pedPreviewTema"></b><span class="pt-a" id="pedPreviewBanda"></span></div>
+    </div>
     <div class="modal-btns">
       <button class="btn-cancel" id="pedCancelar">Cancelar</button>
-      <button class="btn-enviar" id="pedEnviar">Enviar pedido</button>
+      <button class="btn-enviar" id="pedEnviar">Programar tema</button>
     </div>
-    <div class="ok-msg" id="pedOk">✅ ¡Pedido enviado! El DJ lo recibió al toque 🤘</div>
+    <div class="ok-msg" id="pedOk">✅ ¡Programado! Va a entrar en la cola de la radio 🤘</div>
   </div>
 </div>
 
@@ -4904,7 +4945,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== 🎸 PEDÍ TU TEMA — botón flotante + modal ===== -->
+<!-- ===== 🎸 PROGRAMÁ TU TEMA — modal con autocompletado iTunes + cola en vivo ===== -->
 <script>
 (function(){
   var btn = document.getElementById("btnPedidoTema");
@@ -4917,9 +4958,24 @@ renderFavs();
   var btnEnviar = document.getElementById("pedEnviar");
   var btnCancelar = document.getElementById("pedCancelar");
   var okMsg = document.getElementById("pedOk");
+  var sugBanda = document.getElementById("pedSugBanda");
+  var sugTema = document.getElementById("pedSugTema");
+  var preview = document.getElementById("pedPreview");
+  var previewImg = document.getElementById("pedPreviewImg");
+  var previewTema = document.getElementById("pedPreviewTema");
+  var previewBanda = document.getElementById("pedPreviewBanda");
+
+  /* Carátula del tema confirmado contra iTunes (para mostrarla en la cola) */
+  var seleccion = { cover: null };
 
   /* Mostrar el botón flotante después de 3s (para que cargue primero la app) */
   setTimeout(function(){ btn.classList.add("show"); }, 3000);
+
+  function ocultarSug(){
+    sugBanda.classList.remove("show"); sugTema.classList.remove("show");
+    sugBanda.innerHTML = ""; sugTema.innerHTML = "";
+  }
+  function ocultarPreview(){ preview.classList.remove("show"); seleccion.cover = null; }
 
   function abrir(){
     modal.classList.add("show");
@@ -4928,9 +4984,11 @@ renderFavs();
     inpNombre.value = "";
     inpBanda.value = "";
     inpTema.value = "";
+    seleccion = { cover: null };
+    ocultarSug(); ocultarPreview();
     setTimeout(function(){ inpBanda.focus(); }, 100);
   }
-  function cerrar(){ modal.classList.remove("show"); }
+  function cerrar(){ modal.classList.remove("show"); ocultarSug(); }
 
   /* Cerrar mensaje de error visual si existe */
   function limpiarError(){
@@ -4956,6 +5014,107 @@ renderFavs();
     if (n) inpNombre.value = n;
   }catch(e){}
 
+  /* =====================================================
+     🔍 AUTOCOMPLETADO con iTunes — valida que la banda
+     y el tema existan de verdad antes de mandar el pedido
+     ===================================================== */
+  var tBusqueda = null;
+
+  function itunesBuscar(termino, ok){
+    var url = "https://itunes.apple.com/search?media=music&entity=song&limit=12&term=" + encodeURIComponent(termino);
+    fetchConProxy(url)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ ok(d && d.results ? d.results : []); })
+      .catch(function(){ ok([]); });
+  }
+
+  function mostrarSugBanda(resultados){
+    var vistos = {}, items = [];
+    resultados.forEach(function(r){
+      if (!r.artistName) return;
+      var k = r.artistName.toLowerCase();
+      if (vistos[k]) return;
+      vistos[k] = 1;
+      items.push({ nombre: r.artistName, cover: r.artworkUrl100 || null, detalle: r.primaryGenreName || "Artista" });
+    });
+    if (!items.length){
+      sugBanda.innerHTML = '<div class="sug-vacio">Sin sugerencias — igual podés enviarlo</div>';
+      sugBanda.classList.add("show");
+      return;
+    }
+    sugBanda.innerHTML = items.map(function(it, i){
+      return '<div class="sug" data-i="' + i + '"><img src="' + esc(it.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'"><div><div class="st">' + esc(it.nombre) + '</div><div class="sa">' + esc(it.detalle) + '</div></div></div>';
+    }).join("");
+    sugBanda.classList.add("show");
+    Array.prototype.forEach.call(sugBanda.querySelectorAll(".sug"), function(el){
+      el.onmousedown = function(e){
+        e.preventDefault();
+        var it = items[Number(el.dataset.i)];
+        inpBanda.value = it.nombre;
+        ocultarSug();
+        if (!inpTema.value) inpTema.focus();
+      };
+    });
+  }
+
+  function mostrarPreview(it){
+    previewImg.src = it.cover || "apple-icon.png";
+    previewTema.textContent = it.nombre || "";
+    previewBanda.textContent = it.banda || "";
+    preview.classList.add("show");
+  }
+
+  function mostrarSugTema(resultados){
+    var items = resultados.slice(0, 8).map(function(r){
+      return { nombre: r.trackName, banda: r.artistName, cover: r.artworkUrl100 || null };
+    }).filter(function(it){ return it.nombre; });
+    if (!items.length){
+      sugTema.innerHTML = '<div class="sug-vacio">Sin sugerencias — igual podés enviarlo</div>';
+      sugTema.classList.add("show");
+      return;
+    }
+    sugTema.innerHTML = items.map(function(it, i){
+      return '<div class="sug" data-i="' + i + '"><img src="' + esc(it.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'"><div><div class="st">' + esc(it.nombre) + '</div><div class="sa">' + esc(it.banda || "") + '</div></div></div>';
+    }).join("");
+    sugTema.classList.add("show");
+    Array.prototype.forEach.call(sugTema.querySelectorAll(".sug"), function(el){
+      el.onmousedown = function(e){
+        e.preventDefault();
+        var it = items[Number(el.dataset.i)];
+        inpTema.value = it.nombre;
+        if (!inpBanda.value && it.banda) inpBanda.value = it.banda;
+        seleccion.cover = it.cover || null;
+        mostrarPreview(it);
+        ocultarSug();
+      };
+    });
+  }
+
+  inpBanda.addEventListener("input", function(){
+    ocultarPreview();
+    var v = inpBanda.value.trim();
+    clearTimeout(tBusqueda);
+    if (v.length < 2){ sugBanda.classList.remove("show"); return; }
+    tBusqueda = setTimeout(function(){ itunesBuscar(v, mostrarSugBanda); }, 380);
+  });
+
+  inpTema.addEventListener("input", function(){
+    var v = inpTema.value.trim();
+    clearTimeout(tBusqueda);
+    if (v.length < 2){ sugTema.classList.remove("show"); return; }
+    var b = inpBanda.value.trim();
+    tBusqueda = setTimeout(function(){ itunesBuscar(b ? b + " " + v : v, mostrarSugTema); }, 380);
+  });
+
+  /* Click afuera / Escape cierran las sugerencias */
+  document.addEventListener("click", function(e){
+    if (!sugBanda.contains(e.target) && e.target !== inpBanda) sugBanda.classList.remove("show");
+    if (!sugTema.contains(e.target) && e.target !== inpTema) sugTema.classList.remove("show");
+  });
+  [inpBanda, inpTema].forEach(function(inp){
+    inp.addEventListener("keydown", function(e){ if (e.key === "Escape") ocultarSug(); });
+  });
+
   /* Esperar a que Firebase Auth esté listo (hasta 8 segundos) */
   function esperarAuth(){
     return new Promise(function(resolve){
@@ -4976,9 +5135,9 @@ renderFavs();
     var banda = inpBanda.value.trim();
     var tema = inpTema.value.trim();
     var nombre = inpNombre.value.trim();
-    if (!banda){
+    if (!banda && !tema){
       inpBanda.focus();
-      mostrarError("Escribí una banda");
+      mostrarError("Escribí una banda o un tema");
       return;
     }
 
@@ -4995,25 +5154,27 @@ renderFavs();
     if (!uid){
       mostrarError("No hay conexión con Firebase. Recargá la página e intentá de nuevo.");
       btnEnviar.disabled = false;
-      btnEnviar.textContent = "Enviar pedido";
+      btnEnviar.textContent = "Programar tema";
       return;
     }
 
-    btnEnviar.textContent = "Enviando…";
+    btnEnviar.textContent = "Programando…";
 
     try{
-      console.log("[Pedido] Enviando:", { banda: banda, tema: tema, nombre: nombre, uid: uid });
+      console.log("[Pedido] Programando:", { banda: banda, tema: tema, nombre: nombre, uid: uid });
       await dbFB.collection("temas_pedidos").add({
         banda: banda.slice(0, 60),
         tema: tema.slice(0, 60),
         nombre: nombre.slice(0, 20),
         uid: uid,
-        fecha: Date.now()
+        fecha: Date.now(),
+        estado: "pendiente",            /* ⭐ el puente de la PC del DJ lo toma de acá */
+        cover: seleccion.cover || null  /* ⭐ carátula confirmada para la cola */
       });
       console.log("[Pedido] ✅ Enviado OK");
       /* Guardar nombre para la próxima */
       if (nombre) try{ localStorage.setItem("sikodark-ped-nombre", nombre); }catch(e){}
-      okMsg.textContent = "✅ ¡Pedido enviado! El DJ lo recibió al toque 🤘";
+      okMsg.textContent = "✅ ¡Programado! Va a entrar en la cola de la radio 🤘";
       okMsg.style.display = "block";
       setTimeout(cerrar, 2200);
     }catch(e){
@@ -5028,8 +5189,79 @@ renderFavs();
       mostrarError(msg);
     }
     btnEnviar.disabled = false;
-    btnEnviar.textContent = "Enviar pedido";
+    btnEnviar.textContent = "Programar tema";
   };
+
+  /* =====================================================
+     🎧 COLA EN VIVO — todos los oyentes ven los pedidos
+     y su estado (pendiente → en cola → sonó)
+     ===================================================== */
+  var colaBox = document.getElementById("colaBox");
+  var colaLista = document.getElementById("colaLista");
+  var colaCount = document.getElementById("colaCount");
+
+  var ESTADOS = {
+    pendiente:     { txt: "⏳ Pendiente",  cls: "pendiente",     sub: "esperando a la PC del DJ" },
+    en_cola:       { txt: "🎧 En cola",    cls: "en_cola",       sub: "programado en RadioBOSS" },
+    sonado:        { txt: "✅ Sonó",       cls: "sonado",        sub: "ya pasó al aire" },
+    no_encontrado: { txt: "❌ No estaba",  cls: "no_encontrado", sub: "no está en la música de la radio" }
+  };
+
+  function pintarCola(docs){
+    var items = [];
+    docs.forEach(function(d){
+      var f = d.data();
+      if (!f || (!f.banda && !f.tema)) return;
+      items.push(f);
+    });
+    if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
+    if (!items.length){
+      colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
+      return;
+    }
+    colaLista.innerHTML = items.map(function(f){
+      var est = ESTADOS[f.estado] || ESTADOS.pendiente;
+      var mio = (usuarioUID && f.uid === usuarioUID);
+      var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
+      var titulo = f.tema || f.banda;
+      var sub = (f.tema && f.banda) ? f.banda : "sikodark radio";
+      return '<div class="cola-item' + (mio ? " mio" : "") + '">'
+        + '<img src="' + esc(f.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'">'
+        + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
+        + '<div class="ci-a">' + esc(sub) + esc(de) + '</div></div>'
+        + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
+        + '</div>';
+    }).join("");
+  }
+
+  function escucharCola(){
+    try{
+      dbFB.collection("temas_pedidos").orderBy("fecha", "desc").limit(12).onSnapshot(function(snap){
+        if (colaBox) colaBox.classList.remove("hidden");
+        pintarCola(snap.docs);
+      }, function(err){
+        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err.code);
+        if (colaBox) colaBox.classList.add("hidden");
+      });
+    }catch(e){
+      console.warn("[Cola] No se pudo escuchar la cola:", e.message);
+    }
+  }
+
+  if (window.dbFB){
+    if (usuarioUID){
+      escucharCola();
+    } else {
+      var intentos = 0;
+      var iv = setInterval(function(){
+        intentos++;
+        if (usuarioUID || intentos > 16){
+          clearInterval(iv);
+          if (usuarioUID) escucharCola();
+        }
+      }, 500);
+    }
+  }
 })();
 </script>
 
