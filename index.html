@@ -396,6 +396,23 @@ body::after{
 #btnPedidoTema:active{transform:scale(.92)}
 #btnPedidoTema svg{width:16px;height:16px;fill:currentColor}
 
+/* ===== 🔴 BADGE del botón: cuántos temas hay en la cola ===== */
+#btnPedidoTema .ped-badge{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;
+  border-radius:999px;background:#ff3b30;color:#fff;display:none;align-items:center;
+  justify-content:center;font:800 10px var(--sans);padding:0 5px;
+  box-shadow:0 3px 10px rgba(255,59,48,.65);border:2px solid #12131a}
+#btnPedidoTema .ped-badge.show{display:flex}
+
+/* ===== 🔔 AVISO "alguien programó un tema" ===== */
+#avisoPedido{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);
+  z-index:99998;background:#1c1d24;color:#eee;border:1px solid rgba(245,157,61,.45);
+  border-radius:999px;padding:10px 18px;font:800 12px var(--sans);display:flex;gap:8px;
+  align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.6);opacity:0;pointer-events:none;
+  transition:transform .35s ease,opacity .35s ease;max-width:88vw}
+#avisoPedido.show{transform:translateX(-50%) translateY(0);opacity:1}
+#avisoPedido .ap-ico{font-size:15px}
+#avisoPedido .ap-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* ===== ⭐⬆️ BOTÓN VOLVER ARRIBA ===== */
 #btnTop{position:fixed;bottom:18px;right:16px;z-index:99997;width:46px;height:46px;
   border:0;border-radius:50%;background:var(--primary);color:#161616;cursor:pointer;
@@ -781,17 +798,12 @@ async function cargarImagenTema(url){
     im.onerror = () => rej(new Error("no cargó"));
     im.src = src;
   });
-  /* 1° intento: directa con CORS (iTunes y Wikipedia lo permiten) */
+  /* ⭐ SOLO carga directa con CORS (iTunes/Wikipedia lo permiten y el
+     navegador la tiene en caché). Si el servidor no lo permite, NO se
+     usa ningún proxy: bajar imágenes pesadas por los proxies saturaba
+     la red y frenaba la actualización de la metadata del player.
+     Sin colores disponibles → la card queda con su color normal. */
   try { return await cargar(url, true); } catch(e) {}
-  /* 2° intento: bajar por los proxies → blob local (siempre legible) */
-  try {
-    const r = await fetchConProxy(url);
-    const blob = await r.blob();
-    const urlBlob = URL.createObjectURL(blob);
-    const img = await cargar(urlBlob, false);
-    URL.revokeObjectURL(urlBlob);
-    return img;
-  } catch(e) {}
   return null;
 }
 
@@ -1308,7 +1320,7 @@ async function fetchCover(t) {
         cover = r.url;
         coverEl.src = cover;
         actualizarMediaSession(t, cover);
-        aplicarTemaCaratula(cover);   /* 🎨 pinta la card con los colores de la carátula */
+        aplicarTemaCaratula(cover).catch(function(){});   /* 🎨 pinta la card — si falla, no afecta nada */
         if (history.length > 0 && history[0].title === t.title) {
           history[0].cover = cover;
           localStorage.setItem("sikodark-history", JSON.stringify(history));
@@ -1374,12 +1386,14 @@ function intentarSSE() {
 }
 
 async function iniciarPolling() {
+  let consultando = false;   /* ⭐ candado: si una consulta sigue en vuelo, no lanzo otra */
   async function consultar() {
     /* ⭐ NUNCA saltar el polling — siempre consultar.
        SSE es solo un bonus para updates instantáneos, pero el polling
        es la fuente confiable. Si saltamos el polling cuando SSE está
        "activo", podemos perder cambios de tema si SSE se queda silencioso. */
-
+    if (consultando) return;
+    consultando = true;
     try {
       const r = await fetchConProxy(ZENO_REST_URL);
       if (!r || !r.ok){
@@ -1402,6 +1416,8 @@ async function iniciarPolling() {
       }
     } catch(e) {
       console.warn("[Poll] Error fetch:", e.message);
+    } finally {
+      consultando = false;   /* ⭐ liberar el candado, pase lo que pase */
     }
   }
 
@@ -5207,6 +5223,48 @@ renderFavs();
     no_encontrado: { txt: "❌ No estaba",  cls: "no_encontrado", sub: "no está en la música de la radio" }
   };
 
+  /* =====================================================
+     🔴 BADGE en el botón flotante: cuántos temas esperan
+     en la cola (pendientes + en cola)
+     ===================================================== */
+  var badge = null;
+  function crearBadge(){
+    try{
+      badge = document.createElement("span");
+      badge.className = "ped-badge";
+      badge.textContent = "0";
+      btn.appendChild(badge);
+    }catch(e){}
+  }
+  crearBadge();
+
+  function actualizarBadge(items){
+    if (!badge) return;
+    var n = items.filter(function(f){ return f.estado === "pendiente" || f.estado === "en_cola"; }).length;
+    badge.textContent = String(n);
+    badge.classList.toggle("show", n > 0);
+    btn.setAttribute("aria-label", n > 0 ? "Programá tu tema musical — " + n + " temas en la cola" : "Programá tu tema musical");
+  }
+
+  /* =====================================================
+     🔔 AVISO flotante cuando alguien programa un tema
+     (solo para pedidos NUEVOS, no los viejos al abrir)
+     ===================================================== */
+  var avisoEl = document.getElementById("avisoPedido");
+  var avisoTxt = document.getElementById("avisoPedidoTxt");
+  var avisoTimer = null;
+  function mostrarAvisoPedido(artista, tema, nombre){
+    if (!avisoEl || !avisoTxt) return;
+    var que = tema || artista || "un tema";
+    var quien = nombre ? (nombre + " programó ") : "Alguien programó ";
+    avisoTxt.textContent = quien + que + " — está en la cola 🤘";
+    avisoEl.classList.add("show");
+    clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(function(){ avisoEl.classList.remove("show"); }, 4500);
+  }
+
+  var primerSnapshot = true;
+
   function pintarCola(docs){
     var items = [];
     docs.forEach(function(d){
@@ -5217,6 +5275,7 @@ renderFavs();
     if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
     if (!items.length){
       colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
+      actualizarBadge(items);   /* cola vacía → el badge se apaga */
       return;
     }
     colaLista.innerHTML = items.map(function(f){
@@ -5232,6 +5291,7 @@ renderFavs();
         + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
         + '</div>';
     }).join("");
+    actualizarBadge(items);
   }
 
   function escucharCola(){
@@ -5239,6 +5299,16 @@ renderFavs();
       dbFB.collection("temas_pedidos").orderBy("fecha", "desc").limit(12).onSnapshot(function(snap){
         if (colaBox) colaBox.classList.remove("hidden");
         pintarCola(snap.docs);
+        /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante */
+        if (primerSnapshot){ primerSnapshot = false; }
+        else {
+          snap.docChanges().forEach(function(ch){
+            if (ch.type === "added" && ch.doc){
+              var f = ch.doc.data();
+              if (f && (f.banda || f.tema) && f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+            }
+          });
+        }
       }, function(err){
         console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err.code);
         if (colaBox) colaBox.classList.add("hidden");
@@ -5264,6 +5334,9 @@ renderFavs();
   }
 })();
 </script>
+
+<!-- ===== 🔔 AVISO flotante: alguien programó un tema ===== -->
+<div id="avisoPedido" aria-live="polite"><span class="ap-ico">🎸</span><span class="ap-txt" id="avisoPedidoTxt"></span></div>
 
 <!-- ===== ⭐⬆️ Volver arriba ===== -->
 <button id="btnTop" aria-label="Volver arriba">
