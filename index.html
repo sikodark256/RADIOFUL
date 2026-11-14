@@ -465,6 +465,9 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
 .cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
+.pedidos-pausa{margin-top:14px;border:1px solid rgba(245,157,61,.45);background:rgba(245,157,61,.10);border-radius:14px;padding:12px 14px;text-align:center;color:#ffd9a3;font:700 12px var(--sans);line-height:1.45}
+.gear-pedidos{flex:0 0 auto;width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--secondary);color:var(--muted);font:800 15px/28px var(--sans);cursor:pointer;padding:0;margin-left:8px;transition:color .18s,border-color .18s}
+.gear-pedidos:hover{color:var(--primary);border-color:rgba(245,157,61,.5)}
 </style>
 </head>
 <body>
@@ -559,7 +562,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 </section>
 
 <section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><span id="colaCount" class="count">0</span></div>
+  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><div style="display:flex;align-items:center"><span id="colaCount" class="count">0</span><button id="btnGearPedidos" class="gear-pedidos" aria-label="Panel del DJ: activar o pausar los pedidos" title="Panel del DJ">⚙</button></div></div>
+  <div id="pedidosPausa" class="pedidos-pausa" hidden>⏸️ El DJ pausó los pedidos por ahora — la cola se sigue viendo, volvé más tarde 🤘</div>
   <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
 </section>
 </div>
@@ -5130,6 +5134,12 @@ renderFavs();
   function ocultarPreview(){ preview.classList.remove("show"); seleccion.cover = null; }
 
   function abrir(){
+    /* ⏸️ si el DJ pausó los pedidos, ni abrimos el modal */
+    if (window.sikoPedidosOff){
+      if (typeof toast === "function") toast("⏸️ El DJ pausó los pedidos por ahora");
+      else alert("⏸️ El DJ pausó los pedidos por ahora");
+      return;
+    }
     modal.classList.add("show");
     okMsg.style.display = "none";
     okMsg.textContent = "";
@@ -5284,6 +5294,12 @@ renderFavs();
 
   btnEnviar.onclick = async function(){
     limpiarError();
+    /* ⏸️ doble seguro: si el DJ pausó los pedidos ya estando el
+       modal abierto, no dejamos mandar el pedido */
+    if (window.sikoPedidosOff){
+      mostrarError("⏸️ El DJ pausó los pedidos por ahora — probá más tarde");
+      return;
+    }
     var banda = inpBanda.value.trim();
     var tema = inpTema.value.trim();
     var nombre = inpNombre.value.trim();
@@ -5462,8 +5478,18 @@ renderFavs();
        TAMBIÉN los pedidos guardados sin el campo "fecha": con
        orderBy en el servidor esos docs quedan invisibles y la
        cola parecía vacía aunque hubiera pedidos adentro */
-    items.sort(function(a,b){ return (b.fecha || 0) - (a.fecha || 0); });
-    var visibles = items.slice(0, 12);
+    /* ⭐ ORDEN DE REPRODUCCIÓN: arriba los que están esperando,
+       del MÁS VIEJO al más nuevo (el primero de la lista es el
+       PRÓXIMO EN SONAR — así se respeta el orden de los pedidos),
+       y abajo los que ya pasaron (sonó / no estaba) */
+    var esperando = [], pasados = [];
+    items.forEach(function(f){
+      var e = f.estado || "pendiente";
+      (e === "sonado" || e === "no_encontrado" ? pasados : esperando).push(f);
+    });
+    esperando.sort(function(a,b){ return (a.fecha || 0) - (b.fecha || 0); });
+    pasados.sort(function(a,b){ return (b.fecha || 0) - (a.fecha || 0); });
+    var visibles = esperando.concat(pasados).slice(0, 12);
     if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
 
     /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
@@ -5567,6 +5593,64 @@ renderFavs();
 
 <!-- ===== 🔔 AVISO flotante: alguien programó un tema ===== -->
 <div id="avisoPedido" aria-live="polite"><span class="ap-ico">🎸</span><span class="ap-txt" id="avisoPedidoTxt"></span></div>
+
+<!-- ===== ⚙️ PANEL DEL DJ — activar / pausar los pedidos ===== -->
+<script>
+(function(){
+  var btn = document.getElementById("btnPedidoTema");
+  var pausa = document.getElementById("pedidosPausa");
+  var gear = document.getElementById("btnGearPedidos");
+
+  function aplicar(habilitado){
+    window.sikoPedidosOff = !habilitado;
+    if (btn) btn.style.display = habilitado ? "" : "none";
+    if (btn && habilitado) btn.classList.add("show");
+    if (pausa) pausa.hidden = habilitado;
+  }
+  aplicar(true);   /* por defecto: activados */
+
+  /* escuchamos en vivo el estado: config/pedidos.habilitado
+     (si el documento no existe → activados, como siempre) */
+  try{
+    dbFB.collection("config").doc("pedidos").onSnapshot(function(s){
+      var f = s.exists ? s.data() : {};
+      aplicar(f.habilitado !== false);
+    }, function(){ /* sin permiso de lectura → quedan activados */ });
+  }catch(e){}
+
+  /* ⚙️ el DJ toca el engranaje de la cola, pone su contraseña
+     y cambia el modo. Usa una sesión APARTE de Firebase (sikoAdmin)
+     así no rompe la conexión del oyente que está navegando. */
+  var adminApp = null;
+  if (gear) gear.onclick = function(){
+    var ahoraOn = !window.sikoPedidosOff;
+    var pass = prompt("Panel del DJ ⚙️\n\nLos pedidos están " + (ahoraOn ? "ACTIVADOS ✓" : "PAUSADOS ⏸") + ".\nContraseña de sikoradio@hotmail.com para " + (ahoraOn ? "PAUSARLOS" : "ACTIVARLOS") + ":");
+    if (pass === null || !pass) return;
+    try{
+      if (!adminApp) adminApp = firebase.initializeApp(firebaseConfig, "sikoAdmin");
+      var auth = adminApp.auth();
+      auth.signInWithEmailAndPassword("sikoradio@hotmail.com", pass)
+        .then(function(){
+          return adminApp.firestore().collection("config").doc("pedidos").set({ habilitado: !ahoraOn });
+        })
+        .then(function(){
+          var msg = !ahoraOn ? "▶️ Pedidos activados" : "⏸️ Pedidos pausados";
+          if (typeof toast === "function") toast(msg); else alert(msg);
+        })
+        .catch(function(e){
+          var m = String((e && e.code) || (e && e.message) || e);
+          if (/user-not-found|invalid-credential|wrong-password|invalid-login/i.test(m))
+            m = "Contraseña incorrecta — o falta crear el usuario sikoradio@hotmail.com en Firebase (Authentication → Sign-in method → Email/Password → Users → Add user). Crealo una sola vez y listo.";
+          else if (/network|fetch|timeout/i.test(m)) m = "Sin conexión — probá de nuevo en un rato";
+          alert("No pude cambiar el modo de los pedidos:\n\n" + m);
+        })
+        .then(function(){ try{ auth.signOut(); }catch(e){} });
+    }catch(e2){
+      alert("No pude abrir el panel del DJ: " + (e2 && e2.message));
+    }
+  };
+})();
+</script>
 
 <!-- ===== ⭐⬆️ Volver arriba ===== -->
 <button id="btnTop" aria-label="Volver arriba">
