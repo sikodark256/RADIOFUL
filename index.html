@@ -5402,6 +5402,55 @@ renderFavs();
   var primerSnapshot = true;
   var pedidosVistos = {};   /* ids ya notificados — evita avisos repetidos */
 
+  /* =====================================================
+     🖼️ CARÁTULAS de la cola — los pedidos escritos a mano
+     (sin usar el autocompletado) llegan sin imagen: la
+     buscamos en iTunes y la guardamos en localStorage
+     para no volver a pedirla en cada recarga
+     ===================================================== */
+  var COVERS_KEY = "sikodark-cola-covers";
+  var colaCovers = {};
+  try { colaCovers = JSON.parse(localStorage.getItem(COVERS_KEY) || "{}") || {}; } catch(e){ colaCovers = {}; }
+  var colaCoverFallo = {};    /* iTunes no la tenía (esta sesión) — no reintentar */
+  var colaCoverBuscando = {}; /* búsqueda en curso — no duplicar */
+
+  function claveCola(f){
+    return String((f.tema || "") + " " + (f.banda || "")).toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function pintarCoverEnDom(ck, url){
+    if (!colaLista) return;
+    try{
+      colaLista.querySelectorAll('img[data-ck="' + ck + '"]').forEach(function(im){
+        im.removeAttribute("data-f");
+        im.src = url;
+      });
+    }catch(e){}
+  }
+
+  function buscarCoverCola(f, ck){
+    if (colaCoverBuscando[ck] || colaCoverFallo[ck]) return;
+    var q = [f.tema, f.banda].filter(Boolean).join(" ").trim();
+    if (!q) return;
+    colaCoverBuscando[ck] = 1;
+    fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(q))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var r0 = d && d.results && d.results[0];
+        if (r0 && r0.artworkUrl100){
+          var url = String(r0.artworkUrl100).replace("100x100", "200x200");  /* más nítida */
+          colaCovers[ck] = url;
+          try{ localStorage.setItem(COVERS_KEY, JSON.stringify(colaCovers)); }catch(e){}
+          pintarCoverEnDom(ck, url);
+        } else {
+          colaCoverFallo[ck] = 1;
+        }
+      })
+      .catch(function(){})
+      .then(function(){ delete colaCoverBuscando[ck]; });
+  }
+
   function pintarCola(docs){
     var items = [];
     docs.forEach(function(d){
@@ -5439,14 +5488,23 @@ renderFavs();
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
       var titulo = f.tema || f.banda;
-      var sub = (f.tema && f.banda) ? f.banda : (f.tema ? "pedido de los oyentes" : "sikodark radio");
+      var sub = (f.tema && f.banda) ? f.banda : "pedido de los oyentes";
+      var ck = claveCola(f);
+      var cov = f.cover || colaCovers[ck] || "";
       return '<div class="cola-item' + (mio ? " mio" : "") + '">'
-        + '<img src="' + esc(f.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'">'
+        + '<img src="' + esc(cov || "apple-icon.png") + '" alt="" data-ck="' + esc(ck) + '"'
+        + ' onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'apple-icon.png\';}">'
         + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
         + '<div class="ci-a">' + esc(sub) + esc(de) + '</div></div>'
         + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
         + '</div>';
     }).join("");
+    /* 🖼️ buscar en iTunes las carátulas que falten (una sola vez cada una) */
+    visibles.forEach(function(f){
+      var ck = claveCola(f);
+      if (!ck || f.cover || colaCovers[ck]) return;
+      buscarCoverCola(f, ck);
+    });
     actualizarBadge(items);
   }
 
