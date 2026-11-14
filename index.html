@@ -558,7 +558,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 
-<section id="colaBox" class="card hidden" aria-label="Cola de pedidos de los oyentes">
+<section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
   <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><span id="colaCount" class="count">0</span></div>
   <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
 </section>
@@ -1340,6 +1340,80 @@ async function fetchCover(t) {
   quitarTemaCaratula();   /* 🎨 sin carátula → la card vuelve a su color normal */
 }
 
+/* =========================================================
+   ⭐ FIX METADATA — pistas con el artista mal tagueado.
+   A veces un archivo tiene el artista tagueado como "sikodark"
+   y al aire sale "sikodark - Bohemian Rhapsody": la web muestra
+   la canción pero abajo "sikodark" y la carátula no aparece.
+   Recuperamos el artista REAL (de los pedidos o de iTunes)
+   antes de mostrar el tema, así la info y la carátula salen
+   siempre correctas.
+   ========================================================= */
+const LS_FIX_ARTIST = "sikodark-fix-artist";
+let FIX_ARTIST = {};
+try { FIX_ARTIST = JSON.parse(localStorage.getItem(LS_FIX_ARTIST) || "{}"); } catch (e) { FIX_ARTIST = {}; }
+
+function sikoNorm(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function artistaRoto(a) {
+  if (!a) return true;
+  const v = String(a).trim().toLowerCase();
+  if (!v) return true;
+  return /^(sikodark|sikodark\s*radio|radio\s*sikodark|radio|dj|unknown(\s*artist)?|artista\s*desconocido|desconocido|varios|various(\s*artists)?)$/.test(v);
+}
+
+const _fixEnCurso = {};
+function corregirArtista(track) {
+  if (!track || !track.title) return Promise.resolve(track);
+  const malo = artistaRoto(track.artist) || (track.artist && sikoNorm(track.artist) === sikoNorm(track.title));
+  if (!malo) return Promise.resolve(track);
+  const k = sikoNorm(track.title);
+  if (!k || k.length < 3) return Promise.resolve(track);
+
+  /* corrección ya conocida (30 días si se encontró, 6 h si no) */
+  const c = FIX_ARTIST[k];
+  if (c && (c.artist || c.neg) && Date.now() - (c.t || 0) < (c.artist ? 30 : 0.25) * 24 * 3600 * 1000) {
+    return Promise.resolve(c.artist ? { title: track.title, artist: c.artist } : track);
+  }
+
+  if (_fixEnCurso[k]) return _fixEnCurso[k].then(a => (a ? { title: track.title, artist: a } : track));
+  _fixEnCurso[k] = (async function () {
+    /* 1) ¿es un pedido reciente? tienen la banda correcta */
+    try {
+      const idx = window.__sikoPedidosIdx || {};
+      let hit = idx[k];
+      if (!hit) {
+        for (const clave of Object.keys(idx)) {
+          if ((clave.length >= 5 && clave.indexOf(k) >= 0) || (k.length >= 5 && k.indexOf(clave) >= 0)) { hit = idx[clave]; break; }
+        }
+      }
+      if (hit && hit.banda) return hit.banda;
+    } catch (e) {}
+    /* 2) iTunes: buscar por el título solo y tomar el artista */
+    try {
+      const r = await fetchConProxy(ITUNES_URL + "?term=" + encodeURIComponent(track.title.trim()) + "&media=music&entity=song&limit=5");
+      const d = await r.json();
+      const rs = (d && d.results) || [];
+      for (const res of rs) {
+        if (res.artistName && sikoNorm(res.trackName) === k) return res.artistName;
+      }
+      for (const res of rs) {
+        if (res.artistName && sikoNorm(res.trackName).indexOf(k) >= 0) return res.artistName;
+      }
+    } catch (e) {}
+    return null;
+  })();
+  return _fixEnCurso[k].then(function (art) {
+    delete _fixEnCurso[k];
+    FIX_ARTIST[k] = art ? { artist: art, t: Date.now() } : { neg: true, t: Date.now() };
+    try { localStorage.setItem(LS_FIX_ARTIST, JSON.stringify(FIX_ARTIST)); } catch (e) {}
+    return art ? { title: track.title, artist: art } : track;
+  });
+}
+
 let ultimaActualizacionMs = 0;   /* timestamp del último update exitoso */
 let sseActivo = false;            /* true si SSE está recibiendo datos */
 let fastPollHasta = 0;            /* hasta cuándo hacer polling agresivo */
@@ -1350,7 +1424,9 @@ function procesarMetadataRaw(streamTitle) {
   console.log("[Metadata] Procesando:", streamTitle, "→ artist:", track.artist, "title:", track.title);
   if (track.title && track.title !== "En vivo") {
     ultimaActualizacionMs = Date.now();
-    setTrack(track);
+    /* ⭐ corregir artista mal tagueado ANTES de mostrar el tema,
+       así salen bien la info y la carátula */
+    corregirArtista(track).then(function (t) { setTrack(t); });
     /* ⭐ Ocultar indicador "Actualizando..." cuando llega metadata */
     showRefresh(false);
   }
@@ -4944,6 +5020,16 @@ renderFavs();
     /* ⏱️ Cada 12 segundos — más tiempo para leer contenido rico.
        (la encuesta se salta automáticamente gracias al check _visible) */
     tickerTimer = setInterval(rotar, 12000);
+
+    /* ⭐ API interna: expone el pintado a la función de PEDIDOS (las
+       funciones de pintado son locales de modoTicker, no del IIFE) */
+    window.sikodarkTickerAPI = {
+      pintar: pintarItem,
+      transicion: transicionCarrusel,
+      reiniciarTimer: function(){
+        if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = setInterval(rotar, 12000); }
+      }
+    };
   }
 
   function pintar(a){
@@ -4952,6 +5038,56 @@ renderFavs();
     if (tiene) mostrarPubli(a);
     else modoTicker();
   }
+
+  /* =========================================================
+     🎸 PEDIDO DE LOS OYENTES — cuando alguien programa un tema
+     desde la web, aparece ACÁ (en esta misma ventana de info y
+     efemérides) con su carátula, igual que los datos de las bandas
+     ========================================================= */
+  window.sikodarkMostrarPedido = function(p){
+    try{
+      var api = window.sikodarkTickerAPI;
+      if (!api || !api.transicion) return;   /* el ticker todavía no arrancó */
+      if (!p || modoActual !== "ticker") return;
+      if (!p.banda && !p.tema) return;
+      var que = [p.banda, p.tema].filter(Boolean).join(" — ");
+      var mio = (typeof usuarioUID !== "undefined" && p.uid && p.uid === usuarioUID);
+      var texto = mio
+        ? "Lo pediste vos y ya está en la cola de la radio — enseguida entra al aire 🤘"
+        : (p.nombre ? p.nombre : "Alguien") + " lo programó y ya está en la cola de la radio — enseguida entra al aire 🤘";
+      var item = {
+        tag: "🎸 PEDIDO DE LOS OYENTES",
+        headline: que.toUpperCase(),
+        texto: texto,
+        img: p.cover || "",
+        estado: "", anioFormacion: "", origen: "", genero: "", wikiUrl: "",
+        score: 9
+      };
+      /* si la encuesta estaba fija en pantalla, liberar la rotación
+         (el pedido la reemplaza ahora, y la encuesta vuelve después) */
+      var itemActual = tickerItems.length ? tickerItems[0] : null;
+      if (itemActual && itemActual.tipo === "encuesta" && itemActual._visible) itemActual._visible = false;
+
+      api.transicion(item);
+      /* reiniciar el contador de rotación para que el pedido tenga
+         sus 12 segundos completos en pantalla */
+      api.reiniciarTimer();
+
+      /* si vino sin carátula, buscarla en iTunes y repintar el mismo item */
+      if (!item.img){
+        fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(que))
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            var r0 = d && d.results && d.results[0];
+            if (r0 && r0.artworkUrl100 && tickTag.textContent.indexOf("PEDIDO") >= 0 && tickHeadline.textContent === item.headline){
+              item.img = r0.artworkUrl100;
+              api.pintar(item);
+            }
+          })
+          .catch(function(){});
+      }
+    }catch(e){}
+  };
 
   try{
     dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
@@ -5264,6 +5400,7 @@ renderFavs();
   }
 
   var primerSnapshot = true;
+  var pedidosVistos = {};   /* ids ya notificados — evita avisos repetidos */
 
   function pintarCola(docs){
     var items = [];
@@ -5273,6 +5410,19 @@ renderFavs();
       items.push(f);
     });
     if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
+
+    /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
+       la banda real cuando un archivo del DJ está mal tagueado */
+    try{
+      var idx = {};
+      items.forEach(function(f){
+        if (!f.tema || !f.banda) return;
+        var k = String(f.tema).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                  .replace(/[^a-z0-9]+/g, " ").trim();
+        if (k && !idx[k]) idx[k] = { banda: f.banda, cover: f.cover || null };
+      });
+      window.__sikoPedidosIdx = idx;
+    }catch(e){}
     if (!items.length){
       colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
       actualizarBadge(items);   /* cola vacía → el badge se apaga */
@@ -5283,7 +5433,7 @@ renderFavs();
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
       var titulo = f.tema || f.banda;
-      var sub = (f.tema && f.banda) ? f.banda : "sikodark radio";
+      var sub = (f.tema && f.banda) ? f.banda : (f.tema ? "pedido de los oyentes" : "sikodark radio");
       return '<div class="cola-item' + (mio ? " mio" : "") + '">'
         + '<img src="' + esc(f.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'">'
         + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
@@ -5299,19 +5449,30 @@ renderFavs();
       dbFB.collection("temas_pedidos").orderBy("fecha", "desc").limit(12).onSnapshot(function(snap){
         if (colaBox) colaBox.classList.remove("hidden");
         pintarCola(snap.docs);
-        /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante */
-        if (primerSnapshot){ primerSnapshot = false; }
-        else {
+        /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante
+           + salen en la ventana de info/efemérides (ticker) */
+        if (primerSnapshot){
+          primerSnapshot = false;
+          snap.docs.forEach(function(d){ pedidosVistos[d.id] = 1; });
+        } else {
           snap.docChanges().forEach(function(ch){
-            if (ch.type === "added" && ch.doc){
+            if (ch.type === "added" && ch.doc && !pedidosVistos[ch.doc.id]){
+              pedidosVistos[ch.doc.id] = 1;
               var f = ch.doc.data();
-              if (f && (f.banda || f.tema) && f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+              if (f && (f.banda || f.tema)){
+                if (f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+                if (window.sikodarkMostrarPedido) window.sikodarkMostrarPedido(f);
+              }
             }
           });
         }
       }, function(err){
-        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err.code);
-        if (colaBox) colaBox.classList.add("hidden");
+        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err && err.code);
+        if (err && err.code === "permission-denied"){
+          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">🔒 La cola de pedidos está deshabilitada — falta habilitar la lectura de "temas_pedidos" en las reglas de Firebase</p>';
+        } else {
+          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo leer la cola de pedidos — recargá la página en un rato</p>';
+        }
       });
     }catch(e){
       console.warn("[Cola] No se pudo escuchar la cola:", e.message);
@@ -5328,6 +5489,7 @@ renderFavs();
         if (usuarioUID || intentos > 16){
           clearInterval(iv);
           if (usuarioUID) escucharCola();
+          else if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo conectar con Firebase — la cola de pedidos no está disponible ahora</p>';
         }
       }, 500);
     }
