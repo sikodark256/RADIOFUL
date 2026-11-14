@@ -1,127 +1,110 @@
 ==========================================================
-   🔑 REGLAS DE FIRESTORE — sikodark radio
+   🔑 REGLAS DE FIRESTORE — sikodark radio (versión reparada)
 ==========================================================
+Cómo aplicarlas:
+1. https://console.firebase.google.com → proyecto sikodarkradio-26a07
+2. Firestore Database → Reglas
+3. Borrar todo y pegar esto → Publicar
 
-Para que funcionen los PEDIDOS DE TEMAS y la ENCUESTA,
-tenés que actualizar las reglas de seguridad en Firebase.
-
-Pasos:
-1. Entrá a https://console.firebase.google.com
-2. Elegí tu proyecto: sikodarkradio-26a07
-3. En el menú izquierdo: Firestore Database → Reglas
-4. Borrá todo lo que hay y PEGÁ esto:
-
+Cambios importantes vs. la versión anterior:
+• temas_pedidos: la COLA PÚBLICA de la web necesita LECTURA anónima
+  (si no, la cola muestra "permiso denegado"). La creación queda
+  validada; update/delete solo el admin (el puente con service
+  account bypassa estas reglas, no necesita permiso).
+• config: lectura anónima, escritura solo admin; los votos de la encuesta
+  siguen permitidos para cualquier oyente autenticado.
+• Fallback final: todo lo demás denegado por defecto.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // === USUARIOS (lo que ya tenías) ===
+    function logueado() { return request.auth != null; }
+    function admin()    { return request.auth.token.email == "sikoradio@hotmail.com"; }
+
+    // === USUARIOS ===
     match /usuarios/{docId} {
-      allow read, write: if request.auth != null;
+      allow read: if logueado();
+      allow create, update: if logueado();
+      allow delete: if admin();
     }
 
-    // === VISITAS, ESCUCHAS, MEGUSTAS, TOKENS ===
+    // === PRESENCIA (latido de oyentes) ===
+    match /presencia/{docId} {
+      allow read, write: if logueado();
+    }
+
+    // === VISITAS Y ESCUCHAS (estadísticas) ===
     match /visitas/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow create: if logueado();
+      allow read: if logueado();
     }
     match /escuchas/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    match /megustas/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-    match /tokens/{docId} {
-      allow read, write: if request.auth != null;
+      allow create: if logueado();
+      allow read: if admin();
     }
 
-    // === PRESENCIA ===
-    match /presencia/{docId} {
-      allow read, write: if request.auth != null;
+    // === ME GUSTAS ===
+    match /megustas/{docId} {
+      allow read: if logueado();
+      allow create: if logueado();
+      allow delete: if admin();
+    }
+
+    // === TOKENS DE NOTIFICACIÓN PUSH ===
+    match /tokens/{docId} {
+      allow read, write: if logueado();
     }
 
     // === CONFIG (avisos, publicidad, encuesta) ===
-    // Cualquier usuario autenticado (incluido anónimo) puede LEER.
-    // Solo el admin puede ESCRIBIR.
     match /config/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.email == "sikoradio@hotmail.com";
-      // Excepción: los votos de la encuesta los puede sumar cualquier oyente
-      // (lo hacemos via FieldValue.arrayUnion desde el cliente)
-      allow update: if request.auth != null
-        && request.resource.data.diff(resource.data)
-            .affectedKeys().hasOnly(['encuesta']);
+      allow read: if logueado();
+      allow write: if admin();
+      // Los votos de la encuesta los suma el cliente con arrayUnion
+      allow update: if logueado()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['encuesta']);
     }
 
-    // === PEDIDOS DE TEMAS (¡NUEVO!) ===
-    // Cualquier usuario autenticado (incluido anónimo) puede crear pedidos.
-    // Solo el admin puede leerlos y borrarlos.
+    // === PEDIDOS DE TEMAS ===
+    // Lectura anónima: la cola en vivo de la web la ve todo oyente.
+    // Creación validada: campos obligatorios y largo máximo.
+    // Update/delete: solo admin. El puente del DJ usa service account
+    // (Admin SDK) y por eso ignora estas reglas.
     match /temas_pedidos/{docId} {
-      allow create: if request.auth != null
+      allow read: if logueado();
+      allow create: if logueado()
         && request.resource.data.banda is string
         && request.resource.data.banda.size() <= 60
+        && request.resource.data.tema is string
+        && request.resource.data.tema.size() <= 60
         && request.resource.data.fecha is int;
-      allow read, delete, update: if request.auth.token.email == "sikoradio@hotmail.com";
+      allow update, delete: if admin();
     }
 
-    // Bloquear todo lo demás por defecto
+    // Todo lo demás, bloqueado por defecto
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
 
-
-5. Tocá el botón "Publicar" (arriba a la derecha).
-6. Listo. Los pedidos van a empezar a llegar al panel al toque.
-
-
 ==========================================================
-   🧪 CÓMO PROBAR SI ANDA
+   🧪 PRUEBAS
 ==========================================================
+A) Web (celular, anónimo):
+   1. Abrir la app → "Programá tu tema" → enviar banda + tema.
+   2. Debe aparecer "✅ Programado" y el pedido en la cola en vivo
+      con estado ⏳ Pendiente (ahora la cola SÍ puede leer).
 
-A) Probá el PEDIDO desde tu celular:
-   1. Abrí la app de sikodark
-   2. Tocá el botón "🎸 Pedí tu tema" (abajo a la izquierda)
-   3. Escribí una banda y mandá el pedido
-   4. Deberías ver "✅ ¡Pedido enviado!"
+B) Panel admin (PC):
+   1. Abrir avisos.html → login con sikoradio@hotmail.com.
+   2. En "🎸 Pedidos de temas" debe listarse el pedido; los botones
+      Borrar y "Limpiar todos" funcionan (admin).
 
-B) Mirá el PANEL desde una PC:
-   1. Abrí avisos.html
-   2. Loguéate como admin
-   3. Bajá a "🎸 Pedidos de temas"
-   4. Tu pedido debería aparecer al toque
-
-C) Si te tira error de permisos en la app:
-   - Vas a ver un cartel rojo con "Permiso denegado"
-   - Significa que las reglas todavía no se aplicaron
-   - Esperá 1-2 minutos y recargá
-   - Verificá que el email del admin en las reglas sea
-     EXACTAMENTE "sikoradio@hotmail.com" (con minúsculas)
-
-
-==========================================================
-   🐛 DEBUG AVANZADO
-==========================================================
-
-Si todavía no anda, abrí la CONSOLA del navegador (F12) y mirá
-los mensajes [Pedido] o el error rojo de Firebase.
-
-Errores comunes:
-
-• "Missing or insufficient permissions"
-  → Las reglas no están publicadas o el email del admin
-    no coincide.
-
-• "Firebase: Error (auth/operation-not-allowed)"
-  → Tenés que habilitar el método "Anónimo" en:
-    Firebase Console → Authentication → Sign-in method →
-    Anónimo → Habilitar → Guardar
-
-• "Cannot read property 'add' of undefined"
-  → El script de Firebase no cargó. Verificá que tenés
-    internet y que el <script> de firebase-firestore-compat.js
-    esté en el <head> del index.html.
+C) Errores comunes:
+   • "Missing or insufficient permissions" → reglas no publicadas aún;
+     esperar 1-2 min y recargar.
+   • "auth/operation-not-allowed" → Authentication → Sign-in method →
+     habilitar Anónimo.
+   • El puente del DJ (puente_radioboss.py) marca en_cola/sonado sin
+     tocar estas reglas porque usa service account.

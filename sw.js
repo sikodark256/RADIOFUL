@@ -1,11 +1,15 @@
-/* sikodark radio — Service Worker v2 con auto-update */
-const CACHE = 'sikodark-v26';
+/* sikodark radio — Service Worker v27 con auto-update */
+const CACHE = 'sikodark-v27';
 const ASSETS = [
   './',
   './index.html',
   './offline.html',
   './manifest.json',
-  './apple-icon.png'
+  './apple-icon.png',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {

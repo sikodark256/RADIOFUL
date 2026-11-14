@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RadioBOSS — sikodark radio</title>
+<!--
+  🎛️ Panel de control remoto de RadioBOSS (versión corregida).
+
+  USA LA API DOCUMENTADA DE RADIOBOSS:
+    GET {base}?pass=CLAVE&cmd=play|pause|stop|next|prev|fadeout
+    GET {base}?pass=CLAVE&action=playbackinfo
+    GET {base}?pass=CLAVE&cmd=setvol 70
+
+  1. En RadioBOSS: Settings → Options → API → Enable Remote Control,
+     puerto (ej. 9000), contraseña, dejar "localhost only".
+  2. Abrir ESTE archivo en la PC del DJ (doble clic o servidor local).
+     Si lo abrís desde un hosting externo, el navegador puede bloquear
+     por CORS: lo normal es correrlo en la misma PC donde está RadioBOSS.
+  3. Completar URL y contraseña abajo → Guardar.
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui,Arial,sans-serif; }
+  body { background:#14151c; color:#f5f5f7; padding:20px; max-width:520px; margin:0 auto; }
+  h2 { text-align:center; font-size:18px; margin-bottom:14px; }
+  .cancion { background:#22232b; border:1px solid #2f303a; border-radius:14px; padding:18px; text-align:center; margin-bottom:14px; }
+  .etiqueta { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#8a8b96; margin-bottom:6px; }
+  .artista { font-size:14px; color:#a5a6ad; margin-bottom:4px; }
+  .titulo { font-size:21px; font-weight:800; margin-bottom:10px; }
+  .estado { display:inline-block; font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px; background:rgba(52,199,89,.15); color:#34c759; }
+  .estado.detenido { background:rgba(255,59,48,.14); color:#ff9d96; }
+  .estado.pausa { background:rgba(255,204,0,.15); color:#ffcc00; }
+  .sig { margin-top:12px; padding-top:12px; border-top:1px solid #2f303a; font-size:13px; color:#cfcfd6; }
+  .sig b { color:#f59d3d; }
+  .controles { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  button { padding:14px 8px; border:0; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; background:#2c2d35; color:#f5f5f7; }
+  button:hover { filter:brightness(1.15); }
+  .verde { background:#28a745; color:#fff; }
+  .rojo  { background:#dc3545; color:#fff; }
+  .azul  { background:#0a84ff; color:#fff; }
+  .naranja { background:#fd7e14; color:#fff; }
+  .volumen { background:#22232b; border:1px solid #2f303a; border-radius:14px; padding:14px; margin-bottom:14px; }
+  .volumen label { font-size:12px; color:#a5a6ad; display:flex; justify-content:space-between; margin-bottom:8px; }
+  input[type=range] { width:100%; accent-color:#f59d3d; }
+  .config { background:#1b1c23; border:1px solid #2f303a; border-radius:14px; padding:14px; margin-bottom:14px; }
+  .config label { display:block; font-size:11px; color:#8a8b96; margin:8px 0 4px; }
+  .config input { width:100%; padding:9px; border:1px solid #333; border-radius:8px; background:#0e0f14; color:#eee; font-size:13px; }
+  .config button { width:100%; margin-top:10px; background:#f59d3d; color:#191919; }
+  .pie { text-align:center; font-size:11px; color:#6d6e78; margin-top:10px; }
+  .oyentes { text-align:center; font-size:13px; color:#a5a6ad; margin-bottom:14px; }
+  .oyentes b { color:#fff; font-size:16px; }
+</style>
+</head>
+<body>
+<h2>🎛️ RadioBOSS · sikodark radio</h2>
+
+<div class="config">
+  <label>URL de la API de RadioBOSS</label>
+  <input id="apiUrl" value="http://127.0.0.1:9000" placeholder="http://127.0.0.1:9000">
+  <label>Contraseña de la API (Settings → Options → API)</label>
+  <input id="apiPass" type="password" placeholder="contraseña de la API">
+  <button onclick="guardarConfig()">💾 Guardar conexión</button>
+</div>
+
+<div class="cancion">
+  <p class="etiqueta">Ahora suena</p>
+  <p class="artista" id="artista">—</p>
+  <h3 class="titulo" id="titulo">Conectando…</h3>
+  <span class="estado detenido" id="estado">● Sin conexión</span>
+  <div class="sig">Siguiente: <b id="sig">—</b></div>
+</div>
+
+<div class="oyentes">👂 Oyentes: <b id="oyentes">0</b></div>
+
+<div class="controles">
+  <button class="verde" onclick="cmd('play')">▶ Play</button>
+  <button class="naranja" onclick="cmd('pause')">⏸ Pausa</button>
+  <button class="rojo"  onclick="cmd('stop')">⏹ Stop</button>
+  <button class="azul"  onclick="cmd('next')">⏭ Siguiente</button>
+  <button class="azul"  onclick="cmd('prev')">⏮ Anterior</button>
+  <button class="naranja" onclick="cmd('fadeout 2000')">🌫 Fade 2s</button>
+</div>
+
+<div class="volumen">
+  <label>🔊 Volumen <span id="volVal">80</span></label>
+  <input type="range" id="vol" min="0" max="100" value="80" oninput="document.getElementById('volVal').textContent=this.value">
+  <button class="azul" style="width:100%;margin-top:8px" onclick="setVol()">Aplicar volumen</button>
+</div>
+
+<p class="pie">Refresco automático cada 6 s · API local de RadioBOSS</p>
+
+<script>
+let cfg = {
+  url: localStorage.getItem("rb_url") || "http://127.0.0.1:9000",
+  pass: localStorage.getItem("rb_pass") || ""
+};
+document.getElementById("apiUrl").value = cfg.url;
+document.getElementById("apiPass").value = cfg.pass;
+
+function guardarConfig(){
+  cfg.url = document.getElementById("apiUrl").value.trim().replace(/\/+$/, "");
+  cfg.pass = document.getElementById("apiPass").value.trim();
+  localStorage.setItem("rb_url", cfg.url);
+  localStorage.setItem("rb_pass", cfg.pass);
+  refrescar();
+}
+
+async function api(params){
+  const q = new URLSearchParams(Object.assign({ pass: cfg.pass }, params));
+  const res = await fetch(cfg.url + "/?" + q.toString(), { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return await res.text();
+}
+
+async function cmd(c){
+  try {
+    await api({ cmd: c });
+    setTimeout(refrescar, 400);
+  } catch(e) {
+    alert("No llega a la API de RadioBOSS:\n" + e.message +
+      "\n\nVerificá: Settings → Options → API activada, puerto y contraseña.");
+  }
+}
+
+async function setVol(){
+  const v = document.getElementById("vol").value;
+  await cmd("setvol " + v);
+}
+
+function attr(xml, tag, attrName){
+  const el = xml.querySelector(tag);
+  return el ? el.getAttribute(attrName) : "";
+}
+
+async function refrescar(){
+  const estadoEl = document.getElementById("estado");
+  try {
+    const texto = await api({ action: "playbackinfo" });
+    const xml = new DOMParser().parseFromString(texto, "text/xml");
+
+    const artista = attr(xml, "CurrentTrack TRACK", "ARTIST") || attr(xml, "CurrentTrack", "ARTIST") || "—";
+    const titulo  = attr(xml, "CurrentTrack TRACK", "TITLE")  || attr(xml, "CurrentTrack", "TITLE")  || "En vivo";
+    const sigArt  = attr(xml, "NextTrack TRACK", "ARTIST") || "";
+    const sigTit  = attr(xml, "NextTrack TRACK", "TITLE")  || "";
+    const state   = attr(xml, "Playback", "state");
+    const oyentes  = attr(xml, "Streaming", "listeners") || "0";
+
+    document.getElementById("artista").textContent = artista;
+    document.getElementById("titulo").textContent = titulo;
+    document.getElementById("sig").textContent = sigTit ? (sigArt + " — " + sigTit) : "—";
+    document.getElementById("oyentes").textContent = oyentes;
+
+    estadoEl.classList.remove("detenido", "pausa");
+    if (state === "stop" || !attr(xml, "CurrentTrack TRACK", "FILENAME")) {
+      estadoEl.textContent = "● Detenido";
+      estadoEl.classList.add("detenido");
+    } else if (state === "pause" || state === "paused") {
+      estadoEl.textContent = "⏸ En pausa";
+      estadoEl.classList.add("pausa");
+    } else {
+      estadoEl.textContent = "● Reproduciendo";
+    }
+  } catch(e) {
+    estadoEl.textContent = "● Sin conexión";
+    estadoEl.classList.add("detenido");
+    document.getElementById("titulo").textContent = "No conecta con RadioBOSS";
+  }
+}
+
+refrescar();
+setInterval(refrescar, 6000);
+</script>
+</body>
+</html>
