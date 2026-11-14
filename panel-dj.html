@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>sikodark · panel del DJ</title>
+<style>
+:root{
+  --bg:#0a0b10; --card:#13141b; --border:#262833; --text:#f2f2f5;
+  --muted:#8b8e9a; --primary:#f59d3d; --ok:#7df09a; --err:#ff9d96;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:Montserrat,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;padding:26px 14px 60px}
+.wrap{width:100%;max-width:480px}
+header{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+header .logo{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--primary)}
+header .eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
+header h1{font-size:20px;font-weight:800;letter-spacing:.02em}
+header h1 b{color:var(--primary)}
+.tag{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--muted);
+  border:1px solid var(--border);border-radius:999px;padding:5px 10px;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+label{display:block;font:800 11px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 7px}
+input{width:100%;background:#0d0e14;border:1px solid var(--border);border-radius:12px;color:var(--text);
+  font:600 15px var(--sans);padding:13px 14px;outline:none;transition:border-color .18s}
+input:focus{border-color:rgba(245,157,61,.6)}
+button{width:100%;margin-top:18px;background:var(--primary);color:#141414;border:0;border-radius:12px;
+  padding:14px;font:800 14px var(--sans);text-transform:uppercase;letter-spacing:.05em;cursor:pointer;transition:filter .15s}
+button:hover{filter:brightness(1.08)}
+button.secundario{background:#1c1d24;color:var(--text);border:1px solid var(--border);font-size:12px;padding:11px;margin-top:12px}
+.err{display:none;margin-top:16px;border:1px solid rgba(255,59,48,.4);background:rgba(255,59,48,.10);
+  border-radius:12px;padding:13px;color:var(--err);font:600 12.5px/1.55 var(--sans)}
+.err.show{display:block}
+/* ---- panel ---- */
+#estadoBox{display:flex;align-items:center;gap:14px}
+#estadoDot{width:14px;height:14px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(125,240,154,.55);flex:0 0 14px}
+#estadoDot.off{background:var(--err);box-shadow:0 0 12px rgba(255,157,150,.55)}
+#estadoTxt{flex:1;min-width:0}
+#estadoTxt .e1{font:800 17px var(--sans)}
+#estadoTxt .e2{font:600 11.5px var(--sans);color:var(--muted);margin-top:3px;line-height:1.5}
+#btnToggle{margin-top:16px}
+#btnToggle.pausar{background:#d9534f;color:#fff}
+.nota{margin-top:14px;border:1px dashed var(--border);border-radius:12px;padding:11px 13px;
+  color:var(--muted);font:600 11.5px/1.6 var(--sans)}
+.nota b{color:var(--text)}
+h2{font:800 13px var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+  margin:26px 0 12px;display:flex;align-items:center;gap:8px}
+h2 .n{background:rgba(245,157,61,.2);color:var(--primary);border-radius:999px;padding:2px 9px;
+  font:800 11px var(--mono)}
+.item{display:flex;gap:11px;align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:9px 11px;margin-bottom:8px}
+.item img{width:42px;height:42px;border-radius:9px;object-fit:cover;flex:0 0 42px;background:#141419}
+.item .t{flex:1;min-width:0}
+.item .t .a{font:800 12.5px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t .b{font:700 10.5px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;
+  font:800 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.chip.pendiente{background:rgba(255,255,255,.08);color:#cfcfd6;border:1px solid rgba(255,255,255,.15)}
+.chip.en_cola{background:rgba(245,157,61,.16);color:var(--primary);border:1px solid rgba(245,157,61,.4)}
+.chip.sonado{background:rgba(52,199,89,.14);color:var(--ok);border:1px solid rgba(52,199,89,.4)}
+.chip.no_encontrado{background:rgba(255,59,48,.13);color:var(--err);border:1px solid rgba(255,59,48,.4)}
+.vacio{border:1px dashed var(--border);border-radius:14px;padding:16px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
+footer{margin-top:26px;text-align:center;color:var(--muted);font:600 11px/1.7 var(--sans)}
+footer b{color:var(--primary)}
+.cargando{font:700 12px var(--sans);color:var(--muted);text-align:center;padding:14px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <img class="logo" src="apple-icon.png" alt="sikodark" onerror="this.style.display='none'">
+  <div>
+    <div class="eyebrow">Radio online</div>
+    <h1>sikodark <b>panel del DJ</b></h1>
+  </div>
+  <span class="tag">privado</span>
+</header>
+
+<!-- ===== ENTRAR ===== -->
+<section id="login" class="card">
+  <label for="mail">Mail del DJ</label>
+  <input id="mail" type="email" autocomplete="username" value="sikoradio@hotmail.com">
+  <label for="pass">Contraseña</label>
+  <input id="pass" type="password" autocomplete="current-password" placeholder="Tu contraseña de Firebase">
+  <button id="btnEntrar">Entrar al panel</button>
+  <div id="err" class="err"></div>
+  <div class="nota">Esta página es <b>solo tuya</b>: no la compartas ni la linkees desde la radio. Los oyentes no saben que existe.</div>
+</section>
+
+<!-- ===== PANEL ===== -->
+<section id="panel" class="hidden">
+  <div class="card">
+    <div id="estadoBox">
+      <div id="estadoDot"></div>
+      <div id="estadoTxt">
+        <div class="e1" id="estado">Cargando…</div>
+        <div class="e2" id="estadoSub">leyendo Firebase…</div>
+      </div>
+    </div>
+    <button id="btnToggle">…</button>
+    <div class="nota">
+      <b>PAUSADOS</b>: el botón "Programá tu tema" se esconde de la web al toque, los pedidos nuevos no se toman (los que ya estaban siguen sonando).<br>
+      <b>ACTIVADOS</b>: vuelve todo a la normalidad. Nada se pierde nunca.
+    </div>
+  </div>
+
+  <h2>Últimos pedidos <span class="n" id="nPedidos">0</span></h2>
+  <div id="lista"><div class="cargando">Cargando pedidos…</div></div>
+
+  <button class="secundario" id="btnSalir">Cerrar sesión</button>
+</section>
+
+<footer>
+  Atajos: también podés pausarlos escribiendo <b>pedidos off</b> (y <b>pedidos on</b>) en la ventana<br>
+  negra del puente de tu PC, o desde Firebase Console. Todo hace lo mismo.
+</footer>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ===== Firebase (mismo config público de la web) ===== */
+  var firebaseConfig = {
+    apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
+    authDomain: "sikodarkradio-26a07.firebaseapp.com",
+    projectId: "sikodarkradio-26a07",
+    storageBucket: "sikodarkradio-26a07.firebasestorage.app",
+    messagingSenderId: "941041207378",
+    appId: "1:941041207378:web:994e34372109d30acf778b"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db = firebase.firestore();
+
+  var $ = function (id) { return document.getElementById(id); };
+  var login = $("login"), panel = $("panel"), errBox = $("err");
+  var estadoEl = $("estado"), estadoSubEl = $("estadoSub"), estadoDot = $("estadoDot");
+  var btnToggle = $("btnToggle"), lista = $("lista"), nPedidos = $("nPedidos");
+
+  function mostrarError(msg) {
+    errBox.textContent = msg;
+    errBox.classList.add("show");
+  }
+
+  function errorAmigable(e) {
+    var code = (e && e.code) || "";
+    if (code === "auth/unauthorized-domain") {
+      return "Tu hosting todavía no está autorizado para entrar. Arreglalo en 1 minuto: Firebase Console → Authentication → Configuración (Settings) → Dominios autorizados → \"Agregar dominio\" → escribí el dominio de tu radio (ej: tunombre.github.io) → guardá y volvé a entrar acá.";
+    }
+    if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+      return "La contraseña no es correcta. Revisala y probá de nuevo.";
+    }
+    if (code === "auth/user-not-found") {
+      return "No encuentro el usuario de la radio. Revisalo en Firebase Console → Authentication → Usuarios.";
+    }
+    if (code === "auth/operation-not-allowed") {
+      return "Falta habilitar el ingreso con email: Firebase Console → Authentication → Sign-in method → Email/Password → habilitar.";
+    }
+    if (code === "auth/network-request-failed") {
+      return "Sin conexión — revisá tu internet y probá de nuevo.";
+    }
+    return "No pude entrar: " + ((e && (e.code || e.message)) || "error desconocido");
+  }
+
+  /* ===== ENTRAR ===== */
+  $("btnEntrar").onclick = function () {
+    errBox.classList.remove("show");
+    var mail = $("mail").value.trim();
+    var pass = $("pass").value;
+    if (!mail || !pass) { mostrarError("Escribí el mail y la contraseña."); return; }
+    $("btnEntrar").textContent = "Entrando…";
+    auth.signInWithEmailAndPassword(mail, pass)
+      .then(function () { $("pass").value = ""; $("btnEntrar").textContent = "Entrar al panel"; })
+      .catch(function (e) {
+        $("btnEntrar").textContent = "Entrar al panel";
+        mostrarError(errorAmigable(e));
+      });
+  };
+  $("pass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("btnEntrar").click(); });
+
+  $("btnSalir").onclick = function () {
+    auth.signOut().then(function () { location.reload(); });
+  };
+
+  /* ===== ESTADO DE LOS PEDIDOS (config/pedidos.habilitado) ===== */
+  var escuchando = false;
+  function escucharTodo() {
+    if (escuchando) return;
+    escuchando = true;
+
+    db.collection("config").doc("pedidos").onSnapshot(function (snap) {
+      var d = snap.exists ? snap.data() : {};
+      var on = !(d && d.habilitado === false);
+      pintarEstado(on);
+    }, function (e) {
+      estadoEl.textContent = "Sin permiso";
+      estadoSubEl.textContent = "No pude leer config/pedidos: " + ((e && e.code) || e.message);
+    });
+
+    db.collection("temas_pedidos").limit(30).onSnapshot(function (snap) {
+      pintarPedidos(snap.docs);
+    }, function (e) {
+      lista.innerHTML = '<div class="vacio">No pude leer los pedidos: ' + esc(((e && e.code) || "")) + "</div>";
+    });
+  }
+
+  function pintarEstado(on) {
+    estadoDot.classList.toggle("off", !on);
+    estadoEl.textContent = on ? "Pedidos ACTIVADOS" : "Pedidos PAUSADOS";
+    estadoSubEl.textContent = on
+      ? "el botón \"Programá tu tema\" está visible en la web y el puente toma los pedidos"
+      : "el botón está escondido de la web y el puente no toma pedidos nuevos";
+    btnToggle.textContent = on ? "PAUSAR pedidos" : "ACTIVAR pedidos";
+    btnToggle.classList.toggle("pausar", on);
+  }
+
+  btnToggle.onclick = function () {
+    btnToggle.disabled = true;
+    /* el botón dice lo que vas a hacer: "PAUSAR" estaban activados,
+       "ACTIVAR" estaban pausados */
+    var prender = btnToggle.textContent.indexOf("ACTIVAR") === 0;
+    db.collection("config").doc("pedidos").set({ habilitado: prender }, { merge: true })
+      .then(function () { btnToggle.disabled = false; })
+      .catch(function (e) {
+        btnToggle.disabled = false;
+        alert("No pude cambiarlo: " + ((e && e.code) || e.message));
+      });
+  };
+
+  /* ===== LISTA DE PEDIDOS ===== */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function hora(ts) {
+    try {
+      var d = new Date(Number(ts) || 0);
+      if (!d || isNaN(d.getTime())) return "";
+      var h = d.getHours(), m = d.getMinutes();
+      return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+    } catch (e) { return ""; }
+  }
+
+  var ESTADOS = {
+    pendiente:     { txt: "Pendiente", cls: "pendiente" },
+    en_cola:       { txt: "En cola", cls: "en_cola" },
+    sonado:        { txt: "Sonó", cls: "sonado" },
+    no_encontrado: { txt: "No estaba", cls: "no_encontrado" }
+  };
+
+  function pintarPedidos(docs) {
+    var items = [];
+    docs.forEach(function (d) {
+      var f = d.data();
+      if (!f || (!f.banda && !f.tema)) return;
+      f.__id = d.id;
+      items.push(f);
+    });
+    items.sort(function (a, b) { return (b.fecha || 0) - (a.fecha || 0); });
+    nPedidos.textContent = String(items.length);
+    if (!items.length) {
+      lista.innerHTML = '<div class="vacio">Todavía no hay pedidos 🤘</div>';
+      return;
+    }
+    lista.innerHTML = items.slice(0, 25).map(function (f) {
+      var est = ESTADOS[f.estado] || ESTADOS.pendiente;
+      var titulo = f.tema || f.banda;
+      var sub = (f.tema && f.banda) ? f.banda : "pedido de los oyentes";
+      var de = f.nombre ? " · de " + f.nombre : "";
+      var hs = "";
+      if (f.estado === "sonado" && f.sonadoAt) hs += " · sonó " + hora(f.sonadoAt);
+      else if (f.fecha) hs += " · " + hora(f.fecha);
+      return '<div class="item">'
+        + '<img src="' + esc(f.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'">'
+        + '<div class="t"><div class="a">' + esc(titulo) + '</div>'
+        + '<div class="b">' + esc(sub) + esc(de) + esc(hs) + '</div></div>'
+        + '<span class="chip ' + est.cls + '">' + est.txt + '</span>'
+        + '</div>';
+    }).join("");
+  }
+
+  /* ===== SESIÓN ===== */
+  auth.onAuthStateChanged(function (user) {
+    if (user) {
+      login.style.display = "none";
+      panel.style.display = "block";
+      escucharTodo();
+    } else {
+      login.style.display = "block";
+      panel.style.display = "none";
+      escuchando = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
