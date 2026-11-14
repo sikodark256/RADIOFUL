@@ -466,8 +466,6 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
 .cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
 .pedidos-pausa{margin-top:14px;border:1px solid rgba(245,157,61,.45);background:rgba(245,157,61,.10);border-radius:14px;padding:12px 14px;text-align:center;color:#ffd9a3;font:700 12px var(--sans);line-height:1.45}
-.gear-pedidos{flex:0 0 auto;width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--secondary);color:var(--muted);font:800 15px/28px var(--sans);cursor:pointer;padding:0;margin-left:8px;transition:color .18s,border-color .18s}
-.gear-pedidos:hover{color:var(--primary);border-color:rgba(245,157,61,.5)}
 /* ⭐ pestañas Pendientes / Ya sonaron de la cola de pedidos */
 .cola-tabs{display:flex;gap:8px;margin:2px 0 4px}
 .cola-tab{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:11px;border:1px solid var(--border);background:var(--secondary);color:var(--muted);font:800 10.5px var(--sans);text-transform:uppercase;letter-spacing:.05em;padding:9px 8px;cursor:pointer;transition:color .18s,border-color .18s,background .18s}
@@ -569,7 +567,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 </section>
 
 <section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Pedidos de los oyentes · por orden de llegada (FIFO)</p></div><div style="display:flex;align-items:center"><span id="colaCount" class="count">0</span><button id="btnGearPedidos" class="gear-pedidos" aria-label="Panel del DJ: activar o pausar los pedidos" title="Panel del DJ">⚙</button></div></div>
+  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Pedidos de los oyentes · por orden de llegada (FIFO)</p></div><span id="colaCount" class="count">0</span></div>
   <div id="pedidosPausa" class="pedidos-pausa" hidden>⏸️ El DJ pausó los pedidos por ahora — la cola se sigue viendo, volvé más tarde 🤘</div>
   <div class="cola-tabs" role="tablist" aria-label="Estado de los pedidos">
     <button id="colaTabPend" class="cola-tab activo" type="button" role="tab" aria-selected="true">⏳ Pendientes <span class="tab-n" id="colaTabPendN">0</span></button>
@@ -1364,7 +1362,7 @@ async function fetchCover(t) {
    antes de mostrar el tema, así la info y la carátula salen
    siempre correctas.
    ========================================================= */
-const LS_FIX_ARTIST = "sikodark-fix-artist";
+const LS_FIX_ARTIST = "sikodark-fix-artist2";   /* ⭐ v2: descarta las correcciones viejas equivocadas */
 let FIX_ARTIST = {};
 try { FIX_ARTIST = JSON.parse(localStorage.getItem(LS_FIX_ARTIST) || "{}"); } catch (e) { FIX_ARTIST = {}; }
 
@@ -1407,16 +1405,23 @@ function corregirArtista(track) {
       }
       if (hit && hit.banda) return hit.banda;
     } catch (e) {}
+    /* 1.5) ¿el "título" al aire es la BANDA de un pedido reciente?
+       Le pasa a los pedidos de solo-grupo: recuperamos la banda
+       correcta del pedido en vez de que iTunes traiga otra parecida */
+    try {
+      const bidx = window.__sikoPedidosBandIdx || {};
+      if (bidx[k] && bidx[k].banda) return bidx[k].banda;
+    } catch (e) {}
     /* 2) iTunes: buscar por el título solo y tomar el artista */
     try {
       const r = await fetchConProxy(ITUNES_URL + "?term=" + encodeURIComponent(track.title.trim()) + "&media=music&entity=song&limit=5");
       const d = await r.json();
       const rs = (d && d.results) || [];
       for (const res of rs) {
-        if (res.artistName && sikoNorm(res.trackName) === k) return res.artistName;
+        if (res.artistName && !artistaRoto(res.artistName) && sikoNorm(res.trackName) === k) return res.artistName;
       }
       for (const res of rs) {
-        if (res.artistName && sikoNorm(res.trackName).indexOf(k) >= 0) return res.artistName;
+        if (res.artistName && !artistaRoto(res.artistName) && sikoNorm(res.trackName).indexOf(k) >= 0) return res.artistName;
       }
     } catch (e) {}
     return null;
@@ -5088,14 +5093,27 @@ renderFavs();
          sus 12 segundos completos en pantalla */
       api.reiniciarTimer();
 
-      /* si vino sin carátula, buscarla en iTunes y repintar el mismo item */
+      /* si vino sin carátula, buscarla en iTunes — ⭐ VALIDANDO que
+         el resultado sea de la banda pedida: antes agarraba el
+         primer resultado de la lista y salía la carátula de un
+         artista parecido pero equivocado ("otra banda similar") */
       if (!item.img){
-        fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(que))
+        fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=8&term=" + encodeURIComponent(que))
           .then(function(r){ return r.json(); })
           .then(function(d){
-            var r0 = d && d.results && d.results[0];
-            if (r0 && r0.artworkUrl100 && tickTag.textContent.indexOf("PEDIDO") >= 0 && tickHeadline.textContent === item.headline){
-              item.img = r0.artworkUrl100;
+            var rs = (d && d.results) || [];
+            var nb = sikoNorm(p.banda), nt = sikoNorm(p.tema);
+            var r0 = null;
+            for (var i = 0; i < rs.length; i++){
+              var x = rs[i];
+              if (!x || !x.artworkUrl100) continue;
+              var ra = sikoNorm(x.artistName), rt = sikoNorm(x.trackName);
+              if (nb && ra !== nb && ra.indexOf(nb) < 0 && nb.indexOf(ra) < 0) continue;
+              if (nt && rt !== nt && rt.indexOf(nt) < 0 && nt.indexOf(rt) < 0) continue;
+              r0 = x; break;
+            }
+            if (r0 && tickTag.textContent.indexOf("PEDIDO") >= 0 && tickHeadline.textContent === item.headline){
+              item.img = String(r0.artworkUrl100).replace("100x100", "200x200");
               api.pintar(item);
             }
           })
@@ -5435,7 +5453,7 @@ renderFavs();
      buscamos en iTunes y la guardamos en localStorage
      para no volver a pedirla en cada recarga
      ===================================================== */
-  var COVERS_KEY = "sikodark-cola-covers";
+  var COVERS_KEY = "sikodark-cola-covers2";   /* ⭐ v2: descarta las carátulas viejas equivocadas */
   var colaCovers = {};
   try { colaCovers = JSON.parse(localStorage.getItem(COVERS_KEY) || "{}") || {}; } catch(e){ colaCovers = {}; }
   var colaCoverFallo = {};    /* iTunes no la tenía (esta sesión) — no reintentar */
@@ -5461,11 +5479,25 @@ renderFavs();
     var q = [f.tema, f.banda].filter(Boolean).join(" ").trim();
     if (!q) return;
     colaCoverBuscando[ck] = 1;
-    fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(q))
+    fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=8&term=" + encodeURIComponent(q))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var r0 = d && d.results && d.results[0];
-        if (r0 && r0.artworkUrl100){
+        /* ⭐ la carátula tiene que ser del pedido REAL: si sabemos la
+           banda, el resultado de iTunes tiene que ser de ESA banda —
+           antes tomaba el primero de la lista y salía la carátula de
+           un artista parecido pero equivocado */
+        var rs = (d && d.results) || [];
+        var nb = sikoNorm(f.banda), nt = sikoNorm(f.tema);
+        var r0 = null;
+        for (var i = 0; i < rs.length; i++){
+          var x = rs[i];
+          if (!x || !x.artworkUrl100) continue;
+          var ra = sikoNorm(x.artistName), rt = sikoNorm(x.trackName);
+          if (nb && ra !== nb && ra.indexOf(nb) < 0 && nb.indexOf(ra) < 0) continue;
+          if (nt && rt !== nt && rt.indexOf(nt) < 0 && nt.indexOf(rt) < 0) continue;
+          r0 = x; break;
+        }
+        if (r0){
           var url = String(r0.artworkUrl100).replace("100x100", "200x200");  /* más nítida */
           colaCovers[ck] = url;
           try{ localStorage.setItem(COVERS_KEY, JSON.stringify(colaCovers)); }catch(e){}
@@ -5546,13 +5578,18 @@ renderFavs();
        la banda real cuando un archivo del DJ está mal tagueado */
     try{
       var idx = {};
+      var idxB = {};
       items.forEach(function(f){
-        if (!f.tema || !f.banda) return;
-        var k = String(f.tema).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                  .replace(/[^a-z0-9]+/g, " ").trim();
-        if (k && !idx[k]) idx[k] = { banda: f.banda, cover: f.cover || null };
+        var k = sikoNorm(f.tema);
+        if (k && f.banda && !idx[k]) idx[k] = { banda: f.banda, cover: f.cover || null };
+        /* ⭐ también por BANDA: para los pedidos de solo-grupo, así el
+           fix de metadata recupera la banda correcta del pedido y no
+           una parecida que traiga iTunes */
+        var kb = sikoNorm(f.banda);
+        if (kb && !idxB[kb]) idxB[kb] = { banda: f.banda, cover: f.cover || null };
       });
       window.__sikoPedidosIdx = idx;
+      window.__sikoPedidosBandIdx = idxB;
     }catch(e){}
     if (!items.length){
       colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
@@ -5652,12 +5689,12 @@ renderFavs();
 <!-- ===== 🔔 AVISO flotante: alguien programó un tema ===== -->
 <div id="avisoPedido" aria-live="polite"><span class="ap-ico">🎸</span><span class="ap-txt" id="avisoPedidoTxt"></span></div>
 
-<!-- ===== ⚙️ PANEL DEL DJ — activar / pausar los pedidos ===== -->
+<!-- ===== ⏸️ PAUSA DE PEDIDOS — la controla el DJ en privado
+     desde Firebase Console (los oyentes no ven ninguna opción) ===== -->
 <script>
 (function(){
   var btn = document.getElementById("btnPedidoTema");
   var pausa = document.getElementById("pedidosPausa");
-  var gear = document.getElementById("btnGearPedidos");
 
   function aplicar(habilitado){
     window.sikoPedidosOff = !habilitado;
@@ -5667,46 +5704,15 @@ renderFavs();
   }
   aplicar(true);   /* por defecto: activados */
 
-  /* escuchamos en vivo el estado: config/pedidos.habilitado
-     (si el documento no existe → activados, como siempre) */
+  /* escuchamos en vivo config/pedidos.habilitado — el DJ lo cambia
+     desde Firebase Console (privado, invisible para los oyentes).
+     Si el documento no existe, los pedidos están activados. */
   try{
     dbFB.collection("config").doc("pedidos").onSnapshot(function(s){
       var f = s.exists ? s.data() : {};
       aplicar(f.habilitado !== false);
     }, function(){ /* sin permiso de lectura → quedan activados */ });
   }catch(e){}
-
-  /* ⚙️ el DJ toca el engranaje de la cola, pone su contraseña
-     y cambia el modo. Usa una sesión APARTE de Firebase (sikoAdmin)
-     así no rompe la conexión del oyente que está navegando. */
-  var adminApp = null;
-  if (gear) gear.onclick = function(){
-    var ahoraOn = !window.sikoPedidosOff;
-    var pass = prompt("Panel del DJ ⚙️\n\nLos pedidos están " + (ahoraOn ? "ACTIVADOS ✓" : "PAUSADOS ⏸") + ".\nContraseña de sikoradio@hotmail.com para " + (ahoraOn ? "PAUSARLOS" : "ACTIVARLOS") + ":");
-    if (pass === null || !pass) return;
-    try{
-      if (!adminApp) adminApp = firebase.initializeApp(firebaseConfig, "sikoAdmin");
-      var auth = adminApp.auth();
-      auth.signInWithEmailAndPassword("sikoradio@hotmail.com", pass)
-        .then(function(){
-          return adminApp.firestore().collection("config").doc("pedidos").set({ habilitado: !ahoraOn }, { merge: true });
-        })
-        .then(function(){
-          var msg = !ahoraOn ? "▶️ Pedidos activados" : "⏸️ Pedidos pausados";
-          if (typeof toast === "function") toast(msg); else alert(msg);
-        })
-        .catch(function(e){
-          var m = String((e && e.code) || (e && e.message) || e);
-          if (/user-not-found|invalid-credential|wrong-password|invalid-login/i.test(m))
-            m = "Contraseña incorrecta — o falta crear el usuario sikoradio@hotmail.com en Firebase (Authentication → Sign-in method → Email/Password → Users → Add user). Crealo una sola vez y listo.";
-          else if (/network|fetch|timeout/i.test(m)) m = "Sin conexión — probá de nuevo en un rato";
-          alert("No pude cambiar el modo de los pedidos:\n\n" + m);
-        })
-        .then(function(){ try{ auth.signOut(); }catch(e){} });
-    }catch(e2){
-      alert("No pude abrir el panel del DJ: " + (e2 && e2.message));
-    }
-  };
 })();
 </script>
 
