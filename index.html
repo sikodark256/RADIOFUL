@@ -5409,6 +5409,12 @@ renderFavs();
       if (!f || (!f.banda && !f.tema)) return;
       items.push(f);
     });
+    /* ⭐ ordenamos en el navegador (no en la consulta) así aparecen
+       TAMBIÉN los pedidos guardados sin el campo "fecha": con
+       orderBy en el servidor esos docs quedan invisibles y la
+       cola parecía vacía aunque hubiera pedidos adentro */
+    items.sort(function(a,b){ return (b.fecha || 0) - (a.fecha || 0); });
+    var visibles = items.slice(0, 12);
     if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
 
     /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
@@ -5428,7 +5434,7 @@ renderFavs();
       actualizarBadge(items);   /* cola vacía → el badge se apaga */
       return;
     }
-    colaLista.innerHTML = items.map(function(f){
+    colaLista.innerHTML = visibles.map(function(f){
       var est = ESTADOS[f.estado] || ESTADOS.pendiente;
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
@@ -5446,7 +5452,7 @@ renderFavs();
 
   function escucharCola(){
     try{
-      dbFB.collection("temas_pedidos").orderBy("fecha", "desc").limit(12).onSnapshot(function(snap){
+      dbFB.collection("temas_pedidos").limit(30).onSnapshot(function(snap){
         if (colaBox) colaBox.classList.remove("hidden");
         pintarCola(snap.docs);
         /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante
