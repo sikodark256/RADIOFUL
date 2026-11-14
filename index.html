@@ -5485,7 +5485,11 @@ renderFavs();
     }
   }
 
-  if (window.dbFB){
+  /* ⭐ FIX: dbFB se declara con "const" (línea ~1804) y por eso NO existe
+     como window.dbFB — el viejo "if (window.dbFB)" daba siempre falso y
+     el listener de la cola NUNCA arrancaba: la cola quedaba siempre
+     vacía aunque los pedidos se guardaban bien en Firebase */
+  if (typeof dbFB !== "undefined"){
     if (usuarioUID){
       escucharCola();
     } else {
