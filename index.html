@@ -75,7 +75,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .track-info{padding:9px}
 .track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:11px}
-.track-artist{font-family:var(--sans);font-weight:700;font-size:10.5px;color:var(--muted);margin-top:2px}
+.track-artist{fonjt-family:var(--sans);font-weight:700;font-size:10.5px;color:var(--muted);margin-top:2px}
 footer{color:var(--muted);text-align:center;font:11px var(--mono)}
 .hidden{display:none}
 
@@ -562,18 +562,18 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 </section>
 
 <section class="card history" aria-labelledby="history-title">
-<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
+<div class="history-head"><div><h2 id="history-title"> &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 
 <section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Pedidos de los oyentes · por orden de llegada (FIFO)</p></div><span id="colaCount" class="count">0</span></div>
-  <div id="pedidosPausa" class="pedidos-pausa" hidden>⏸️ El DJ pausó los pedidos por ahora — la cola se sigue viendo, volvé más tarde 🤘</div>
+  <div class="history-head"><div><h2>Cola de pedidos</h2><p class="sub">Pedidos de los oyentes </p></div><span id="colaCount" class="count">0</span></div>
+  <div id="pedidosPausa" class="pedidos-pausa" hidden>⏸️ SIkodark pausó los pedidos por ahora </div>
   <div class="cola-tabs" role="tablist" aria-label="Estado de los pedidos">
-    <button id="colaTabPend" class="cola-tab activo" type="button" role="tab" aria-selected="true">⏳ Pendientes <span class="tab-n" id="colaTabPendN">0</span></button>
-    <button id="colaTabSon" class="cola-tab" type="button" role="tab" aria-selected="false">✅ Ya sonaron <span class="tab-n" id="colaTabSonN">0</span></button>
+    <button id="colaTabPend" class="cola-tab activo" type="button" role="tab" aria-selected="true">Pendientes <span class="tab-n" id="colaTabPendN">0</span></button>
+    <button id="colaTabSon" class="cola-tab" type="button" role="tab" aria-selected="false">Ya sonaron <span class="tab-n" id="colaTabSonN">0</span></button>
   </div>
-  <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
+  <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — Programá tu banda favorita</p></div>
 </section>
 </div>
 <footer>sikodark radio · música en directo</footer>
@@ -590,12 +590,12 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
     <h3>🎸 Programá tu tema musical</h3>
     <p class="sub">Escribí una banda o tema — si está en la música de la radio, entra en la cola al toque.</p>
     <label>Tu nombre (opcional)</label>
-    <input type="text" id="pedNombre" placeholder="Ej: Juanchi" maxlength="20">
+    <input type="text" id="pedNombre" placeholder="" maxlength="20">
     <label>Banda / Artista</label>
-    <input type="text" id="pedBanda" placeholder="Ej: Guns N' Roses" maxlength="60" autocomplete="off">
+    <input type="text" id="pedBanda" placeholder="" maxlength="60" autocomplete="off">
     <div id="pedSugBanda" class="ped-sug"></div>
     <label>Tema (opcional)</label>
-    <input type="text" id="pedTema" placeholder="Ej: Sweet Child O' Mine" maxlength="60" autocomplete="off">
+    <input type="text" id="pedTema" placeholder="" maxlength="60" autocomplete="off">
     <div id="pedSugTema" class="ped-sug"></div>
     <div id="pedPreview" class="ped-preview">
       <img id="pedPreviewImg" src="apple-icon.png" alt="">
@@ -605,7 +605,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
       <button class="btn-cancel" id="pedCancelar">Cancelar</button>
       <button class="btn-enviar" id="pedEnviar">Programar tema</button>
     </div>
-    <div class="ok-msg" id="pedOk">✅ ¡Programado! Va a entrar en la cola de la radio 🤘</div>
+    <div class="ok-msg" id="pedOk">✅ ¡Programado! Va a entrar en la cola de la radio </div>
   </div>
 </div>
 
