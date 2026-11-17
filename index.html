@@ -465,6 +465,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
 .cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
+.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:7px 0 3px;opacity:.8}
 </style>
 </head>
 <body>
@@ -559,7 +560,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 </section>
 
 <section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><span id="colaCount" class="count">0</span></div>
+  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Por orden de llegada — se limpia sola cada 5 minutos</p></div><span id="colaCount" class="count">0</span></div>
   <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
 </section>
 </div>
@@ -1786,7 +1787,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v30 — cola viva: orderBy fecha + limpieza automática a los 5 min");
+console.log("🧠 Sikodark Radio v31.1 — cola FIFO + limpieza 5 min + anti-parpadeo");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -5459,6 +5460,41 @@ renderFavs();
     return isNaN(p) ? 0 : p;
   }
 
+  /* ⭐ v31.1 ANTI-PARPADEO: la cola solo se re-dibuja cuando los datos
+     cambiaron DE VERDAD. Antes el refresco de los "lleva X min esperando"
+     rearmaba todo el HTML cada 30 segundos y las carátulas reparpadeaban.
+     Ahora: si nada cambió, solo se actualizan esos textos en su lugar. */
+  var firmaColaUltima = null;
+
+  function firmaCola(docs){
+    var partes = [];
+    docs.forEach(function(d){
+      try{
+        var f = d.data();
+        if (!f || (!f.banda && !f.tema)) return;
+        partes.push(d.id + "|" + (f.estado || "") + "|" + fechaDoc(f)
+          + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || ""));
+      }catch(e){}
+    });
+    return partes.join(";;");
+  }
+
+  function refrescarEsperas(){
+    if (!colaLista) return;
+    var ahora = Date.now();
+    try{
+      colaLista.querySelectorAll("span.ci-esp[data-fd]").forEach(function(sp){
+        var fd = Number(sp.getAttribute("data-fd"));
+        if (!fd) return;
+        var esp = Math.max(0, Math.round((ahora - fd) / 60000));
+        var txt = "";
+        if (esp >= 1) txt = " · lleva " + esp + " min esperando";
+        if (esp >= 15) txt += " — quizá no esté en la música de la radio";
+        if (sp.textContent !== txt) sp.textContent = txt;   /* sin tocar el resto */
+      });
+    }catch(e){}
+  }
+
   function pintarCola(docs){
     var items = [];
     docs.forEach(function(d){
@@ -5466,15 +5502,34 @@ renderFavs();
       if (!f || (!f.banda && !f.tema)) return;
       items.push(f);
     });
+    /* ⭐ v31.1: si la foto de la cola es idéntica a la última dibujada,
+       no rearmar el HTML (eso era lo que hacía parpadear la parte de
+       abajo) — solo refrescar los minutos de espera */
+    var firma = firmaCola(docs);
+    if (firma === firmaColaUltima){ refrescarEsperas(); return; }
+    firmaColaUltima = firma;
     /* ⭐ v29 FIX: la consulta ahora trae los 25 pedidos MÁS NUEVOS
        (orderBy fecha desc — antes limit(30) sin orden devolvía
        los primeros 30 docs por ID aleatorio y los pedidos nuevos
        casi nunca entraban: la cola se veía vacía/vieja aunque
        Firebase los guardaba bien). Reordenamos acá por si algún
        doc viejo llegó sin "fecha" o con fecha en formato texto. */
-    items.sort(function(a,b){ return fechaDoc(b) - fechaDoc(a); });
-    var visibles = items.slice(0, 12);
-    if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
+    /* ⭐ v31 COLA FIFO: arriba los pedidos VIVOS por ORDEN DE LLEGADA
+       (el más viejo primero = el próximo en sonar, igual que los toma
+       el puente en la PC del DJ). Abajo, solo como recuerdo, los que ya
+       terminaron (✅ sonó / ❌ no estaba) hasta que la limpieza de los
+       5 minutos los borre. */
+    var vivos = [], finis = [];
+    items.forEach(function(f){
+      if (f.estado === "sonado" || f.estado === "no_encontrado") finis.push(f);
+      else vivos.push(f);
+    });
+    vivos.sort(function(a,b){ return fechaDoc(a) - fechaDoc(b); });
+    finis.sort(function(a,b){ return fechaDoc(b) - fechaDoc(a); });
+    var visibles = vivos.slice(0, 12).concat(finis.slice(0, 4));
+    if (colaCount) colaCount.textContent = vivos.length
+      ? vivos.length + " en cola"
+      : (finis.length ? "cola limpia" : "0 pedidos");
 
     /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
        la banda real cuando un archivo del DJ está mal tagueado */
@@ -5489,11 +5544,11 @@ renderFavs();
       window.__sikoPedidosIdx = idx;
     }catch(e){}
     if (!items.length){
-      colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
+      colaLista.innerHTML = '<p class="cola-vacio">Cola limpia — tocá "Programá tu tema" 🤘</p>';
       actualizarBadge(items);   /* cola vacía → el badge se apaga */
       return;
     }
-    colaLista.innerHTML = visibles.map(function(f){
+    function filaCola(f){
       var est = ESTADOS[f.estado] || ESTADOS.pendiente;
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
@@ -5501,20 +5556,36 @@ renderFavs();
       var sub = (f.tema && f.banda) ? f.banda : "pedido de los oyentes";
       var ck = claveCola(f);
       var cov = f.cover || colaCovers[ck] || "";
+      /* ⏱ v31: cuánto lleva esperando — si espera mucho rato es casi
+         seguro que no está en la música de la radio (el puente tarda
+         menos de ~10 min en tomar los pedidos que sí tiene).
+         v31.1: se mete en un span vacío y lo rellena refrescarEsperas(),
+         así el minutero corre SIN rearmar el HTML (no parpadea). */
+      var espHTML = "";
+      if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
+        var fd = fechaDoc(f);
+        if (fd > 0) espHTML = '<span class="ci-esp" data-fd="' + fd + '"></span>';
+      }
       return '<div class="cola-item' + (mio ? " mio" : "") + '">'
         + '<img src="' + esc(cov || "apple-icon.png") + '" alt="" data-ck="' + esc(ck) + '"'
         + ' onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'apple-icon.png\';}">'
         + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
-        + '<div class="ci-a">' + esc(sub) + esc(de) + '</div></div>'
+        + '<div class="ci-a">' + esc(sub) + esc(de) + espHTML + '</div></div>'
         + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
         + '</div>';
-    }).join("");
+    }
+    colaLista.innerHTML = vivos.slice(0, 12).map(filaCola).join("")
+      + (finis.length
+          ? '<div class="cola-sep">🧹 ya sonaron o no estaban — se borran a los 5 min</div>'
+            + finis.slice(0, 4).map(filaCola).join("")
+          : "");
     /* 🖼️ buscar en iTunes las carátulas que falten (una sola vez cada una) */
     visibles.forEach(function(f){
       var ck = claveCola(f);
       if (!ck || f.cover || colaCovers[ck]) return;
       buscarCoverCola(f, ck);
     });
+    refrescarEsperas();   /* ⏱ rellenar los "lleva X min" recién creados */
     actualizarBadge(items);
   }
 
@@ -5597,9 +5668,13 @@ renderFavs();
         }
       });
 
-      /* 🧹 revisión cada 30s — para que la ventana de 5 minutos corra
-         aunque no llegue ningún cambio nuevo a la colección */
-      setInterval(function(){ procesarLimpieza(docsColaActuales); }, 30000);
+      /* 🧹 revisión cada 30s — la ventana de 5 minutos sigue corriendo y
+         los "lleva X min" se actualizan tocando SOLO esos textos
+         (v31.1: ya no se redibuja la cola acá — eso la hacía parpadear) */
+      setInterval(function(){
+        procesarLimpieza(docsColaActuales);
+        refrescarEsperas();
+      }, 30000);
     }catch(e){
       console.warn("[Cola] No se pudo escuchar la cola:", e.message);
     }
