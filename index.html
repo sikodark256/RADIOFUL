@@ -452,8 +452,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .ped-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:0 0 44px;background:#141419}
 .ped-preview .pt-b{display:block;font:800 12.5px var(--sans);color:#f5f5f7;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ped-preview .pt-a{font:700 10.5px var(--sans);color:var(--primary)}
-.cola-lista{margin-top:16px;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;scrollbar-width:thin}
-.cola-item{display:flex;gap:11px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:8px 11px}
+.cola-lista{margin-top:18px;display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
+.cola-item{display:flex;gap:12px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:11px 13px}
 .cola-item.mio{border-color:rgba(245,157,61,.45)}
 .cola-item img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:0 0 44px;background:#141419}
 .cola-item .ci-txt{flex:1;min-width:0}
@@ -465,7 +465,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
 .cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
-.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:7px 0 3px;opacity:.8}
+.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 0 5px;opacity:.8}
 </style>
 </head>
 <body>
@@ -612,6 +612,12 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
    CONFIGURACIÓN v28
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
+/* ⭐ v31.2: URL del stream con cache-buster — cada conexión es única,
+   así el navegador ni el service worker pueden devolver el buffer viejo
+   del tema anterior (Zeno ignora el parámetro extra, es el mismo stream) */
+function streamFresca(){
+  return STREAM_URL + (STREAM_URL.indexOf("?") >= 0 ? "&" : "?") + "_siko=" + Date.now();
+}
 const MOUNT_ID = "xdkqr4btptutv";
 const LOGO = "icon-512.png";
 const MAX_HISTORY = 10;
@@ -679,7 +685,11 @@ function pauseIcon(){return '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5
 async function startPlayback(){
   try{
     isLoading=true; play.innerHTML=spinner(); ring(true);
-    if(!audio.src) audio.src=STREAM_URL;
+    /* ⭐ v31.2: SIEMPRE conexión nueva al dar play — antes reutilizaba el
+       audio.src viejo y al pausar y volver (o al reabrir la app) seguía
+       desde el buffer del tema anterior. Con URL fresca arranca SIEMPRE
+       al borde del vivo con lo que suena ahora mismo. */
+    audio.src=streamFresca();
     await audio.play();
     log("ok", "Audio reproduciéndose");
     /* ⭐ Activar wake lock para evitar que la pantalla se apague mientras suena */
@@ -1787,7 +1797,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v31.1 — cola FIFO + limpieza 5 min + anti-parpadeo");
+console.log("🧠 Sikodark Radio v31.2 — player siempre al vivo al abrir + cola sin parpadeo + espacios");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1878,7 +1888,7 @@ iniciarPush();
     try{
       audio.pause();
       setTimeout(function(){
-        audio.src = STREAM_URL;
+        audio.src = streamFresca();   /* ⭐ v31.2: URL única → nunca buffer viejo */
         audio.load();
         audio.play().then(function(){
           fallos = 0;
@@ -1941,8 +1951,15 @@ iniciarPush();
            si la canción cambió. */
         activarFastPoll();
 
+        /* ⭐ v31.2: si estuvo 30s+ en background, el buffer del audio quedó
+           con el tema anterior (y como el currentTime sigue avanzando, el
+           detector de freeze no lo ve). Salto directo al borde del vivo. */
+        if (isPlaying && tiempoInactivo > 30000){
+          console.log("[Anti-freeze] 30s+ en background — saltando al borde del vivo");
+          reconectar();
+        }
         /* Si el audio está pausado pero el usuario cree que está sonando → reconectar */
-        if (isPlaying && audio.paused){
+        else if (isPlaying && audio.paused){
           console.log("[Anti-freeze] Audio pausado en background — reconectando");
           reconectar();
         }
@@ -1965,6 +1982,18 @@ iniciarPush();
       }
     } else {
       _ultimaVisitaVisible = Date.now();
+    }
+  });
+
+  /* ⭐ v31.2: al REABRIR la app el navegador puede restaurar la página
+     desde el bfcache (caché de adelante/atrás) con el audio apuntando al
+     buffer viejo — el tema anterior. pageshow con e.persisted = página
+     restaurada → resincronizar stream y metadata al toque. */
+  window.addEventListener("pageshow", function(e){
+    if (e && e.persisted){
+      console.log("[Anti-freeze] Página restaurada del bfcache — resincronizando");
+      activarFastPoll();
+      if (isPlaying) reconectar();
     }
   });
 
