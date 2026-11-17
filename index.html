@@ -76,7 +76,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:11px}
 .track-artist{font-family:var(--sans);font-weight:700;font-size:10.5px;color:var(--muted);margin-top:2px}
-footer{color:var(--muted);text-align:center;font:11px var(--mono)}
+footer{color:var(--muted);text-align:center;font:11px var(--mono);margin:28px auto 18px}
+#colaBox{margin-top:24px}
 .hidden{display:none}
 
 /* ===== ❤️🟠 BOTONES CIRCULARES ===== */
@@ -253,7 +254,10 @@ body::after{
   color:#ffe066}
 
 /* === BODY === */
-.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d}
+/* ⭐ v32: min-height fija — el cuerpo medía 120px o 162px según el item y
+   cada rotación (cada 12s) cambiaba la altura de la tarjeta y empujaba
+   toda la página hacia abajo: la parte final "parpadeaba". */
+.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d;min-height:164px}
 /* ⭐ Headline del nombre de la banda — tamaño chico como antes */
 .tick-mag-headline{font:900 19px/1.18 var(--sans);color:#fff;text-transform:uppercase;
   letter-spacing:.01em;margin:0 0 9px;
@@ -452,8 +456,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .ped-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:0 0 44px;background:#141419}
 .ped-preview .pt-b{display:block;font:800 12.5px var(--sans);color:#f5f5f7;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ped-preview .pt-a{font:700 10.5px var(--sans);color:var(--primary)}
-.cola-lista{margin-top:18px;display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
-.cola-item{display:flex;gap:12px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:11px 13px}
+.cola-lista{margin-top:22px;display:flex;flex-direction:column;gap:13px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
+.cola-item{display:flex;gap:12px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
 .cola-item.mio{border-color:rgba(245,157,61,.45)}
 .cola-item img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:0 0 44px;background:#141419}
 .cola-item .ci-txt{flex:1;min-width:0}
@@ -464,8 +468,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.en_cola{background:rgba(245,157,61,.16);color:var(--primary);border:1px solid rgba(245,157,61,.4)}
 .estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
-.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
-.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 0 5px;opacity:.8}
+.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:30px 18px;text-align:center;color:var(--muted);font:700 12.5px/1.6 var(--sans);margin:2px 0 4px}
+.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:16px 0 6px;opacity:.8}
 </style>
 </head>
 <body>
@@ -1797,7 +1801,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v31.2 — player siempre al vivo al abrir + cola sin parpadeo + espacios");
+console.log("🧠 Sikodark Radio v32 — anti ping-pong del puente + ticker sin saltos + espacios nuevos + player al vivo al abrir");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1951,11 +1955,13 @@ iniciarPush();
            si la canción cambió. */
         activarFastPoll();
 
-        /* ⭐ v31.2: si estuvo 30s+ en background, el buffer del audio quedó
+        /* ⭐ v32: si estuvo 15s+ en background, el buffer del audio quedó
            con el tema anterior (y como el currentTime sigue avanzando, el
-           detector de freeze no lo ve). Salto directo al borde del vivo. */
-        if (isPlaying && tiempoInactivo > 30000){
-          console.log("[Anti-freeze] 30s+ en background — saltando al borde del vivo");
+           detector de freeze no lo ve). Salto directo al borde del vivo.
+           (v31.2 era 30s — el usuario lo quería más agresivo: cada vez que
+           abre la app tiene que arrancar en lo que suena AHORA.) */
+        if (isPlaying && tiempoInactivo > 15000){
+          console.log("[Anti-freeze] 15s+ en background — saltando al borde del vivo");
           reconectar();
         }
         /* Si el audio está pausado pero el usuario cree que está sonando → reconectar */
@@ -5495,13 +5501,11 @@ renderFavs();
      Ahora: si nada cambió, solo se actualizan esos textos en su lugar. */
   var firmaColaUltima = null;
 
-  function firmaCola(docs){
+  function firmaCola(items){
     var partes = [];
-    docs.forEach(function(d){
+    items.forEach(function(f){
       try{
-        var f = d.data();
-        if (!f || (!f.banda && !f.tema)) return;
-        partes.push(d.id + "|" + (f.estado || "") + "|" + fechaDoc(f)
+        partes.push((f.__id || "") + "|" + (f.estado || "") + "|" + (f.fecha_estado || fechaDoc(f))
           + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || ""));
       }catch(e){}
     });
@@ -5525,16 +5529,31 @@ renderFavs();
   }
 
   function pintarCola(docs){
+    var ahora = Date.now();
     var items = [];
     docs.forEach(function(d){
       var f = d.data();
       if (!f || (!f.banda && !f.tema)) return;
+      var est = f.estado;
+      if (est === "sonado" || est === "no_encontrado"){
+        /* ⭐ v32 ANTI-PING-PONG: el puente de la PC del DJ vuelve a escribir
+           pedidos ya sonados (con fecha de hace horas) después de que la web
+           los borró. Cada re-creación disparaba un snapshot → la caja se
+           re-dibujaba cientos de veces → "Cola limpia" parpadeaba.
+           Los finis VIEJOS (>5 min) no se pintan ni cuentan: invisibles. */
+        var fd = (typeof f.fecha_estado === "number" && f.fecha_estado > 0)
+          ? f.fecha_estado : fechaDoc(f);
+        if (fd > 0 && (ahora - fd) > VENTANA_LIMPIEZA) return;
+      }
+      f.__id = d.id;
       items.push(f);
     });
     /* ⭐ v31.1: si la foto de la cola es idéntica a la última dibujada,
        no rearmar el HTML (eso era lo que hacía parpadear la parte de
-       abajo) — solo refrescar los minutos de espera */
-    var firma = firmaCola(docs);
+       abajo) — solo refrescar los minutos de espera.
+       ⭐ v32: la firma se calcula sobre los docs FILTRADOS, así los
+       muertos vivos que re-crea el puente ni siquiera se notan. */
+    var firma = firmaCola(items);
     if (firma === firmaColaUltima){ refrescarEsperas(); return; }
     firmaColaUltima = firma;
     /* ⭐ v29 FIX: la consulta ahora trae los 25 pedidos MÁS NUEVOS
@@ -5666,24 +5685,37 @@ renderFavs();
       /* ⭐ v29 FIX: orderBy("fecha","desc") + limit(25) — trae SIEMPRE
          los 25 pedidos más recientes, así tu pedido entra seguro
          (el tuyo tiene fecha = ahora, es el más nuevo de todos). */
+      var pintarTimer = null;
       dbFB.collection("temas_pedidos").orderBy("fecha","desc").limit(25).onSnapshot(function(snap){
         if (colaBox) colaBox.classList.remove("hidden");
-        pintarCola(snap.docs);
         docsColaActuales = snap.docs;      /* 🧹 foto actual para el timer de limpieza */
-        procesarLimpieza(snap.docs);       /* 🧹 borra lo sonado a los 5 min */
-        /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante
-           + salen en la ventana de info/efemérides (ticker) */
         if (primerSnapshot){
           primerSnapshot = false;
           snap.docs.forEach(function(d){ pedidosVistos[d.id] = 1; });
+          pintarCola(snap.docs);           /* primer pantallazo: al toque */
+          procesarLimpieza(snap.docs);
         } else {
+          /* ⭐ v32 ANTI-PING-PONG: los snapshots llegan en RÁFAGAS (el puente
+             re-crea un pedido viejo → la web lo borra → otro snapshot).
+             Pintar cada paso de la ráfaga era el parpadeo. Esperamos 250ms
+             y dibujamos SOLO el estado final de la ráfaga. */
+          if (pintarTimer) clearTimeout(pintarTimer);
+          pintarTimer = setTimeout(function(){
+            pintarTimer = null;
+            pintarCola(docsColaActuales);
+            procesarLimpieza(docsColaActuales);   /* 🧹 borra lo sonado a los 5 min */
+          }, 250);
           snap.docChanges().forEach(function(ch){
             if (ch.type === "added" && ch.doc && !pedidosVistos[ch.doc.id]){
               pedidosVistos[ch.doc.id] = 1;
               var f = ch.doc.data();
               if (f && (f.banda || f.tema)){
-                if (f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
-                if (window.sikodarkMostrarPedido) window.sikodarkMostrarPedido(f);
+                /* ⭐ v32: si el doc "nuevo" ya llega sonado/no_encontrado es
+                   un muerto vivo re-creado por el puente — NO avisar. */
+                if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
+                  if (f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+                  if (window.sikodarkMostrarPedido) window.sikodarkMostrarPedido(f);
+                }
               }
             }
           });
