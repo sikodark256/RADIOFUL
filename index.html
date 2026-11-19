@@ -949,7 +949,7 @@ function renderHistory(){
     }).join("");
   } catch(e) {}
 }
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 
 async function fetchConProxy(url, opciones = {}) {
   /* ⭐ Cache-busting: si la URL no tiene _, le agrego ?_t=timestamp
@@ -1742,13 +1742,17 @@ async function procesarCancionInteligente(track) {
 }
 
 function pedirPermisoNotificaciones() {
-  if ("Notification" in window && Notification.permission === "default") {
-    const pedir = () => {
-      Notification.requestPermission().then(p => {});
-      document.removeEventListener("click", pedir);
-    };
-    document.addEventListener("click", pedir, { once: true });
-  }
+  if (!("Notification" in window)) return;
+  /* Si ya está concedido (volví a abrir la app), registramos el token directo */
+  if (Notification.permission === "granted"){ iniciarPush(); return; }
+  if (Notification.permission !== "default") return;
+  /* ⭐ El permiso se pide con el PRIMER clic del oyente (gesto real):
+     Chrome no lo muestra bien sin gesto, y así no molesta al cargar. */
+  const pedir = () => {
+    iniciarPush();   /* pide permiso y guarda el token FCM en Firestore */
+    document.removeEventListener("click", pedir);
+  };
+  document.addEventListener("click", pedir, { once: true });
 }
 
 let deferredPrompt=null;
@@ -1880,7 +1884,23 @@ async function iniciarPush() {
     log("ok", "🔔 Notificaciones activadas");
   } catch(e) {}
 }
-iniciarPush();
+/* El arranque del push lo dispara pedirPermisoNotificaciones() con el
+   primer clic del oyente (no se pide permiso sin gesto al cargar). */
+
+/* ⏸️ PAUSA DEL DJ: config/pedidos.habilitado === false oculta el botón
+   "Programá tu tema" y cierra el modal. El puente tampoco toma pedidos
+   nuevos mientras esté en false; nada se pierde, quedan pendientes. */
+window.SIKO_PEDIDOS_OFF = false;
+try{
+  dbFB.collection("config").doc("pedidos").onSnapshot(function(snap){
+    var d = snap.exists ? snap.data() : {};
+    window.SIKO_PEDIDOS_OFF = !!(d && d.habilitado === false);
+    var btn = document.getElementById("btnPedidoTema");
+    if (btn && SIKO_PEDIDOS_OFF) btn.classList.remove("show");
+    var modal = document.getElementById("modalPedido");
+    if (modal && SIKO_PEDIDOS_OFF) modal.classList.remove("show");
+  }, function(){});
+}catch(e){}
 </script>
 
 <!-- ===== 🔄 AUTO-RECUPERACION + AUDIFONOS ===== -->
@@ -5320,6 +5340,12 @@ renderFavs();
 
   btnEnviar.onclick = async function(){
     limpiarError();
+    /* ⏸️ Si el DJ pausó los pedidos (config/pedidos.habilitado=false),
+       no se manda nada aunque el modal quede abierto por cacheo. */
+    if (window.SIKO_PEDIDOS_OFF){
+      mostrarError("⏸️ Los pedidos están pausados por la radio ahora — volvé en un rato 🎧");
+      return;
+    }
     var banda = inpBanda.value.trim();
     var tema = inpTema.value.trim();
     var nombre = inpNombre.value.trim();
