@@ -1,76 +1,84 @@
-/* sikodark radio — Service Worker v27 con auto-update */
-const CACHE = 'sikodark-v27';
-const ASSETS = [
-  './',
-  './index.html',
-  './offline.html',
-  './manifest.json',
-  './apple-icon.png',
-  './apple-touch-icon.png',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-maskable-512.png'
-];
+/* =========================================================
+   📻 Sikodark Radio — Service Worker  (sikodark-v33)
+   - Navegación: red primero (cada versión nueva entra al toque)
+     con caché de respaldo para offline.
+   - Stream, Firestore y carátulas: directo a la red, SIN caché
+     (nunca se sirve música o datos viejos).
+   - Push: Firebase Messaging (mismas credenciales que la página).
+   ========================================================= */
 
-self.addEventListener('install', e => {
-  /* ⭐ Clave 1: activar el SW nuevo INMEDIATAMENTE (sin esperar) */
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
+
+const CACHE = "sikodark-v33";
+const NUCLEO = ["./", "./index.html"];
+
+firebase.initializeApp({
+  apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
+  authDomain: "sikodarkradio-26a07.firebaseapp.com",
+  projectId: "sikodarkradio-26a07",
+  storageBucket: "sikodarkradio-26a07.firebasestorage.app",
+  messagingSenderId: "941041207378",
+  appId: "1:941041207378:web:994e34372109d30acf778b"
+});
+
+const messaging = firebase.messaging();
+
+/* Mensajes en background (celular con la app cerrada) */
+messaging.onBackgroundMessage(function(payload){
+  try{
+    const n = payload.notification || {};
+    const d = payload.data || {};
+    const titulo = n.title || d.title || "Sikodark Radio";
+    const cuerpo = n.body || d.body || "Toca para escuchar la radio 🤘";
+    self.registration.showNotification(titulo, {
+      body: cuerpo,
+      icon: "./apple-icon.png",
+      badge: "./apple-icon.png",
+      tag: "sikodark",
+      data: { url: "./" }
+    });
+  }catch(e){}
+});
+
+self.addEventListener("install", function(e){
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+      .then(function(c){ return c.addAll(NUCLEO); })
+      .catch(function(){ /* si falta algún archivo, no romper el install */ })
   );
 });
 
-self.addEventListener('activate', e => {
-  /* ⭐ Clave 2: borrar TODOS los cachés viejos + tomar control de las pestañas abiertas */
+self.addEventListener("activate", function(e){
   e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(function(keys){
+      return Promise.all(
+        keys.filter(function(k){ return k !== CACHE; })
+            .map(function(k){ return caches.delete(k); })
+      );
+    }).then(function(){ return self.clients.claim(); })
   );
 });
 
-self.addEventListener('fetch', e => {
+self.addEventListener("fetch", function(e){
   const req = e.request;
-  const url = new URL(req.url);
+  if (req.method !== "GET") return;
 
-  if (req.method !== 'GET') return;
-  if (url.hostname.includes('zeno.fm')) return;            /* stream: nunca cachear */
-  if (req.headers.has('range')) return;
-  if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) return;
-  if (url.searchParams.has('__probe__')) { e.respondWith(fetch(req)); return; }
-
-  /* ⭐ Clave 3: el index.html SIEMPRE se pide a la red primero.
-     Solo si no hay internet se usa el caché. Así cada apertura
-     de la PWA trae la versión nueva (si hay conexión). */
-  if (req.mode === 'navigate') {
+  /* Solo la navegación pasa por acá — el resto va directo a la red */
+  if (req.mode === "navigate"){
     e.respondWith(
-      fetch(req)
-        .then(res => {
-          const cp = res.clone();
-          caches.open(CACHE).then(c => c.put('./index.html', cp));
-          return res;
-        })
-        .catch(() =>
-          caches.match('./index.html').then(r => r || caches.match('./offline.html'))
-        )
-    );
-    return;
-  }
-
-  /* Recursos propios: caché primero + actualización silenciosa de fondo */
-  if (url.origin === location.origin) {
-    e.respondWith(
-      caches.match(req).then(r => {
-        const red = fetch(req).then(res => {
-          if (res && res.ok) {
-            const cp = res.clone();
-            caches.open(CACHE).then(c => c.put(req, cp));
-          }
-          return res;
-        }).catch(() => r);
-        return r || red;
+      fetch(req).then(function(res){
+        const copia = res.clone();
+        caches.open(CACHE).then(function(c){
+          c.put("./index.html", copia);
+        }).catch(function(){});
+        return res;
+      }).catch(function(){
+        return caches.match("./index.html")
+          .then(function(r){ return r || caches.match("./"); });
       })
     );
   }
+  /* sin respondWith → el navegador la busca a la red como siempre */
 });
