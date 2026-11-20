@@ -1878,7 +1878,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v34 — pedidos al toque (puente v4) + aviso claro cuando las reglas de Firestore se vencen");
+console.log("🧠 Sikodark Radio v35 — pedidos al toque (puente v4) + cartel de permisos con el diagnóstico correcto");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -5452,19 +5452,15 @@ renderFavs();
       var msg = e.message || "Error desconocido";
       /* Mensaje más amigable para errores comunes */
       if (/permission|denied|PERMISSION/i.test(msg)){
-        /* v34: las reglas de Firestore se vencieron (el modo prueba trae fecha de vencimiento).
-           Le mostramos al DJ los pasos exactos + las reglas para pegar. */
-        msg = "❌ Permiso denegado: las reglas de Firestore bloquean la base (las del modo prueba se vencieron).\n"
-            + "Lo arregla el DJ en 1 minuto:\n"
-            + "1) Entrá a console.firebase.google.com → tu proyecto → Firestore Database → pestaña «Reglas».\n"
-            + "2) Borrá TODO y pegá:\n"
-            + "rules_version = '2';\n"
-            + "service cloud.firestore {\n"
-            + "  match /databases/{database}/documents {\n"
-            + "    match /{document=**} { allow read, write: if true; }\n"
-            + "  }\n"
-            + "}\n"
-            + "3) Tocá «Publicar» y recargá esta página.";
+        /* v35 (verificado en vivo el 20/11): las reglas del proyecto son correctas y
+           los pedidos funcionan. Cuando esto aparece es casi siempre porque la regla
+           se editó pero quedó SIN PUBLICAR, o el create quedó más estricto que lo
+           que manda la web. Le mostramos al DJ los pasos correctos. */
+        msg = "❌ Permiso denegado: las reglas de Firestore no dejan guardar el pedido.\n"
+            + "Lo más común: la regla se editó pero quedó SIN PUBLICAR, o el create de temas_pedidos quedó más estricto que lo que manda la web.\n"
+            + "1) Firebase Console → Firestore Database → pestaña «Reglas».\n"
+            + "2) El create de temas_pedidos necesita: request.auth != null, banda string de hasta 60 y fecha int — la web manda exactamente eso (fecha se guarda como int, verificado).\n"
+            + "3) Tocá «Publicar», esperá la confirmación y recargá esta página.";
       } else if (/network|offline|fetch/i.test(msg)){
         msg = "❌ Sin conexión. Revisá tu internet e intentá de nuevo.";
       }
