@@ -1,125 +1,110 @@
 ==========================================================
-   🔑 REGLAS DE FIRESTORE — sikodark radio (VERSIÓN FINAL)
+   🔑 REGLAS DE FIRESTORE — sikodark radio (versión reparada)
 ==========================================================
 Cómo aplicarlas:
 1. https://console.firebase.google.com → proyecto sikodarkradio-26a07
 2. Firestore Database → Reglas
-3. Borrar TODO lo actual y pegar este bloque → Publicar
+3. Borrar todo y pegar esto → Publicar
 
-Por qué esta versión unifica los dos archivos anteriores:
-• El puente puente2-radioboss.js entra con auth anónima (REST) y
-  necesita poder marcar estado (en_cola / sonado / no_encontrado)
-  en temas_pedidos: por eso se permite update SOLO sobre los
-  campos de seguimiento, nunca sobre banda/tema/nombre.
-• El admin (sikoradio@hotmail.com) tiene control total: borrar
-  pedidos, escribir config, gestionar usuarios.
-• El script limpieza_cola.py usa la cuenta de servicio (Admin SDK)
-  y por eso IGNORA estas reglas: borra igual aunque acá no
-  figure el permiso de borrado anónimo.
-• Los votos de la encuesta los suma el cliente con arrayUnion sobre
-  el campo "encuesta" (esa update puntual sí se permite).
-
-----------------------------------------------------------
-BLOQUE PARA PEGAR EN FIREBASE CONSOLE
-----------------------------------------------------------
+Cambios importantes vs. la versión anterior:
+• temas_pedidos: la COLA PÚBLICA de la web necesita LECTURA anónima
+  (si no, la cola muestra "permiso denegado"). La creación queda
+  validada; update/delete solo el admin (el puente con service
+  account bypassa estas reglas, no necesita permiso).
+• config: lectura anónima, escritura solo admin; los votos de la encuesta
+  siguen permitidos para cualquier oyente autenticado.
+• Fallback final: todo lo demás denegado por defecto.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function admin() {
-      return request.auth != null
-        && request.auth.token.email == "sikoradio@hotmail.com";
-    }
+    function logueado() { return request.auth != null; }
+    function admin()    { return request.auth.token.email == "sikoradio@hotmail.com"; }
 
-    // ===== COLA DE PEDIDOS (web pública + puente del DJ) =====
-    match /temas_pedidos/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.estado == "pendiente"
-        && request.resource.data.fecha is int
-        && request.resource.data.banda is string
-        && request.resource.data.banda.size() <= 60
-        && (!("tema" in request.resource.data)
-            || (request.resource.data.tema is string
-                && request.resource.data.tema.size() <= 60));
-      // update del puente anónimo: solo campos de estado/seguimiento
-      allow update: if admin()
-        || (request.auth != null
-            && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['estado', 'mensaje', 'archivo', 'insertadoAt',
-                         'revisadoAt', 'sonadoAt', 'fecha_estado']));
+    // === USUARIOS ===
+    match /usuarios/{docId} {
+      allow read: if logueado();
+      allow create, update: if logueado();
       allow delete: if admin();
     }
 
-    // ===== USUARIOS / PRESENCIA =====
-    match /usuarios/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if admin();
-    }
+    // === PRESENCIA (latido de oyentes) ===
     match /presencia/{docId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if logueado();
     }
 
-    // ===== ESTADÍSTICAS =====
+    // === VISITAS Y ESCUCHAS (estadísticas) ===
     match /visitas/{docId} {
-      allow create: if request.auth != null;
-      allow read: if admin();
+      allow create: if logueado();
+      allow read: if logueado();
     }
     match /escuchas/{docId} {
-      allow create: if request.auth != null;
+      allow create: if logueado();
       allow read: if admin();
     }
+
+    // === ME GUSTAS ===
     match /megustas/{docId} {
-      allow read, create: if request.auth != null;
+      allow read: if logueado();
+      allow create: if logueado();
       allow delete: if admin();
     }
 
-    // ===== TOKENS PUSH (FCM) =====
+    // === TOKENS DE NOTIFICACIÓN PUSH ===
     match /tokens/{docId} {
-      allow create, update: if request.auth != null;
-      allow read, delete: if admin();
+      allow read, write: if logueado();
     }
 
-    // ===== CONFIG (avisos, publicidad, encuesta, pedidos on/off) =====
+    // === CONFIG (avisos, publicidad, encuesta) ===
     match /config/{docId} {
-      allow read: if request.auth != null;
+      allow read: if logueado();
       allow write: if admin();
-      // votos de la encuesta: arrayUnion sobre el campo "encuesta"
-      allow update: if request.auth != null
-        && request.resource.data.diff(resource.data)
-             .affectedKeys().hasOnly(['encuesta']);
+      // Los votos de la encuesta los suma el cliente con arrayUnion
+      allow update: if logueado()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['encuesta']);
     }
 
-    // ===== TODO LO DEMÁS: denegado por defecto =====
+    // === PEDIDOS DE TEMAS ===
+    // Lectura anónima: la cola en vivo de la web la ve todo oyente.
+    // Creación validada: campos obligatorios y largo máximo.
+    // Update/delete: solo admin. El puente del DJ usa service account
+    // (Admin SDK) y por eso ignora estas reglas.
+    match /temas_pedidos/{docId} {
+      allow read: if logueado();
+      allow create: if logueado()
+        && request.resource.data.banda is string
+        && request.resource.data.banda.size() <= 60
+        && request.resource.data.tema is string
+        && request.resource.data.tema.size() <= 60
+        && request.resource.data.fecha is int;
+      allow update, delete: if admin();
+    }
+
+    // Todo lo demás, bloqueado por defecto
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
 
-----------------------------------------------------------
-PRUEBAS RÁPIDAS
-----------------------------------------------------------
-A) Web anónima:
-   1. Abrir la web → "Programá tu tema" → enviar banda + tema.
-   2. Debe aparecer "✅ Programado" y el pedido con ⏳ Pendiente.
-   3. La cola se lee sin candados de permiso.
+==========================================================
+   🧪 PRUEBAS
+==========================================================
+A) Web (celular, anónimo):
+   1. Abrir la app → "Programá tu tema" → enviar banda + tema.
+   2. Debe aparecer "✅ Programado" y el pedido en la cola en vivo
+      con estado ⏳ Pendiente (ahora la cola SÍ puede leer).
 
-B) Puente del DJ (auth anónima REST):
-   1. Tomar un pendiente → marcarlo en_cola (si las reglas no
-      lo permiten, en la ventana negra verás HTTP 403/permission
-      denied en el PATCH).
+B) Panel admin (PC):
+   1. Abrir avisos.html → login con sikoradio@hotmail.com.
+   2. En "🎸 Pedidos de temas" debe listarse el pedido; los botones
+      Borrar y "Limpiar todos" funcionan (admin).
 
-C) Admin (sikoradio@hotmail.com):
-   1. panel-dj.html / avisos.html: pausar pedidos y borrar pedidos
-      debe funcionar; con otra cuenta el write se rechaza.
-
-D) Errores comunes:
-   • "Missing or insufficient permissions" → reglas no publicadas;
+C) Errores comunes:
+   • "Missing or insufficient permissions" → reglas no publicadas aún;
      esperar 1-2 min y recargar.
-   • "auth/operation-not-allowed" → Authentication → Sign-in method
-     → habilitar Anónimo y Email/Password.
-   • El borrado automático de la cola vieja lo hace limpieza_cola.py
-     con cuenta de servicio (no depende de estas reglas).
+   • "auth/operation-not-allowed" → Authentication → Sign-in method →
+     habilitar Anónimo.
+   • El puente del DJ (puente_radioboss.py) marca en_cola/sonado sin
+     tocar estas reglas porque usa service account.

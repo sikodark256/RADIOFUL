@@ -76,7 +76,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:11px}
 .track-artist{font-family:var(--sans);font-weight:700;font-size:10.5px;color:var(--muted);margin-top:2px}
-footer{color:var(--muted);text-align:center;font:11px var(--mono)}
+footer{color:var(--muted);text-align:center;font:11px var(--mono);margin:28px auto 18px}
+#colaBox{margin-top:24px}
 .hidden{display:none}
 
 /* ===== ❤️🟠 BOTONES CIRCULARES ===== */
@@ -253,7 +254,10 @@ body::after{
   color:#ffe066}
 
 /* === BODY === */
-.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d}
+/* ⭐ v32: min-height fija — el cuerpo medía 120px o 162px según el item y
+   cada rotación (cada 12s) cambiaba la altura de la tarjeta y empujaba
+   toda la página hacia abajo: la parte final "parpadeaba". */
+.tick-mag-body{padding:14px 16px 12px;background:#0a0a0d;min-height:164px}
 /* ⭐ Headline del nombre de la banda — tamaño chico como antes */
 .tick-mag-headline{font:900 19px/1.18 var(--sans);color:#fff;text-transform:uppercase;
   letter-spacing:.01em;margin:0 0 9px;
@@ -452,8 +456,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .ped-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:0 0 44px;background:#141419}
 .ped-preview .pt-b{display:block;font:800 12.5px var(--sans);color:#f5f5f7;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ped-preview .pt-a{font:700 10.5px var(--sans);color:var(--primary)}
-.cola-lista{margin-top:16px;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;scrollbar-width:thin}
-.cola-item{display:flex;gap:11px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:8px 11px}
+.cola-lista{margin-top:22px;display:flex;flex-direction:column;gap:13px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
+.cola-item{display:flex;gap:12px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
 .cola-item.mio{border-color:rgba(245,157,61,.45)}
 .cola-item img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:0 0 44px;background:#141419}
 .cola-item .ci-txt{flex:1;min-width:0}
@@ -464,7 +468,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.en_cola{background:rgba(245,157,61,.16);color:var(--primary);border:1px solid rgba(245,157,61,.4)}
 .estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
-.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font:700 12px var(--sans)}
+.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:30px 18px;text-align:center;color:var(--muted);font:700 12.5px/1.6 var(--sans);margin:2px 0 4px}
+.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:16px 0 6px;opacity:.8}
 </style>
 </head>
 <body>
@@ -558,8 +563,8 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 
-<section id="colaBox" class="card hidden" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Temas programados por los oyentes</p></div><span id="colaCount" class="count">0</span></div>
+<section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
+  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Por orden de llegada — se limpia sola cada 5 minutos</p></div><span id="colaCount" class="count">0</span></div>
   <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
 </section>
 </div>
@@ -611,6 +616,12 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
    CONFIGURACIÓN v28
    ========================================================= */
 const STREAM_URL = "https://stream.zeno.fm/xdkqr4btptutv";
+/* ⭐ v31.2: URL del stream con cache-buster — cada conexión es única,
+   así el navegador ni el service worker pueden devolver el buffer viejo
+   del tema anterior (Zeno ignora el parámetro extra, es el mismo stream) */
+function streamFresca(){
+  return STREAM_URL + (STREAM_URL.indexOf("?") >= 0 ? "&" : "?") + "_siko=" + Date.now();
+}
 const MOUNT_ID = "xdkqr4btptutv";
 const LOGO = "icon-512.png";
 const MAX_HISTORY = 10;
@@ -678,7 +689,11 @@ function pauseIcon(){return '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5
 async function startPlayback(){
   try{
     isLoading=true; play.innerHTML=spinner(); ring(true);
-    if(!audio.src) audio.src=STREAM_URL;
+    /* ⭐ v31.2: SIEMPRE conexión nueva al dar play — antes reutilizaba el
+       audio.src viejo y al pausar y volver (o al reabrir la app) seguía
+       desde el buffer del tema anterior. Con URL fresca arranca SIEMPRE
+       al borde del vivo con lo que suena ahora mismo. */
+    audio.src=streamFresca();
     await audio.play();
     log("ok", "Audio reproduciéndose");
     /* ⭐ Activar wake lock para evitar que la pantalla se apague mientras suena */
@@ -1340,6 +1355,80 @@ async function fetchCover(t) {
   quitarTemaCaratula();   /* 🎨 sin carátula → la card vuelve a su color normal */
 }
 
+/* =========================================================
+   ⭐ FIX METADATA — pistas con el artista mal tagueado.
+   A veces un archivo tiene el artista tagueado como "sikodark"
+   y al aire sale "sikodark - Bohemian Rhapsody": la web muestra
+   la canción pero abajo "sikodark" y la carátula no aparece.
+   Recuperamos el artista REAL (de los pedidos o de iTunes)
+   antes de mostrar el tema, así la info y la carátula salen
+   siempre correctas.
+   ========================================================= */
+const LS_FIX_ARTIST = "sikodark-fix-artist";
+let FIX_ARTIST = {};
+try { FIX_ARTIST = JSON.parse(localStorage.getItem(LS_FIX_ARTIST) || "{}"); } catch (e) { FIX_ARTIST = {}; }
+
+function sikoNorm(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function artistaRoto(a) {
+  if (!a) return true;
+  const v = String(a).trim().toLowerCase();
+  if (!v) return true;
+  return /^(sikodark|sikodark\s*radio|radio\s*sikodark|radio|dj|unknown(\s*artist)?|artista\s*desconocido|desconocido|varios|various(\s*artists)?)$/.test(v);
+}
+
+const _fixEnCurso = {};
+function corregirArtista(track) {
+  if (!track || !track.title) return Promise.resolve(track);
+  const malo = artistaRoto(track.artist) || (track.artist && sikoNorm(track.artist) === sikoNorm(track.title));
+  if (!malo) return Promise.resolve(track);
+  const k = sikoNorm(track.title);
+  if (!k || k.length < 3) return Promise.resolve(track);
+
+  /* corrección ya conocida (30 días si se encontró, 6 h si no) */
+  const c = FIX_ARTIST[k];
+  if (c && (c.artist || c.neg) && Date.now() - (c.t || 0) < (c.artist ? 30 : 0.25) * 24 * 3600 * 1000) {
+    return Promise.resolve(c.artist ? { title: track.title, artist: c.artist } : track);
+  }
+
+  if (_fixEnCurso[k]) return _fixEnCurso[k].then(a => (a ? { title: track.title, artist: a } : track));
+  _fixEnCurso[k] = (async function () {
+    /* 1) ¿es un pedido reciente? tienen la banda correcta */
+    try {
+      const idx = window.__sikoPedidosIdx || {};
+      let hit = idx[k];
+      if (!hit) {
+        for (const clave of Object.keys(idx)) {
+          if ((clave.length >= 5 && clave.indexOf(k) >= 0) || (k.length >= 5 && k.indexOf(clave) >= 0)) { hit = idx[clave]; break; }
+        }
+      }
+      if (hit && hit.banda) return hit.banda;
+    } catch (e) {}
+    /* 2) iTunes: buscar por el título solo y tomar el artista */
+    try {
+      const r = await fetchConProxy(ITUNES_URL + "?term=" + encodeURIComponent(track.title.trim()) + "&media=music&entity=song&limit=5");
+      const d = await r.json();
+      const rs = (d && d.results) || [];
+      for (const res of rs) {
+        if (res.artistName && sikoNorm(res.trackName) === k) return res.artistName;
+      }
+      for (const res of rs) {
+        if (res.artistName && sikoNorm(res.trackName).indexOf(k) >= 0) return res.artistName;
+      }
+    } catch (e) {}
+    return null;
+  })();
+  return _fixEnCurso[k].then(function (art) {
+    delete _fixEnCurso[k];
+    FIX_ARTIST[k] = art ? { artist: art, t: Date.now() } : { neg: true, t: Date.now() };
+    try { localStorage.setItem(LS_FIX_ARTIST, JSON.stringify(FIX_ARTIST)); } catch (e) {}
+    return art ? { title: track.title, artist: art } : track;
+  });
+}
+
 let ultimaActualizacionMs = 0;   /* timestamp del último update exitoso */
 let sseActivo = false;            /* true si SSE está recibiendo datos */
 let fastPollHasta = 0;            /* hasta cuándo hacer polling agresivo */
@@ -1350,7 +1439,9 @@ function procesarMetadataRaw(streamTitle) {
   console.log("[Metadata] Procesando:", streamTitle, "→ artist:", track.artist, "title:", track.title);
   if (track.title && track.title !== "En vivo") {
     ultimaActualizacionMs = Date.now();
-    setTrack(track);
+    /* ⭐ corregir artista mal tagueado ANTES de mostrar el tema,
+       así salen bien la info y la carátula */
+    corregirArtista(track).then(function (t) { setTrack(t); });
     /* ⭐ Ocultar indicador "Actualizando..." cuando llega metadata */
     showRefresh(false);
   }
@@ -1710,7 +1801,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v28 — patrón original de carátulas restaurado + Montserrat + auto-update");
+console.log("🧠 Sikodark Radio v32 — anti ping-pong del puente + ticker sin saltos + espacios nuevos + player al vivo al abrir");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1801,7 +1892,7 @@ iniciarPush();
     try{
       audio.pause();
       setTimeout(function(){
-        audio.src = STREAM_URL;
+        audio.src = streamFresca();   /* ⭐ v31.2: URL única → nunca buffer viejo */
         audio.load();
         audio.play().then(function(){
           fallos = 0;
@@ -1864,8 +1955,17 @@ iniciarPush();
            si la canción cambió. */
         activarFastPoll();
 
+        /* ⭐ v32: si estuvo 15s+ en background, el buffer del audio quedó
+           con el tema anterior (y como el currentTime sigue avanzando, el
+           detector de freeze no lo ve). Salto directo al borde del vivo.
+           (v31.2 era 30s — el usuario lo quería más agresivo: cada vez que
+           abre la app tiene que arrancar en lo que suena AHORA.) */
+        if (isPlaying && tiempoInactivo > 15000){
+          console.log("[Anti-freeze] 15s+ en background — saltando al borde del vivo");
+          reconectar();
+        }
         /* Si el audio está pausado pero el usuario cree que está sonando → reconectar */
-        if (isPlaying && audio.paused){
+        else if (isPlaying && audio.paused){
           console.log("[Anti-freeze] Audio pausado en background — reconectando");
           reconectar();
         }
@@ -1888,6 +1988,18 @@ iniciarPush();
       }
     } else {
       _ultimaVisitaVisible = Date.now();
+    }
+  });
+
+  /* ⭐ v31.2: al REABRIR la app el navegador puede restaurar la página
+     desde el bfcache (caché de adelante/atrás) con el audio apuntando al
+     buffer viejo — el tema anterior. pageshow con e.persisted = página
+     restaurada → resincronizar stream y metadata al toque. */
+  window.addEventListener("pageshow", function(e){
+    if (e && e.persisted){
+      console.log("[Anti-freeze] Página restaurada del bfcache — resincronizando");
+      activarFastPoll();
+      if (isPlaying) reconectar();
     }
   });
 
@@ -4944,6 +5056,16 @@ renderFavs();
     /* ⏱️ Cada 12 segundos — más tiempo para leer contenido rico.
        (la encuesta se salta automáticamente gracias al check _visible) */
     tickerTimer = setInterval(rotar, 12000);
+
+    /* ⭐ API interna: expone el pintado a la función de PEDIDOS (las
+       funciones de pintado son locales de modoTicker, no del IIFE) */
+    window.sikodarkTickerAPI = {
+      pintar: pintarItem,
+      transicion: transicionCarrusel,
+      reiniciarTimer: function(){
+        if (tickerTimer){ clearInterval(tickerTimer); tickerTimer = setInterval(rotar, 12000); }
+      }
+    };
   }
 
   function pintar(a){
@@ -4952,6 +5074,56 @@ renderFavs();
     if (tiene) mostrarPubli(a);
     else modoTicker();
   }
+
+  /* =========================================================
+     🎸 PEDIDO DE LOS OYENTES — cuando alguien programa un tema
+     desde la web, aparece ACÁ (en esta misma ventana de info y
+     efemérides) con su carátula, igual que los datos de las bandas
+     ========================================================= */
+  window.sikodarkMostrarPedido = function(p){
+    try{
+      var api = window.sikodarkTickerAPI;
+      if (!api || !api.transicion) return;   /* el ticker todavía no arrancó */
+      if (!p || modoActual !== "ticker") return;
+      if (!p.banda && !p.tema) return;
+      var que = [p.banda, p.tema].filter(Boolean).join(" — ");
+      var mio = (typeof usuarioUID !== "undefined" && p.uid && p.uid === usuarioUID);
+      var texto = mio
+        ? "Lo pediste vos y ya está en la cola de la radio — enseguida entra al aire 🤘"
+        : (p.nombre ? p.nombre : "Alguien") + " lo programó y ya está en la cola de la radio — enseguida entra al aire 🤘";
+      var item = {
+        tag: "🎸 PEDIDO DE LOS OYENTES",
+        headline: que.toUpperCase(),
+        texto: texto,
+        img: p.cover || "",
+        estado: "", anioFormacion: "", origen: "", genero: "", wikiUrl: "",
+        score: 9
+      };
+      /* si la encuesta estaba fija en pantalla, liberar la rotación
+         (el pedido la reemplaza ahora, y la encuesta vuelve después) */
+      var itemActual = tickerItems.length ? tickerItems[0] : null;
+      if (itemActual && itemActual.tipo === "encuesta" && itemActual._visible) itemActual._visible = false;
+
+      api.transicion(item);
+      /* reiniciar el contador de rotación para que el pedido tenga
+         sus 12 segundos completos en pantalla */
+      api.reiniciarTimer();
+
+      /* si vino sin carátula, buscarla en iTunes y repintar el mismo item */
+      if (!item.img){
+        fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(que))
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            var r0 = d && d.results && d.results[0];
+            if (r0 && r0.artworkUrl100 && tickTag.textContent.indexOf("PEDIDO") >= 0 && tickHeadline.textContent === item.headline){
+              item.img = r0.artworkUrl100;
+              api.pintar(item);
+            }
+          })
+          .catch(function(){});
+      }
+    }catch(e){}
+  };
 
   try{
     dbFB.collection("config").doc("publicidad").onSnapshot(function(snap){
@@ -5138,7 +5310,7 @@ renderFavs();
       var intentos = 0;
       var iv = setInterval(function(){
         intentos++;
-        if (usuarioUID || intentos > 16){
+        if (usuarioUID || intentos > 30){   /* v29: espera hasta 15s */
           clearInterval(iv);
           resolve(usuarioUID);
         }
@@ -5264,70 +5436,326 @@ renderFavs();
   }
 
   var primerSnapshot = true;
+  var pedidosVistos = {};   /* ids ya notificados — evita avisos repetidos */
+
+  /* =====================================================
+     🖼️ CARÁTULAS de la cola — los pedidos escritos a mano
+     (sin usar el autocompletado) llegan sin imagen: la
+     buscamos en iTunes y la guardamos en localStorage
+     para no volver a pedirla en cada recarga
+     ===================================================== */
+  var COVERS_KEY = "sikodark-cola-covers";
+  var colaCovers = {};
+  try { colaCovers = JSON.parse(localStorage.getItem(COVERS_KEY) || "{}") || {}; } catch(e){ colaCovers = {}; }
+  var colaCoverFallo = {};    /* iTunes no la tenía (esta sesión) — no reintentar */
+  var colaCoverBuscando = {}; /* búsqueda en curso — no duplicar */
+
+  function claveCola(f){
+    return String((f.tema || "") + " " + (f.banda || "")).toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function pintarCoverEnDom(ck, url){
+    if (!colaLista) return;
+    try{
+      colaLista.querySelectorAll('img[data-ck="' + ck + '"]').forEach(function(im){
+        im.removeAttribute("data-f");
+        im.src = url;
+      });
+    }catch(e){}
+  }
+
+  function buscarCoverCola(f, ck){
+    if (colaCoverBuscando[ck] || colaCoverFallo[ck]) return;
+    var q = [f.tema, f.banda].filter(Boolean).join(" ").trim();
+    if (!q) return;
+    colaCoverBuscando[ck] = 1;
+    fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(q))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var r0 = d && d.results && d.results[0];
+        if (r0 && r0.artworkUrl100){
+          var url = String(r0.artworkUrl100).replace("100x100", "200x200");  /* más nítida */
+          colaCovers[ck] = url;
+          try{ localStorage.setItem(COVERS_KEY, JSON.stringify(colaCovers)); }catch(e){}
+          pintarCoverEnDom(ck, url);
+        } else {
+          colaCoverFallo[ck] = 1;
+        }
+      })
+      .catch(function(){})
+      .then(function(){ delete colaCoverBuscando[ck]; });
+  }
+
+  /* ⭐ v29 FIX: fechas en número — los pedidos viejos podían
+     guardar "fecha" como texto ISO en vez de número */
+  function fechaDoc(f){
+    if (typeof f.fecha === "number") return f.fecha;
+    var p = Date.parse(f.fecha);
+    return isNaN(p) ? 0 : p;
+  }
+
+  /* ⭐ v31.1 ANTI-PARPADEO: la cola solo se re-dibuja cuando los datos
+     cambiaron DE VERDAD. Antes el refresco de los "lleva X min esperando"
+     rearmaba todo el HTML cada 30 segundos y las carátulas reparpadeaban.
+     Ahora: si nada cambió, solo se actualizan esos textos en su lugar. */
+  var firmaColaUltima = null;
+
+  function firmaCola(items){
+    var partes = [];
+    items.forEach(function(f){
+      try{
+        partes.push((f.__id || "") + "|" + (f.estado || "") + "|" + (f.fecha_estado || fechaDoc(f))
+          + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || ""));
+      }catch(e){}
+    });
+    return partes.join(";;");
+  }
+
+  function refrescarEsperas(){
+    if (!colaLista) return;
+    var ahora = Date.now();
+    try{
+      colaLista.querySelectorAll("span.ci-esp[data-fd]").forEach(function(sp){
+        var fd = Number(sp.getAttribute("data-fd"));
+        if (!fd) return;
+        var esp = Math.max(0, Math.round((ahora - fd) / 60000));
+        var txt = "";
+        if (esp >= 1) txt = " · lleva " + esp + " min esperando";
+        if (esp >= 15) txt += " — quizá no esté en la música de la radio";
+        if (sp.textContent !== txt) sp.textContent = txt;   /* sin tocar el resto */
+      });
+    }catch(e){}
+  }
 
   function pintarCola(docs){
+    var ahora = Date.now();
     var items = [];
     docs.forEach(function(d){
       var f = d.data();
       if (!f || (!f.banda && !f.tema)) return;
+      var est = f.estado;
+      if (est === "sonado" || est === "no_encontrado"){
+        /* ⭐ v32 ANTI-PING-PONG: el puente de la PC del DJ vuelve a escribir
+           pedidos ya sonados (con fecha de hace horas) después de que la web
+           los borró. Cada re-creación disparaba un snapshot → la caja se
+           re-dibujaba cientos de veces → "Cola limpia" parpadeaba.
+           Los finis VIEJOS (>5 min) no se pintan ni cuentan: invisibles. */
+        var fd = (typeof f.fecha_estado === "number" && f.fecha_estado > 0)
+          ? f.fecha_estado : fechaDoc(f);
+        if (fd > 0 && (ahora - fd) > VENTANA_LIMPIEZA) return;
+      }
+      f.__id = d.id;
       items.push(f);
     });
-    if (colaCount) colaCount.textContent = items.length + (items.length === 1 ? " pedido" : " pedidos");
+    /* ⭐ v31.1: si la foto de la cola es idéntica a la última dibujada,
+       no rearmar el HTML (eso era lo que hacía parpadear la parte de
+       abajo) — solo refrescar los minutos de espera.
+       ⭐ v32: la firma se calcula sobre los docs FILTRADOS, así los
+       muertos vivos que re-crea el puente ni siquiera se notan. */
+    var firma = firmaCola(items);
+    if (firma === firmaColaUltima){ refrescarEsperas(); return; }
+    firmaColaUltima = firma;
+    /* ⭐ v29 FIX: la consulta ahora trae los 25 pedidos MÁS NUEVOS
+       (orderBy fecha desc — antes limit(30) sin orden devolvía
+       los primeros 30 docs por ID aleatorio y los pedidos nuevos
+       casi nunca entraban: la cola se veía vacía/vieja aunque
+       Firebase los guardaba bien). Reordenamos acá por si algún
+       doc viejo llegó sin "fecha" o con fecha en formato texto. */
+    /* ⭐ v31 COLA FIFO: arriba los pedidos VIVOS por ORDEN DE LLEGADA
+       (el más viejo primero = el próximo en sonar, igual que los toma
+       el puente en la PC del DJ). Abajo, solo como recuerdo, los que ya
+       terminaron (✅ sonó / ❌ no estaba) hasta que la limpieza de los
+       5 minutos los borre. */
+    var vivos = [], finis = [];
+    items.forEach(function(f){
+      if (f.estado === "sonado" || f.estado === "no_encontrado") finis.push(f);
+      else vivos.push(f);
+    });
+    vivos.sort(function(a,b){ return fechaDoc(a) - fechaDoc(b); });
+    finis.sort(function(a,b){ return fechaDoc(b) - fechaDoc(a); });
+    var visibles = vivos.slice(0, 12).concat(finis.slice(0, 4));
+    if (colaCount) colaCount.textContent = vivos.length
+      ? vivos.length + " en cola"
+      : (finis.length ? "cola limpia" : "0 pedidos");
+
+    /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
+       la banda real cuando un archivo del DJ está mal tagueado */
+    try{
+      var idx = {};
+      items.forEach(function(f){
+        if (!f.tema || !f.banda) return;
+        var k = String(f.tema).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                  .replace(/[^a-z0-9]+/g, " ").trim();
+        if (k && !idx[k]) idx[k] = { banda: f.banda, cover: f.cover || null };
+      });
+      window.__sikoPedidosIdx = idx;
+    }catch(e){}
     if (!items.length){
-      colaLista.innerHTML = '<p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p>';
+      colaLista.innerHTML = '<p class="cola-vacio">Cola limpia — tocá "Programá tu tema" 🤘</p>';
       actualizarBadge(items);   /* cola vacía → el badge se apaga */
       return;
     }
-    colaLista.innerHTML = items.map(function(f){
+    function filaCola(f){
       var est = ESTADOS[f.estado] || ESTADOS.pendiente;
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
       var titulo = f.tema || f.banda;
-      var sub = (f.tema && f.banda) ? f.banda : "sikodark radio";
+      var sub = (f.tema && f.banda) ? f.banda : "pedido de los oyentes";
+      var ck = claveCola(f);
+      var cov = f.cover || colaCovers[ck] || "";
+      /* ⏱ v31: cuánto lleva esperando — si espera mucho rato es casi
+         seguro que no está en la música de la radio (el puente tarda
+         menos de ~10 min en tomar los pedidos que sí tiene).
+         v31.1: se mete en un span vacío y lo rellena refrescarEsperas(),
+         así el minutero corre SIN rearmar el HTML (no parpadea). */
+      var espHTML = "";
+      if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
+        var fd = fechaDoc(f);
+        if (fd > 0) espHTML = '<span class="ci-esp" data-fd="' + fd + '"></span>';
+      }
       return '<div class="cola-item' + (mio ? " mio" : "") + '">'
-        + '<img src="' + esc(f.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'">'
+        + '<img src="' + esc(cov || "apple-icon.png") + '" alt="" data-ck="' + esc(ck) + '"'
+        + ' onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'apple-icon.png\';}">'
         + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
-        + '<div class="ci-a">' + esc(sub) + esc(de) + '</div></div>'
+        + '<div class="ci-a">' + esc(sub) + esc(de) + espHTML + '</div></div>'
         + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
         + '</div>';
-    }).join("");
+    }
+    colaLista.innerHTML = vivos.slice(0, 12).map(filaCola).join("")
+      + (finis.length
+          ? '<div class="cola-sep">🧹 ya sonaron o no estaban — se borran a los 5 min</div>'
+            + finis.slice(0, 4).map(filaCola).join("")
+          : "");
+    /* 🖼️ buscar en iTunes las carátulas que falten (una sola vez cada una) */
+    visibles.forEach(function(f){
+      var ck = claveCola(f);
+      if (!ck || f.cover || colaCovers[ck]) return;
+      buscarCoverCola(f, ck);
+    });
+    refrescarEsperas();   /* ⏱ rellenar los "lleva X min" recién creados */
     actualizarBadge(items);
+  }
+
+  /* 🧹 v30: LIMPIEZA AUTOMÁTICA CONTINUA — la cola queda solo con lo
+     vivo (pendiente / en cola). Los "sonado" y "no_encontrado" se
+     BORRAN A LOS 5 MINUTOS de entrar en ese estado:
+     - Si al abrir la app ya había viejos (sonaron hace horas) → fuera al toque.
+     - Un timer cada 30s revisa, así los 5 min corren aunque no llegue
+       ningún cambio nuevo por snapshot.
+     Así la colección nunca crece de más y queda siempre lista para
+     los pedidos nuevos. Si las reglas de Firebase no permiten borrar,
+     falla en silencio (y de refuerzo está el script limpieza_cola.py
+     en la PC del DJ, que borra con permiso total). */
+  var VENTANA_LIMPIEZA = 5 * 60 * 1000;   /* 5 minutos */
+  var sonadoVisto = {};       /* docId -> momento local en que lo vi sonado */
+  var docsColaActuales = [];  /* última foto de la cola, para el timer */
+
+  function borrarPedido(d){
+    d.ref.delete().catch(function(){ /* sin permiso de borrado: no molesta */ });
+  }
+
+  function procesarLimpieza(docs){
+    if (!docs || !docs.length) return;
+    var ahora = Date.now();
+    var vivos = {};
+    docs.forEach(function(d){
+      try{
+        var f = d.data();
+        if (!f) return;
+        vivos[d.id] = 1;
+        var est = f.estado;
+        if (est !== "sonado" && est !== "no_encontrado") return;
+        if (sonadoVisto[d.id] === undefined){
+          sonadoVisto[d.id] = ahora;
+          /* si ya era viejo al cargar (sonó hace horas), no espera los 5 min */
+          var fdoc = fechaDoc(f);
+          if (fdoc > 0 && ahora - fdoc >= VENTANA_LIMPIEZA){ borrarPedido(d); }
+          return;
+        }
+        if (ahora - sonadoVisto[d.id] >= VENTANA_LIMPIEZA){ borrarPedido(d); }
+      }catch(e){}
+    });
+    /* liberar memoria de docs que ya no existen */
+    for (var k in sonadoVisto){ if (!vivos[k]) delete sonadoVisto[k]; }
   }
 
   function escucharCola(){
     try{
-      dbFB.collection("temas_pedidos").orderBy("fecha", "desc").limit(12).onSnapshot(function(snap){
+      /* ⭐ v29 FIX: orderBy("fecha","desc") + limit(25) — trae SIEMPRE
+         los 25 pedidos más recientes, así tu pedido entra seguro
+         (el tuyo tiene fecha = ahora, es el más nuevo de todos). */
+      var pintarTimer = null;
+      dbFB.collection("temas_pedidos").orderBy("fecha","desc").limit(25).onSnapshot(function(snap){
         if (colaBox) colaBox.classList.remove("hidden");
-        pintarCola(snap.docs);
-        /* 🔔 pedidos NUEVOS (después del primer pantallazo) → aviso flotante */
-        if (primerSnapshot){ primerSnapshot = false; }
-        else {
+        docsColaActuales = snap.docs;      /* 🧹 foto actual para el timer de limpieza */
+        if (primerSnapshot){
+          primerSnapshot = false;
+          snap.docs.forEach(function(d){ pedidosVistos[d.id] = 1; });
+          pintarCola(snap.docs);           /* primer pantallazo: al toque */
+          procesarLimpieza(snap.docs);
+        } else {
+          /* ⭐ v32 ANTI-PING-PONG: los snapshots llegan en RÁFAGAS (el puente
+             re-crea un pedido viejo → la web lo borra → otro snapshot).
+             Pintar cada paso de la ráfaga era el parpadeo. Esperamos 250ms
+             y dibujamos SOLO el estado final de la ráfaga. */
+          if (pintarTimer) clearTimeout(pintarTimer);
+          pintarTimer = setTimeout(function(){
+            pintarTimer = null;
+            pintarCola(docsColaActuales);
+            procesarLimpieza(docsColaActuales);   /* 🧹 borra lo sonado a los 5 min */
+          }, 250);
           snap.docChanges().forEach(function(ch){
-            if (ch.type === "added" && ch.doc){
+            if (ch.type === "added" && ch.doc && !pedidosVistos[ch.doc.id]){
+              pedidosVistos[ch.doc.id] = 1;
               var f = ch.doc.data();
-              if (f && (f.banda || f.tema) && f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+              if (f && (f.banda || f.tema)){
+                /* ⭐ v32: si el doc "nuevo" ya llega sonado/no_encontrado es
+                   un muerto vivo re-creado por el puente — NO avisar. */
+                if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
+                  if (f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
+                  if (window.sikodarkMostrarPedido) window.sikodarkMostrarPedido(f);
+                }
+              }
             }
           });
         }
       }, function(err){
-        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err.code);
-        if (colaBox) colaBox.classList.add("hidden");
+        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err && err.code);
+        if (err && err.code === "permission-denied"){
+          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">🔒 La cola de pedidos está deshabilitada — falta habilitar la lectura de "temas_pedidos" en las reglas de Firebase</p>';
+        } else {
+          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo leer la cola de pedidos — recargá la página en un rato</p>';
+        }
       });
+
+      /* 🧹 revisión cada 30s — la ventana de 5 minutos sigue corriendo y
+         los "lleva X min" se actualizan tocando SOLO esos textos
+         (v31.1: ya no se redibuja la cola acá — eso la hacía parpadear) */
+      setInterval(function(){
+        procesarLimpieza(docsColaActuales);
+        refrescarEsperas();
+      }, 30000);
     }catch(e){
       console.warn("[Cola] No se pudo escuchar la cola:", e.message);
     }
   }
 
-  if (window.dbFB){
+  /* ⭐ FIX: dbFB se declara con "const" (línea ~1804) y por eso NO existe
+     como window.dbFB — el viejo "if (window.dbFB)" daba siempre falso y
+     el listener de la cola NUNCA arrancaba: la cola quedaba siempre
+     vacía aunque los pedidos se guardaban bien en Firebase */
+  if (typeof dbFB !== "undefined"){
     if (usuarioUID){
       escucharCola();
     } else {
       var intentos = 0;
       var iv = setInterval(function(){
         intentos++;
-        if (usuarioUID || intentos > 16){
+        if (usuarioUID || intentos > 30){   /* v29: espera hasta 15s */
           clearInterval(iv);
           if (usuarioUID) escucharCola();
+          else if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo conectar con Firebase — la cola de pedidos no está disponible ahora</p>';
         }
       }, 500);
     }

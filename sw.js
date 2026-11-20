@@ -1,5 +1,5 @@
-/* sikodark radio — Service Worker v28 con auto-update */
-const CACHE = 'sikodark-v28';
+/* sikodark radio — Service Worker v27 con auto-update */
+const CACHE = 'sikodark-v27';
 const ASSETS = [
   './',
   './index.html',

@@ -300,13 +300,8 @@ document.getElementById("btnOrdenFecha").onclick = function(){
   render();
 };
 
-/* ===== 🛠️ CONTROLES (solo el admin por reglas de Firestore) ===== */
-function esAdmin(){
-  var u = firebase.auth().currentUser;
-  return !!(u && u.email === "sikoradio@hotmail.com");
-}
+/* ===== 🛠️ CONTROLES ===== */
 window.bloquearUsuario = async function(id, estaBloqueado){
-  if (!esAdmin()){ alert("Solo la cuenta de administradora puede bloquear oyentes."); return; }
   try{
     if (estaBloqueado){
       await db.collection("usuarios").doc(id).set({ bloqueado: false }, { merge:true });
@@ -319,7 +314,6 @@ window.bloquearUsuario = async function(id, estaBloqueado){
 };
 
 window.renombrarUsuario = async function(id){
-  if (!esAdmin()){ alert("Solo la cuenta de administradora puede renombrar oyentes."); return; }
   const u = USERS.find(x => x.docId === id);
   const actual = (u && u.nombre) || "Anónimo";
   const nuevo = prompt("Nombre del oyente:", actual);
