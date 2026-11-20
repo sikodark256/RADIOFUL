@@ -1878,7 +1878,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v33 — pedidos que entran al aire al toque (puente v4) + posición real de RadioBOSS visible en la cola");
+console.log("🧠 Sikodark Radio v34 — pedidos al toque (puente v4) + aviso claro cuando las reglas de Firestore se vencen");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -5264,9 +5264,14 @@ renderFavs();
     limpiarError();
     var div = document.createElement("div");
     div.id = "pedError";
-    div.style.cssText = "background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:11px;text-align:center;color:#ff9d96;font:700 12px var(--sans);margin-top:10px;line-height:1.4";
+    /* v34: si el mensaje tiene varias líneas (ej. los pasos de las reglas), se alinea a la izquierda */
+    var multilinea = msg.indexOf("\n") >= 0;
+    div.style.cssText = "background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:11px;text-align:" + (multilinea ? "left" : "center") + ";white-space:pre-line;color:#ff9d96;font:700 12px var(--sans);margin-top:10px;line-height:1.45";
     div.textContent = msg;
-    btnCancelar.parentNode.insertBefore(div, btnCancelar.parentNode.firstChild);
+    /* v34: el cartel va ANTES de la fila de botones (no adentro de la fila flex,
+       si no el mensaje largo empuja los botones y queda roto) */
+    var filaBtns = btnCancelar.parentNode;
+    filaBtns.parentNode.insertBefore(div, filaBtns);
   }
 
   btn.onclick = abrir;
@@ -5447,7 +5452,19 @@ renderFavs();
       var msg = e.message || "Error desconocido";
       /* Mensaje más amigable para errores comunes */
       if (/permission|denied|PERMISSION/i.test(msg)){
-        msg = "❌ Permiso denegado. El DJ tiene que habilitar la colección 'temas_pedidos' en Firebase.";
+        /* v34: las reglas de Firestore se vencieron (el modo prueba trae fecha de vencimiento).
+           Le mostramos al DJ los pasos exactos + las reglas para pegar. */
+        msg = "❌ Permiso denegado: las reglas de Firestore bloquean la base (las del modo prueba se vencieron).\n"
+            + "Lo arregla el DJ en 1 minuto:\n"
+            + "1) Entrá a console.firebase.google.com → tu proyecto → Firestore Database → pestaña «Reglas».\n"
+            + "2) Borrá TODO y pegá:\n"
+            + "rules_version = '2';\n"
+            + "service cloud.firestore {\n"
+            + "  match /databases/{database}/documents {\n"
+            + "    match /{document=**} { allow read, write: if true; }\n"
+            + "  }\n"
+            + "}\n"
+            + "3) Tocá «Publicar» y recargá esta página.";
       } else if (/network|offline|fetch/i.test(msg)){
         msg = "❌ Sin conexión. Revisá tu internet e intentá de nuevo.";
       }
