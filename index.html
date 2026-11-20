@@ -917,14 +917,20 @@ function esLikedSeguro(track){
 function agregarAlHistorial(track) {
   try {
     if (!track.title || track.title === "En vivo" || track.title === "Conectando…") return;
+    /* ⭐ v32.1 FIX CARÁTULAS DESFASADAS: acá NO va la carátula global —
+       cuando un tema nuevo llega, `cover` todavía guarda la carátula del
+       TEMA ANTERIOR (fetchCover tarda unos segundos en traer la nueva).
+       Guardarla acá metía en el historial la tapa de la canción previa
+       (Queen con tapa de Mötley Crüe, etc.). El item arranca sin carátula
+       y fetchCover completa la correcta apenas la encuentra. */
     const item = {
       title: track.title,
       artist: track.artist || null,
-      cover: cover || null
+      cover: null
     };
     const mismo = (x) => x && x.title === item.title && x.artist === item.artist;
     if (history.length > 0 && mismo(history[0])) {
-      if (item.cover && history[0].cover !== item.cover) history[0].cover = item.cover;
+      /* mismo tema que ya está arriba — no duplicar (su carátula sigue ahí) */
     } else {
       history = history.filter(x => !mismo(x));
       history.unshift(item);
@@ -933,6 +939,57 @@ function agregarAlHistorial(track) {
     localStorage.setItem("sikodark-history", JSON.stringify(history));
     renderHistory();
   } catch(e) {}
+}
+
+/* =========================================================
+   ⭐ v32.1 REPARACIÓN DEL HISTORIAL — las versiones anteriores
+   guardaban en el historial la carátula del TEMA ANTERIOR
+   (desfasaje de uno: Queen con tapa de Mötley Crüe).
+   La primera vez tras actualizar se re-busca la carátula real
+   de cada tema guardado (iTunes, de a uno) y se corrige en el
+   localStorage. Después, en cada carga solo se reintentan las
+   primeras 3 que hayan quedado sin carátula.
+   ========================================================= */
+const HIST_REPAIR_KEY = "sikodark-hist-reparado";
+let _reparando = false;
+async function repararHistorial(){
+  if (_reparando || !history.length) return;
+  _reparando = true;
+  try{
+    const ya = localStorage.getItem(HIST_REPAIR_KEY);
+    const full = !ya;                       /* primera vez: revisar TODAS */
+    let lista = [];
+    if (full){
+      for (let i = 0; i < history.length; i++) lista.push(i);
+      localStorage.setItem(HIST_REPAIR_KEY, String(Date.now()));
+    } else {
+      history.slice(0, 3).forEach(function(x,i){ if (x && !x.cover) lista.push(i); });
+      if (!lista.length) return;
+    }
+    for (let n = 0; n < lista.length; n++){
+      const x = history[lista[n]];
+      if (!x || !x.title) continue;
+      try{
+        let r = null;
+        try { r = await cover_iTunes_cancion(x); } catch(e){}
+        if (!r || !r.url){ try { r = await cover_iTunes_soloTitulo(x); } catch(e){} }
+        const url = r && r.url;
+        if (url){
+          /* verificar que la entrada siga siendo la misma (el historial puede
+             haber cambiado mientras buscaba) */
+          const j = history.findIndex(function(y){
+            return y && y.title === x.title && (y.artist||null) === (x.artist||null);
+          });
+          if (j >= 0 && history[j].cover !== url){
+            history[j].cover = url;
+            localStorage.setItem("sikodark-history", JSON.stringify(history));
+            renderHistory();
+          }
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+  _reparando = false;
 }
 
 function renderHistory(){
@@ -949,7 +1006,7 @@ function renderHistory(){
     }).join("");
   } catch(e) {}
 }
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
 
 async function fetchConProxy(url, opciones = {}) {
   /* ⭐ Cache-busting: si la URL no tiene _, le agrego ?_t=timestamp
@@ -1302,8 +1359,14 @@ async function cover_Spotify_artista(t) {
   return null;
 }
 
+/* ⭐ v32.1: anula búsquedas viejas si el tema cambió, y recuerda a qué
+   tema pertenece la carátula global (para no usar la del tema anterior) */
+let coverToken = 0;
+let ultimoCoverKey = "";
+
 async function fetchCover(t) {
   if (!t.title || t.title === "En vivo") return;
+  const miToken = ++coverToken;   /* ⭐ v32.1: si llega otro tema, esta búsqueda se aborta sola */
   console.log("%c[Cover] Buscando carátula para: " + (t.artist||"?") + " - " + t.title, "color:#ff8a24;font-weight:bold");
   /* ⭐ NUEVO ORDEN sin Deezer (CORS bloqueado en browser, API con rate limits):
      1. iTunes track (gratis, sin límites, CORS-friendly)
@@ -1330,14 +1393,24 @@ async function fetchCover(t) {
     try {
       console.log("[Cover] 🔍 Probando " + e.nombre + "...");
       const r = await e.fn(t);
+      if (miToken !== coverToken) return;   /* ⭐ v32.1: llegó otro tema mientras buscaba */
       if (r && r.url) {
         console.log("%c[Cover] ✅ " + e.nombre + " encontró carátula", "color:#34c759", r.url.substring(0, 100));
         cover = r.url;
         coverEl.src = cover;
         actualizarMediaSession(t, cover);
         aplicarTemaCaratula(cover).catch(function(){});   /* 🎨 pinta la card — si falla, no afecta nada */
-        if (history.length > 0 && history[0].title === t.title) {
-          history[0].cover = cover;
+        if (typeof cambiarFondo === "function") cambiarFondo(cover);   /* ⭐ v32.1: el fondo también con la carátula CORRECTA */
+        ultimoCoverKey = (t.artist||"").toLowerCase().trim() + "||" + t.title.toLowerCase().trim();
+        /* ⭐ v32.1: actualizar la entrada de historial de ESTE tema
+           (título Y artista) — antes solo miraba history[0] por título,
+           y si cambiaba de tema rápido la carátula le quedaba al tema
+           viejo: ese era el desfasaje del historial. */
+        const idx = history.findIndex(function(x){
+          return x && x.title === t.title && (x.artist||null) === (t.artist||null);
+        });
+        if (idx >= 0 && history[idx].cover !== cover){
+          history[idx].cover = cover;
           localStorage.setItem("sikodark-history", JSON.stringify(history));
           renderHistory();
         }
@@ -1349,6 +1422,7 @@ async function fetchCover(t) {
       console.warn("[Cover] ❌ " + e.nombre + " falló:", err.message || err);
     }
   }
+  if (miToken !== coverToken) return;   /* ⭐ v32.1: otra búsqueda más nueva sigue en curso */
   console.error("%c[Cover] 🚫 NINGUNA estrategia encontró carátula — usando LOGO", "color:#ff3b30;font-weight:bold");
   cover = null;
   coverEl.src = LOGO;
@@ -1734,7 +1808,9 @@ async function procesarCancionInteligente(track) {
   }
   const infoFinal = {
     frase: infoArtista.frase,
-    caratula: cover || infoArtista.imagenArtista || LOGO,
+    /* ⭐ v32.1: usar la carátula global SOLO si ya es la de ESTE tema —
+       a los 800ms sigue siendo la del tema anterior (fondo desfasado) */
+    caratula: (ultimoCoverKey === trackId ? cover : null) || infoArtista.imagenArtista || LOGO,
     genero: infoArtista.genero || null,
     fuente: infoArtista.fuente || null
   };
@@ -1742,17 +1818,13 @@ async function procesarCancionInteligente(track) {
 }
 
 function pedirPermisoNotificaciones() {
-  if (!("Notification" in window)) return;
-  /* Si ya está concedido (volví a abrir la app), registramos el token directo */
-  if (Notification.permission === "granted"){ iniciarPush(); return; }
-  if (Notification.permission !== "default") return;
-  /* ⭐ El permiso se pide con el PRIMER clic del oyente (gesto real):
-     Chrome no lo muestra bien sin gesto, y así no molesta al cargar. */
-  const pedir = () => {
-    iniciarPush();   /* pide permiso y guarda el token FCM en Firestore */
-    document.removeEventListener("click", pedir);
-  };
-  document.addEventListener("click", pedir, { once: true });
+  if ("Notification" in window && Notification.permission === "default") {
+    const pedir = () => {
+      Notification.requestPermission().then(p => {});
+      document.removeEventListener("click", pedir);
+    };
+    document.addEventListener("click", pedir, { once: true });
+  }
 }
 
 let deferredPrompt=null;
@@ -1792,6 +1864,7 @@ function aplicarUpdate(){
 }
 
 renderHistory();
+setTimeout(repararHistorial, 6000);   /* ⭐ v32.1: corrige las carátulas desfasadas ya guardadas */
 pedirPermisoNotificaciones();
 conectarMetadata();
 
@@ -1805,7 +1878,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v32 — anti ping-pong del puente + ticker sin saltos + espacios nuevos + player al vivo al abrir");
+console.log("🧠 Sikodark Radio v33 — pedidos que entran al aire al toque (puente v4) + posición real de RadioBOSS visible en la cola");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1884,23 +1957,7 @@ async function iniciarPush() {
     log("ok", "🔔 Notificaciones activadas");
   } catch(e) {}
 }
-/* El arranque del push lo dispara pedirPermisoNotificaciones() con el
-   primer clic del oyente (no se pide permiso sin gesto al cargar). */
-
-/* ⏸️ PAUSA DEL DJ: config/pedidos.habilitado === false oculta el botón
-   "Programá tu tema" y cierra el modal. El puente tampoco toma pedidos
-   nuevos mientras esté en false; nada se pierde, quedan pendientes. */
-window.SIKO_PEDIDOS_OFF = false;
-try{
-  dbFB.collection("config").doc("pedidos").onSnapshot(function(snap){
-    var d = snap.exists ? snap.data() : {};
-    window.SIKO_PEDIDOS_OFF = !!(d && d.habilitado === false);
-    var btn = document.getElementById("btnPedidoTema");
-    if (btn && SIKO_PEDIDOS_OFF) btn.classList.remove("show");
-    var modal = document.getElementById("modalPedido");
-    if (modal && SIKO_PEDIDOS_OFF) modal.classList.remove("show");
-  }, function(){});
-}catch(e){}
+iniciarPush();
 </script>
 
 <!-- ===== 🔄 AUTO-RECUPERACION + AUDIFONOS ===== -->
@@ -5340,12 +5397,6 @@ renderFavs();
 
   btnEnviar.onclick = async function(){
     limpiarError();
-    /* ⏸️ Si el DJ pausó los pedidos (config/pedidos.habilitado=false),
-       no se manda nada aunque el modal quede abierto por cacheo. */
-    if (window.SIKO_PEDIDOS_OFF){
-      mostrarError("⏸️ Los pedidos están pausados por la radio ahora — volvé en un rato 🎧");
-      return;
-    }
     var banda = inpBanda.value.trim();
     var tema = inpTema.value.trim();
     var nombre = inpNombre.value.trim();
@@ -5532,7 +5583,8 @@ renderFavs();
     items.forEach(function(f){
       try{
         partes.push((f.__id || "") + "|" + (f.estado || "") + "|" + (f.fecha_estado || fechaDoc(f))
-          + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || ""));
+          + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || "")
+          + "|" + (f.pos_radioboss || ""));   /* ⭐ v33: la posición en RadioBOSS también es parte de la foto */
       }catch(e){}
     });
     return partes.join(";;");
@@ -5624,6 +5676,15 @@ renderFavs();
     }
     function filaCola(f){
       var est = ESTADOS[f.estado] || ESTADOS.pendiente;
+      var estTxt = est.txt, estSub = est.sub;
+      /* ⭐ v33: si el puente v4 ya lo metió en RadioBOSS, mostrar la posición
+         REAL del playlist — así "en cola" deja de ser un misterio y se
+         entiende que suena terminando el tema que está al aire */
+      if (f.estado === "en_cola" && typeof f.pos_radioboss === "number" && f.pos_radioboss > 0){
+        estTxt = "🎧 En cola · #" + f.pos_radioboss;
+        estSub = "posición " + f.pos_radioboss + " del playlist de RadioBOSS"
+          + (f.pos_radioboss <= 3 ? " — suena al terminar el tema actual" : "");
+      }
       var mio = (usuarioUID && f.uid === usuarioUID);
       var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
       var titulo = f.tema || f.banda;
@@ -5645,7 +5706,7 @@ renderFavs();
         + ' onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'apple-icon.png\';}">'
         + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
         + '<div class="ci-a">' + esc(sub) + esc(de) + espHTML + '</div></div>'
-        + '<span class="estado ' + est.cls + '" title="' + est.sub + '">' + est.txt + '</span>'
+        + '<span class="estado ' + est.cls + '" title="' + esc(estSub) + '">' + esc(estTxt) + '</span>'
         + '</div>';
     }
     colaLista.innerHTML = vivos.slice(0, 12).map(filaCola).join("")
