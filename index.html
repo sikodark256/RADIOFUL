@@ -502,6 +502,13 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .torre-msj{font:700 11.5px/1.5 var(--sans);margin-top:10px;min-height:15px}
 .torre-msj.ok{color:#7df09a}.torre-msj.err{color:#ff9d96}
 .torre-msj .torre-alfinal{color:var(--muted);font-weight:700;font-size:10.5px;text-decoration:underline;cursor:pointer;margin-left:8px}
+/* ⭐ v37: ESPECIAL INTELIGENTE */
+.torre-especial{margin-top:12px;border:1px dashed rgba(125,240,154,.35);border-radius:12px;padding:11px 12px}
+.torre-especial .te-head{font:800 9px var(--mono);letter-spacing:.09em;color:#7df09a;text-transform:uppercase}
+.torre-especial .te-fila{display:flex;gap:8px;margin-top:8px}
+.torre-especial input[type=text]{flex:1;min-width:0;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:700 12px var(--sans);padding:9px 11px;outline:none}
+.torre-especial input[type=number]{width:58px;flex:0 0 58px;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:800 12px var(--sans);padding:9px 6px;text-align:center;outline:none}
+.torre-especial .te-nota{font:700 10px/1.45 var(--sans);color:var(--muted);margin-top:7px}
 </style>
 </head>
 <body>
@@ -540,7 +547,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
 
 <div id="diagnostico">
-  <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v36 (Torre de Control)...</span></div>
+  <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v37 (Torre de Control + Especial)...</span></div>
 </div>
 
 <div class="controls">
@@ -625,6 +632,15 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
       <div class="torre-busca">
         <input type="text" id="torreBusca" placeholder="Buscar en la música del DJ para programar…" maxlength="80" autocomplete="off">
         <div id="torreSug" class="ped-sug"></div>
+      </div>
+      <div class="torre-especial">
+        <div class="te-head">Especial inteligente</div>
+        <div class="te-fila">
+          <input type="text" id="torreEspecArtista" placeholder="Artista — ej: Guns N' Roses" maxlength="60" autocomplete="off">
+          <input type="number" id="torreEspecCant" min="2" max="10" value="4" title="Cuántos temas">
+          <button id="torreEspecIr" class="torre-btn-accion">Programar</button>
+        </div>
+        <div class="te-nota">La torre busca lo mejor de ese artista en tu música y lo encola después del tema actual. Ves los temas acá y en el playlist en vivo.</div>
       </div>
       <div class="torre-acciones">
         <button id="torreSaltar" class="torre-btn-accion">⏭️ Saltar tema</button>
@@ -1946,7 +1962,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v36 — Torre de Control: playlist de RadioBOSS en vivo desde la web + pedidos con archivo exacto");
+console.log("🧠 Sikodark Radio v37 — Torre de Control + Especial inteligente + búsqueda por palabra completa");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -6056,24 +6072,53 @@ renderFavs();
     }catch(e){ bibliotecaCargando = false; }
   }
 
+  /* ⭐ v37: búsqueda por PALABRA COMPLETA + ranking por título exacto.
+     Arregla los desastres reales que vimos en vivo: pedir "Heart" ya no
+     trae a Steelheart (la palabra estaba DENTRO de "steelheart"), y de
+     "True" ahora gana "Spandau Ballet - True" antes que "Madonna -
+     True Blue" (título exacto vale más que título que empieza igual). */
+  function posPalabra(texto, tok){
+    var i = texto.indexOf(tok);
+    while (i !== -1){
+      if (i === 0 || texto.charAt(i - 1) === " ") return i;
+      i = texto.indexOf(tok, i + 1);
+    }
+    return -1;
+  }
+
   function buscarEnBiblio(banda, q){
     if (!biblioteca || !biblioteca.length) return [];
     var texto = normTxt((banda || "") + " " + (q || ""));
     if (texto.length < 2) return [];
+    var PARADA = { the:1, and:1, de:1, del:1, los:1, las:1, el:1 };
     var toks = texto.split(" ").filter(function(t){ return t.length >= 3; });
+    var utiles = toks.filter(function(t){ return !PARADA[t]; });
+    if (utiles.length) toks = utiles;   /* 'The Beatles' → exige solo 'beatles' */
     if (!toks.length) return [];
     var nb = normTxt(banda || "");
+    var nt = normTxt(q || "");
     var salida = [];
     for (var i = 0; i < biblioteca.length && salida.length < 500; i++){
       var it = biblioteca[i];
       var pts = 0;
       for (var j = 0; j < toks.length; j++){
-        var p = it._n.indexOf(toks[j]);
-        if (p === -1){ pts = -1; break; }
+        var p = posPalabra(it._n, toks[j]);
+        if (p === -1){ pts = -1; break; }        /* la palabra NO está → afuera */
         pts += (p === 0 ? 3 : 1);
       }
       if (pts < 0) continue;
-      if (nb && it._nb.indexOf(nb) === 0) pts += 4;   /* desempate: empieza con la banda */
+      /* título exacto: "True" le gana a "True Blue" */
+      var ti = normTxt(it.titulo);
+      if (nt && ti){
+        if (ti === nt) pts += 6;
+        else if (ti.indexOf(nt) === 0) pts += 3;
+      }
+      /* el artista del archivo arranca con la banda pedida */
+      if (nb){
+        var ar = normTxt(it.artista);
+        if (ar.indexOf(nb) === 0) pts += 4;
+        else if (it._nb.indexOf(nb) === 0) pts += 3;
+      }
       salida.push([pts, it]);
     }
     salida.sort(function(a, b){ return b[0] - a[0]; });
@@ -6217,6 +6262,41 @@ renderFavs();
     });
   };
 
+  /* ---------- ⭐ v37: ESPECIAL INTELIGENTE ("poné lo mejor de Guns") ---------- */
+  var torreEspecArtista = document.getElementById("torreEspecArtista");
+  var torreEspecCant = document.getElementById("torreEspecCant");
+  var torreEspecIr = document.getElementById("torreEspecIr");
+  if (torreEspecIr){
+    torreEspecIr.onclick = function(){
+      if (!sesionTorre){ msj("Poné el PIN primero.", false); return; }
+      var art = torreEspecArtista.value.trim();
+      var cant = parseInt(torreEspecCant.value, 10);
+      if (!(cant >= 2 && cant <= 10)) cant = 4;
+      if (art.length < 2){ msj("Escribí el artista del especial (ej: Guns N' Roses).", false); return; }
+      torreEspecIr.disabled = true;
+      msj("🤖 buscando lo mejor de " + esc(art) + " en la música del DJ…", true);
+      mandarComando({ tipo: "especial", artista: art, cantidad: cant,
+                      token: sesionTorre }).then(function(rta){
+        torreEspecIr.disabled = false;
+        if (rta && rta.resultado === "ok"){
+          var rep = rta.respuesta || {};
+          var lista = (rep.temas || []).map(function(t, i){
+            return (i + 1) + ". " + esc(t.titulo || "?");
+          }).join("<br>");
+          msj("✅ Especial " + esc(art) + ": " + (rep.total || 0) +
+              " tema(s) encolados desde la posición " + (rep.pos || "?") +
+              "<br><span style=\"font-weight:400;opacity:.9\">" + lista + "</span>", true);
+          torreEspecArtista.value = "";
+        } else {
+          msj("❌ " + (rta && rta.resultado || "la torre no respondió — ¿está encendida?"), false);
+        }
+      });
+    };
+    torreEspecArtista.addEventListener("keydown", function(e){
+      if (e.key === "Enter") torreEspecIr.click();
+    });
+  }
+
   /* borrar una pista del playlist (botón 🗑️ de cada fila) */
   torreLista.addEventListener("click", function(e){
     var btn = e.target.closest ? e.target.closest(".torre-del") : null;
@@ -6274,7 +6354,7 @@ renderFavs();
     if (!torreSug.contains(e.target) && e.target !== torreBusca) torreSug.classList.remove("show");
   });
 
-  console.log("[Torre] 🗼 panel v36 listo");
+  console.log("[Torre] 🗼 panel v37 listo (especial inteligente incluido)");
 })();
 </script>
 </body>
