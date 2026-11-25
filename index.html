@@ -665,6 +665,10 @@ function showRefresh(v){
 let isPlaying=false,isLoading=false,muted=false,cover=null,history=[];
 let ultimoTitulo = "", pollingInterval = null;
 audio.volume=.8;
+/* ⭐ v41: distingue si el audio lo paró el USUARIO o lo pausó el SISTEMA
+   (llamada entrante, otra app se quedó el foco del audio, ahorro de batería).
+   Las pausas del sistema se reanudan solas: el sonido NO se corta. */
+var paradaManual = false;
 
 try {
   const h = localStorage.getItem("sikodark-history");
@@ -701,20 +705,54 @@ async function startPlayback(){
   }catch(e){isLoading=false;setPlaying(false);ring(false);log("err","No se pudo reproducir: "+e.message)}
 }
 function stopPlayback(){
-  registrarFinEscucha();
+  /* ⭐ v41: marcar que fue parada DEL USUARIO (la pausa del sistema no
+     debe apagar la radio: se reanuda sola, sin cortar el sonido) */
+  paradaManual = true;
   audio.pause();
   setPlaying(false);
   isLoading=false;
   ring(false);
   /* ⭐ Liberar wake lock al parar */
   if (window.liberarWakeLock) window.liberarWakeLock();
+  setTimeout(function(){ paradaManual = false; }, 500);
 }
 
-play.onclick=()=>isPlaying?stopPlayback():startPlayback();
+/* ⭐ v41: si el audio está pausado (aunque el modo siga "en vivo"),
+   el botón ARRANCA; si está sonando, para. Nunca queda un botón que
+   "no hace nada" tras una pausa automática. */
+play.onclick=()=>(!isPlaying||audio.paused)?startPlayback():stopPlayback();
 audio.onplaying=()=>{isLoading=false;setPlaying(true);ring(false)};
 audio.onwaiting=()=>{isLoading=true;play.innerHTML=spinner();ring(true)};
-audio.onpause=()=>{registrarFinEscucha();if(!audio.ended){isLoading=false;setPlaying(false);ring(false)}};
-audio.onerror=()=>{isLoading=false;setPlaying(false);ring(false);log("err","Error en el stream de audio")};
+audio.onpause=()=>{
+  if (paradaManual){
+    /* parada del usuario → registrar fin de escucha y mostrar Detenido */
+    registrarFinEscucha();
+    if(!audio.ended){isLoading=false;setPlaying(false);ring(false)}
+    return;
+  }
+  /* ⭐ v41: pausa AUTOMÁTICA del sistema (llamada, otra app, batería).
+     ANTES esto ponía "Detenido" y había que volver a tocar play.
+     AHORA: se reanuda la MISMA conexión → el sonido vuelve SIN cortarse. */
+  console.log("[Player] Pausa automática — reanudando sin cortar");
+  isLoading=false; ring(false);
+  setTimeout(function(){
+    if (!paradaManual && isPlaying && audio.paused && document.visibilityState==="visible"){
+      audio.play().catch(function(){ /* la retoma anti-freeze al abrir la web */ });
+    }
+  }, 600);
+};
+audio.onerror=()=>{
+  ring(false); isLoading=false;
+  /* ⭐ v41: si el usuario estaba escuchando, el stream se reintenta SOLO
+     (antes quedaba en "Detenido" hasta que tocaras play) */
+  if (isPlaying && !paradaManual && typeof window.__sikoReconectar==="function"){
+    log("warn","Se cortó el stream — reconectando…");
+    window.__sikoReconectar();
+  }else{
+    setPlaying(false);
+    log("err","Error en el stream de audio");
+  }
+};
 
 volume.oninput=()=>{audio.volume=Number(volume.value);muted=false;audio.muted=false;volume.style.setProperty("--vol",(volume.value*100)+"%")};
 mute.onclick=()=>{muted=!muted;audio.muted=muted;mute.innerHTML=muted?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></svg>':'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M19 9a5 5 0 0 1 0 6"/><path d="M16.5 7.5a8 8 0 0 1 0 9"/></svg>'};
@@ -1856,6 +1894,15 @@ function mostrarAvisoActualizacion(){
 }
 
 function aplicarUpdate(){
+  /* ⭐ v41: si la radio está SONANDO, no recargar ahora (se cortaría el
+     sonido). La nueva versión ya quedó instalada y se activa sola la
+     próxima vez que se abra la web. */
+  if (typeof isPlaying !== "undefined" && isPlaying){
+    var aviso = document.getElementById("avisoUpdate");
+    if (aviso) aviso.style.display = "none";
+    if (typeof toast === "function") toast("🎧 Sonando: la versión nueva se activa al recargar");
+    return;
+  }
   navigator.serviceWorker.getRegistrations().then(function(regs){
     Promise.all(regs.map(function(r){ return r.update(); })).catch(function(){});
   }).finally(function(){
@@ -1878,7 +1925,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v38 — panel del DJ en panel.html + búsqueda por palabra completa");
+console.log("🧠 Sikodark Radio v41 — player sin cortes: no se reconecta si el audio suena, pausas del sistema se reanudan solas");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -1965,6 +2012,37 @@ iniciarPush();
 (function(){
   var ultimaPos = 0, fallos = 0, vigia = null;
 
+  /* ⭐ v41: ¿el audio avanza de verdad? */
+  function avanzando(){
+    return isPlaying && !audio.paused && !audio.ended && audio.readyState >= 2;
+  }
+
+  /* ⭐⭐⭐ v41 — EL FIX DEL CORTE AL ABRIR LA WEB ⭐⭐⭐
+     SALTAR AL BORDE DEL VIVO SIN CORTAR EL SONIDO.
+     Antes: al volver de background se PAUSABA el audio y se abría una
+     conexión NUEVA (ese era el corte que escuchabas, "como si estuviera
+     actualizando"). Ahora: si el audio quedó retrasado respecto del
+     vivo, se adelanta la posición DENTRO de la misma conexión →
+     el sonido sigue fluyendo, sin pausa ni reconexión. */
+  function saltarAlVivo(){
+    try{
+      var borde = null;
+      if (audio.seekable && audio.seekable.length) borde = audio.seekable.end(audio.seekable.length - 1);
+      else if (audio.buffered && audio.buffered.length) borde = audio.buffered.end(audio.buffered.length - 1);
+      if (borde !== null && isFinite(borde) && borde - audio.currentTime > 4){
+        var atraso = Math.round(borde - audio.currentTime);
+        audio.currentTime = Math.max(0, borde - 0.5);
+        console.log("[Player] Salto al vivo sin cortar (venía " + atraso + "s atrás)");
+      }
+    }catch(e){ /* el stream no permite saltar → no pasa nada, no se corta */ }
+  }
+
+  /* ⭐ v41: reanudar la MISMA conexión (cero corte, cero re-buffer) */
+  function reanudar(){
+    return audio.play().then(function(){ return true; }).catch(function(){ return false; });
+  }
+
+  /* Reconexión dura — SOLO para streams realmente rotos */
   function reconectar(){
     try{
       audio.pause();
@@ -1977,10 +2055,14 @@ iniciarPush();
         }).catch(function(){
           fallos++;
           if (fallos <= 6) setTimeout(reconectar, 4000);
+          else { fallos = -45; log("warn", "No se pudo reconectar — reintento en un rato"); }
         });
       }, 300);
     }catch(e){}
   }
+  /* ⭐ v41: expuestos para que el player se auto-repare si el stream tira error */
+  window.__sikoReconectar = reconectar;
+  window.__sikoSaltarVivo = saltarAlVivo;
 
   function iniciarVigia(){
     if (vigia) clearInterval(vigia);
@@ -1989,7 +2071,15 @@ iniciarPush();
       var pos = audio.currentTime;
       if (Math.abs(pos - ultimaPos) < 0.05){
         fallos++;
-        if (fallos >= 4) reconectar();
+        if (fallos === 4 && audio.paused){
+          /* ⭐ v41: lo pausó el sistema → reanudar la MISMA conexión */
+          reanudar().then(function(ok){ if (!ok && fallos === 4) reconectar(); });
+        }
+        else if (fallos >= 4 && fallos % 8 === 4){
+          /* ⭐ v41: congelado de verdad → reconectar (con calma, no en
+             loop infinito: cada ~8 fallos = ~32s) */
+          reconectar();
+        }
       } else {
         fallos = 0;
       }
@@ -1999,7 +2089,9 @@ iniciarPush();
   iniciarVigia();
 
   window.addEventListener("online", function(){
-    if (isPlaying) reconectar();
+    /* ⭐ v41: reconectar SOLO si el stream no está avanzando.
+       Si está sonando bien, NO SE TOCA (antes esto cortaba el audio). */
+    if (isPlaying && (audio.paused || audio.error)) reconectar();
     /* ⭐ Al volver internet, forzar fast poll para refrescar metadata YA */
     activarFastPoll();
   });
@@ -2010,8 +2102,10 @@ iniciarPush();
      El navegador pausa los timers cuando la pestaña pasa a background.
      Al volver a ser visible:
        - Activar fast poll para refrescar metadata
-       - Si el audio está pausado pero isPlaying=true → reconectar stream
-       - Si el audio está congelado → reconectar
+       - ⭐ v41: si el audio SUENA y avanza → NO SE TOCA (cero corte)
+       - Si quedó retrasado → salto al vivo DENTRO de la misma conexión
+       - Si el sistema lo pausó → reanudar la MISMA conexión (sin corte)
+       - Solo si está congelado de verdad → reconectar
 
      ⭐ IMPORTANTE: NO limpiar la carátula ni resetear ultimoTitulo.
      Si la canción no cambió mientras estuviste en background, la carátula
@@ -2032,22 +2126,24 @@ iniciarPush();
            si la canción cambió. */
         activarFastPoll();
 
-        /* ⭐ v32: si estuvo 15s+ en background, el buffer del audio quedó
-           con el tema anterior (y como el currentTime sigue avanzando, el
-           detector de freeze no lo ve). Salto directo al borde del vivo.
-           (v31.2 era 30s — el usuario lo quería más agresivo: cada vez que
-           abre la app tiene que arrancar en lo que suena AHORA.) */
-        if (isPlaying && tiempoInactivo > 15000){
-          console.log("[Anti-freeze] 15s+ en background — saltando al borde del vivo");
-          reconectar();
+        if (isPlaying && audio.paused){
+          /* ⭐ v41: el sistema pausó el audio en background →
+             reanudar la MISMA conexión (reconectar cortaba el sonido) */
+          console.log("[Anti-freeze] Audio pausado en background — reanudando sin cortar");
+          reanudar().then(function(ok){
+            if (ok) saltarAlVivo();
+            else reconectar();
+          });
         }
-        /* Si el audio está pausado pero el usuario cree que está sonando → reconectar */
-        else if (isPlaying && audio.paused){
-          console.log("[Anti-freeze] Audio pausado en background — reconectando");
-          reconectar();
-        }
-        /* Si el audio está sonando pero congelado → reconectar */
         else if (isPlaying){
+          /* ⭐⭐ v41 — ESTO ERA EL CORTE AL ABRIR LA WEB ⭐⭐
+             Antes: 15s+ en background → reconectar() SIEMPRE → pausa +
+             conexión nueva = 2-5s de silencio "como actualizando".
+             Ahora: si el audio sigue sonando, NO SE TOCA. Solo se
+             adelanta al borde del vivo si quedó retrasado. */
+          console.log("[Anti-freeze] Audio sigue sonando — sin corte");
+          saltarAlVivo();
+          /* ¿de verdad está congelado? (currentTime no avanza) */
           setTimeout(function(){
             var pos = audio.currentTime;
             setTimeout(function(){
@@ -2076,7 +2172,9 @@ iniciarPush();
     if (e && e.persisted){
       console.log("[Anti-freeze] Página restaurada del bfcache — resincronizando");
       activarFastPoll();
-      if (isPlaying) reconectar();
+      /* ⭐ v41: solo reconectar si el audio NO avanza; si suena, no se toca */
+      if (isPlaying && (audio.paused || audio.error)) reconectar();
+      else if (isPlaying) saltarAlVivo();
     }
   });
 
@@ -2117,12 +2215,19 @@ iniciarPush();
     try{ navigator.mediaSession.setActionHandler("stop", function(){ stopPlayback(); }); }catch(e){}
     try{
       navigator.mediaSession.setActionHandler("nexttrack", function(){
-        if (isPlaying) reconectar();
+        /* ⭐ v41: saltar al vivo SIN cortar; reconectar solo si no se pudo */
+        if (isPlaying){
+          saltarAlVivo();
+          setTimeout(function(){ if (isPlaying && audio.paused) reconectar(); }, 800);
+        }
       });
     }catch(e){}
     try{
       navigator.mediaSession.setActionHandler("previoustrack", function(){
-        if (isPlaying) reconectar();
+        if (isPlaying){
+          saltarAlVivo();
+          setTimeout(function(){ if (isPlaying && audio.paused) reconectar(); }, 800);
+        }
       });
     }catch(e){}
   }
@@ -2467,7 +2572,10 @@ renderFavs();
     try{ localStorage.setItem(LS_PLAY, "1"); }catch(e){}
   });
   audio.addEventListener("pause", function(){
-    try{ if (!audio.ended) localStorage.setItem(LS_PLAY, "0"); }catch(e){}
+    /* ⭐ v41: solo marcar "no estaba sonando" si el USUARIO paró.
+       Si el navegador pausó solo (app en background, llamada), dejar "1"
+       para que al reabrir la web siga sonando solo. */
+    try{ if (!audio.ended && paradaManual) localStorage.setItem(LS_PLAY, "0"); }catch(e){}
   });
 
   try{
