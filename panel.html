@@ -74,6 +74,23 @@ button.btn.neutro{border-color:var(--border);color:var(--muted)}
 
 .caja-especial{margin-top:4px;border:1px dashed rgba(125,240,154,.4);border-radius:13px;padding:12px}
 .caja-especial .head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase}
+
+/* ⭐ v6.1: propuesta de especial — el DJ elige cuáles salen al aire */
+.cand-head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase;margin-top:12px}
+.cand-fila{display:flex;gap:9px;align-items:center;background:var(--secondary);border:1px solid var(--border);
+  border-radius:11px;padding:8px 10px;margin-top:6px}
+.cand-fila input[type=checkbox]{width:17px;height:17px;flex:0 0 17px;accent-color:var(--ok);cursor:pointer}
+.cand-fila.no-sel{opacity:.45}
+.caratula{width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:#0e0f14;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font:800 15px var(--sans);overflow:hidden}
+.caratula img{width:100%;height:100%;object-fit:cover;display:block}
+.caratula.chica{width:32px;height:32px;flex:0 0 32px;font-size:12px}
+.cand-txt{flex:1;min-width:0}
+.cand-t{font:800 12px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand-a{font:700 10px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand-mover{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:none;border:1px solid var(--border);
+  color:var(--muted);font:800 13px var(--sans);cursor:pointer}
+.cand-mover:disabled{opacity:.3;cursor:default}
 .nota{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin-top:8px}
 .acciones{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .sesion{font:800 10px var(--mono);color:var(--ok)}
@@ -161,10 +178,19 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
       <div class="head">Especial inteligente</div>
       <div class="fila" style="margin-top:8px">
         <input type="text" id="espArtista" placeholder="Artista — ej: Guns N' Roses" maxlength="60" autocomplete="off">
-        <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos temas">
-        <button class="btn verde" id="espIr">Programar</button>
+        <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos vienen marcados">
+        <button class="btn verde" id="espIr">Buscar</button>
       </div>
-      <div class="nota">La torre busca lo mejor de ese artista en tu música y lo encola después del tema actual. Lo ves abajo en el playlist en vivo.</div>
+      <div class="nota">La torre busca lo mejor del artista en tu música y te lo propone acá con las carátulas de iTunes. Marcás cuáles salen al aire y en qué orden — nada entra al playlist hasta que aprietes Poner al aire.</div>
+      <div id="candidatos" class="oculto">
+        <div class="cand-head" id="candTitulo">Propuesta</div>
+        <div id="candLista"></div>
+        <div class="acciones">
+          <button class="btn verde" id="candAire">Poner al aire</button>
+          <button class="btn neutro" id="candCancelar">Descartar</button>
+        </div>
+        <div class="nota">Con las flechas ordenás los temas — el de arriba suena primero.</div>
+      </div>
     </div>
 
     <div class="etiq">Programar un audio puntual</div>
@@ -445,7 +471,117 @@ $("listaProx").addEventListener("click", function(e){
   });
 });
 
-/* ==================== especial inteligente ==================== */
+/* ==================== ⭐ v6.1: CARÁTULAS DE iTUNES ==================== */
+var PROXIES = [
+  function(u){ return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); },
+  function(u){ return "https://corsproxy.io/?" + encodeURIComponent(u); },
+  function(u){ return "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u); }
+];
+
+function fetchConProxy(url){
+  var finalUrl = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_t=" + Date.now();
+  function intentar(u){
+    return new Promise(function(res, rej){
+      var c = new AbortController();
+      var to = setTimeout(function(){ c.abort(); rej(new Error("timeout")); }, 5000);
+      fetch(u, { signal: c.signal, cache: "no-store" }).then(function(r){
+        clearTimeout(to);
+        if (r.ok) res(r); else rej(new Error("http " + r.status));
+      }).catch(function(e){ clearTimeout(to); rej(e); });
+    });
+  }
+  var p = intentar(finalUrl).catch(function(){ return intentar(PROXIES[0](finalUrl)); })
+    .catch(function(){ return intentar(PROXIES[1](finalUrl)); })
+    .catch(function(){ return intentar(PROXIES[2](finalUrl)); });
+  return p;
+}
+
+var cacheCaratulas = {};
+function buscarCaratula(termino, cb){
+  var clave = String(termino || "").toLowerCase();
+  if (cacheCaratulas[clave] !== undefined) return cb(cacheCaratulas[clave]);
+  var url = "https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(termino);
+  fetchConProxy(url).then(function(r){ return r.json(); }).then(function(d){
+    var img = null;
+    if (d && d.results && d.results.length && d.results[0].artworkUrl100){
+      img = d.results[0].artworkUrl100.replace("100x100", "200x200");
+    }
+    cacheCaratulas[clave] = img;
+    cb(img);
+  }).catch(function(){ cacheCaratulas[clave] = null; cb(null); });
+}
+
+function cargarCaratula(el){
+  var term = el.getAttribute("data-term") || "";
+  if (!term || el.getAttribute("data-hecha")) return;
+  el.setAttribute("data-hecha", "1");
+  buscarCaratula(term, function(url){
+    if (url) el.innerHTML = '<img src="' + esc(url) + '" alt="" onerror="this.parentNode.innerHTML=\'♪\'">';
+  });
+}
+
+/* ==================== ⭐ v6.1: ESPECIAL CON CONTROL TOTAL ====================
+   1) Buscar: la torre PROPONE hasta 15 candidatos (no encola nada)
+   2) El DJ marca cuáles salen al aire y los ordena con flechas
+   3) Poner al aire: la torre encola SOLO lo elegido, en ese orden */
+var cand = null;   /* {artista, items:[{archivo, titulo, artista, checked}]} */
+
+function contarSel(){
+  if (!cand) return 0;
+  return cand.items.filter(function(c){ return c.checked; }).length;
+}
+
+function renderCandidatos(){
+  var cont = $("candLista");
+  if (!cand || !cand.items.length){
+    $("candidatos").classList.add("oculto");
+    cont.innerHTML = "";
+    return;
+  }
+  $("candidatos").classList.remove("oculto");
+  $("candTitulo").textContent = "La torre propone " + cand.items.length + " de " + cand.artista + " — marcá los que salen al aire";
+  cont.innerHTML = cand.items.map(function(c, i){
+    var nombre = c.titulo || String(c.archivo || "").split(/[\\/]/).pop() || "?";
+    return '<div class="cand-fila' + (c.checked ? "" : " no-sel") + '" data-i="' + i + '">'
+      + '<input type="checkbox"' + (c.checked ? " checked" : "") + ' title="¿Sale al aire?">'
+      + '<span class="caratula" data-term="' + esc((c.artista || "") + " " + (c.titulo || "")) + '">♪</span>'
+      + '<div class="cand-txt"><div class="cand-t">' + esc(nombre) + '</div>'
+      + '<div class="cand-a">' + esc(c.artista || "") + '</div></div>'
+      + '<button class="cand-mover" data-dir="-1"' + (i === 0 ? " disabled" : "") + ' title="Subir">↑</button>'
+      + '<button class="cand-mover" data-dir="1"' + (i === cand.items.length - 1 ? " disabled" : "") + ' title="Bajar">↓</button>'
+      + '</div>';
+  }).join("");
+  $("candAire").textContent = "Poner al aire (" + contarSel() + ")";
+  Array.prototype.forEach.call(cont.querySelectorAll(".caratula"), function(el, idx){
+    setTimeout(function(){ cargarCaratula(el); }, 150 * idx);
+  });
+}
+
+$("candLista").addEventListener("change", function(e){
+  if (!cand || e.target.type !== "checkbox") return;
+  var fila = e.target.closest(".cand-fila");
+  if (!fila) return;
+  var i = Number(fila.getAttribute("data-i"));
+  if (!(i >= 0 && i < cand.items.length)) return;
+  cand.items[i].checked = e.target.checked;
+  fila.classList.toggle("no-sel", !e.target.checked);
+  $("candAire").textContent = "Poner al aire (" + contarSel() + ")";
+});
+
+$("candLista").addEventListener("click", function(e){
+  var btn = e.target.closest ? e.target.closest(".cand-mover") : null;
+  if (!btn || !cand) return;
+  var fila = btn.closest(".cand-fila");
+  if (!fila) return;
+  var i = Number(fila.getAttribute("data-i"));
+  var j = i + Number(btn.getAttribute("data-dir"));
+  if (!(i >= 0) || !(j >= 0) || j >= cand.items.length) return;
+  var tmp = cand.items[i];
+  cand.items[i] = cand.items[j];
+  cand.items[j] = tmp;
+  renderCandidatos();
+});
+
 $("espIr").onclick = function(){
   if (!token){ msjHerr("Poné el PIN primero.", false); return; }
   var art = $("espArtista").value.trim();
@@ -454,24 +590,59 @@ $("espIr").onclick = function(){
   if (art.length < 2){ msjHerr("Escribí el artista del especial (ej: Guns N' Roses).", false); return; }
   $("espIr").disabled = true;
   msjHerr("Buscando lo mejor de <b>" + esc(art) + "</b> en la música del DJ…", true);
-  mandarComando({ tipo: "especial", artista: art, cantidad: cant, token: token }).then(function(rta){
+  mandarComando({ tipo: "especial_buscar", artista: art, token: token }).then(function(rta){
     $("espIr").disabled = false;
     if (siSesionVencida(rta)) return;
     if (rta && rta.resultado === "ok"){
-      var rep = rta.respuesta || {};
-      var lista = (rep.temas || []).map(function(t, i){
-        return (i + 1) + ". " + esc(t.titulo || "?");
-      }).join("<br>");
-      msjHerr("Especial <b>" + esc(art) + "</b>: " + (rep.total || 0) +
-        " tema(s) encolados desde la posición " + (rep.pos || "?") +
-        '<br><span class="lista-temas">' + lista + "</span>", true);
-      $("espArtista").value = "";
+      var cands = (rta.respuesta && rta.respuesta.candidatos) || [];
+      if (!cands.length){ msjHerr("La torre no encontró candidatos.", false); return; }
+      cand = { artista: art, items: cands.map(function(c, i){
+        return { archivo: c.archivo || "", titulo: c.titulo || "", artista: c.artista || "", checked: i < cant };
+      })};
+      msjHerr("Propuesta lista — marcá y ordená, después «Poner al aire».", true);
+      renderCandidatos();
     } else {
       msjHerr("× " + esc((rta && rta.resultado) || "la torre no respondió — ¿está encendida?"), false);
     }
   });
 };
 $("espArtista").addEventListener("keydown", function(e){ if (e.key === "Enter") $("espIr").click(); });
+
+$("candAire").onclick = function(){
+  if (!token || !cand) return;
+  var elegidos = cand.items.filter(function(c){ return c.checked; });
+  if (!elegidos.length){ msjHerr("No marcaste ningún tema.", false); return; }
+  if (elegidos.length > 10) elegidos = elegidos.slice(0, 10);
+  if (!confirm("¿Poner " + elegidos.length + " tema(s) al aire, después del tema actual?")) return;
+  $("candAire").disabled = true;
+  msjHerr("Encolando el especial…", true);
+  mandarComando({ tipo: "especial_aplicar", lista: elegidos.map(function(c){ return c.archivo; }),
+                  token: token }).then(function(r){
+    $("candAire").disabled = false;
+    if (siSesionVencida(r)) return;
+    if (r && r.resultado === "ok"){
+      var rep = r.respuesta || {};
+      var lista = (rep.temas || []).map(function(t, i){
+        return (i + 1) + ". " + esc(t.titulo || "?");
+      }).join("<br>");
+      msjHerr("Especial al aire: " + (rep.total || 0) + " tema(s) desde la posición " + (rep.pos || "?") +
+        '<br><span class="lista-temas">' + lista + "</span>", true);
+      cand = null;
+      $("candidatos").classList.add("oculto");
+      $("candLista").innerHTML = "";
+      $("espArtista").value = "";
+    } else {
+      msjHerr("× " + esc((r && r.resultado) || "la torre no respondió"), false);
+    }
+  });
+};
+
+$("candCancelar").onclick = function(){
+  cand = null;
+  $("candidatos").classList.add("oculto");
+  $("candLista").innerHTML = "";
+  msjHerr("Propuesta descartada — nada entró al playlist.", true);
+};
 
 /* ==================== biblioteca del DJ + buscador ==================== */
 function normTxt(s){
@@ -566,10 +737,14 @@ $("inpBusca").addEventListener("input", function(){
       }
       $("sugs").innerHTML = res.map(function(it, i){
         return '<div class="sug" data-i="' + i + '">'
+          + '<span class="caratula chica" data-term="' + esc((it.artista || "") + " " + (it.titulo || it.base || "")) + '">♪</span>'
           + '<div><div class="st">' + esc(it.titulo || it.base) + '</div>'
           + '<div class="sa">' + esc(it.artista) + '</div></div></div>';
       }).join("");
       $("sugs").classList.add("show");
+      Array.prototype.forEach.call($("sugs").querySelectorAll(".caratula"), function(el, idx){
+        setTimeout(function(){ cargarCaratula(el); }, 120 * idx);
+      });
       Array.prototype.forEach.call($("sugs").querySelectorAll(".sug"), function(el){
         el.onmousedown = function(ev){
           ev.preventDefault();
