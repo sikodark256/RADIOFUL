@@ -1,352 +1,694 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head><link rel="manifest" href="panel-manifest.json">
-<meta name="theme-color" content="#171820">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Panel DJ — sikodark radio</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0c10">
+<title>Panel del DJ — Sikodark Radio</title>
 <style>
-:root{--bg:#171820;--card:#22232b;--sec:#2c2d35;--text:#f5f5f7;--muted:#a5a6ad;--pri:#ff8a24;--bor:rgba(255,255,255,.1);--ok:#34c759;--err:#ff3b30}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:16px}
-h1{font-size:20px;margin:0 0 8px}
-.sup{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.estado{font-size:12px;color:var(--muted);flex:1;min-width:150px}
-button{background:var(--pri);color:#191919;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer}
-.mini{padding:6px 12px;margin:0;font-size:12px;background:var(--sec);color:var(--text)}
-.mini.peligro{background:rgba(255,59,48,.15);color:var(--err)}
-.mini.ok{background:rgba(52,199,89,.15);color:var(--ok)}
-.mini.activo{background:var(--pri);color:#191919;font-weight:700}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-.card{background:var(--card);border:1px solid var(--bor);border-radius:14px;padding:14px;text-align:center}
-.card .n{font-size:24px;font-weight:800;color:var(--pri)}
-.card .n.vivo{color:var(--ok)}
-.card .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
-h2{font-size:15px;margin:20px 0 8px}
-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--bor)}
-th,td{padding:9px 10px;text-align:left;font-size:13px;border-bottom:1px solid var(--bor)}
-th{background:var(--sec);font-size:11px;text-transform:uppercase;color:var(--muted)}
-td.num{font-weight:800;color:var(--pri)}
-.pos{color:var(--muted);font-family:monospace;font-size:12px}
-.nombreUser{font-weight:700}
-.ico{font-size:16px}
-/* ⭐ BADGE EN LÍNEA con pulso */
-.onlineBadge{display:inline-flex;align-items:center;gap:5px;background:rgba(52,199,89,.16);
-  color:var(--ok);border:1px solid rgba(52,199,89,.45);border-radius:999px;
-  padding:3px 9px;font-size:10.5px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
-.onlineBadge .pt{width:8px;height:8px;border-radius:50%;background:var(--ok);
-  box-shadow:0 0 8px rgba(52,199,89,.9);animation:pulso 1.4s infinite}
-@keyframes pulso{50%{opacity:.35}}
-.offlineBadge{display:inline-block;color:#6d6e78;font-size:10.5px;white-space:nowrap}
-.tiempoLinea{display:block;font-size:11px;color:var(--ok);margin-top:3px;font-family:monospace}
-.conexion{font-family:monospace;font-size:12px}
-.conexion b{color:var(--ok)}
-.chips{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}
-.chip{background:var(--sec);color:var(--muted);border-radius:999px;padding:2px 8px;font-size:10.5px}
-.vacio{color:var(--muted);font-size:13px;padding:12px;background:var(--card);border:1px dashed var(--bor);border-radius:12px}
-.bloqueadoTxt{color:var(--err);font-size:11px}
-.sub2{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:2px}
-.ordenBtns{display:flex;gap:6px;margin:0 0 8px;flex-wrap:wrap}
+:root{
+  --bg:#07080c; --card:#12141a; --secondary:#1a1d24; --border:#262a33;
+  --text:#f2f2f0; --muted:#8a8f9c; --primary:#f59d3d; --ok:#7df09a; --err:#ff9d96;
+  --sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  padding:18px 14px 40px;max-width:560px;margin-left:auto;margin-right:auto}
+header{display:flex;align-items:center;gap:10px;padding:6px 2px 16px}
+header h1{font:800 17px/1.2 var(--sans);margin:0;letter-spacing:.01em}
+header .sub{font:700 10px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.punto{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:#3a3f4b;margin-left:auto}
+.punto.on{background:var(--ok);box-shadow:0 0 8px rgba(125,240,154,.7);animation:pulso 1.7s infinite}
+@keyframes pulso{0%,100%{opacity:1}50%{opacity:.35}}
+
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tabs button{flex:1;background:var(--card);border:1px solid var(--border);color:var(--muted);
+  border-radius:12px;padding:11px 8px;font:800 12px var(--sans);cursor:pointer}
+.tabs button.sel{color:var(--primary);border-color:rgba(245,157,61,.5);background:rgba(245,157,61,.08)}
+section.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px}
+.oculto{display:none!important}
+
+h2{font:800 13px/1.2 var(--sans);margin:0 0 4px}
+.subt{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin:0 0 12px}
+.etiq{font:800 9px var(--mono);letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin:12px 0 6px}
+
+input[type=text],input[type=password],input[type=number],input[type=email]{width:100%;background:#0e0f14;
+  border:1px solid #33373f;border-radius:11px;color:var(--text);font:700 13px var(--sans);padding:11px 12px;outline:none}
+input:focus{border-color:rgba(245,157,61,.55)}
+.fila{display:flex;gap:8px}
+.fila input[type=text]{flex:1;min-width:0}
+.fila input[type=number]{width:64px;flex:0 0 64px;text-align:center}
+
+button.btn{background:var(--secondary);border:1px solid rgba(245,157,61,.45);color:var(--primary);
+  border-radius:11px;padding:11px 14px;font:800 12px var(--sans);cursor:pointer;white-space:nowrap}
+button.btn:disabled{opacity:.45;cursor:default}
+button.btn.grande{width:100%;padding:13px}
+button.btn.verde{border-color:rgba(125,240,154,.45);color:var(--ok)}
+button.btn.rojo{border-color:rgba(255,90,90,.45);color:var(--err)}
+button.btn.neutro{border-color:var(--border);color:var(--muted)}
+
+.al-aire{display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,rgba(245,157,61,.14),rgba(245,157,61,.05));
+  border:1px solid rgba(245,157,61,.4);border-radius:14px;padding:13px}
+.al-aire .pulso{width:11px;height:11px;border-radius:50%;background:var(--primary);flex:0 0 11px;animation:pulso 1.7s infinite}
+.al-aire .txt{flex:1;min-width:0}
+.al-aire .tag{font:800 9px var(--mono);letter-spacing:.09em;color:var(--primary);text-transform:uppercase}
+.al-aire .tema{font:800 15px var(--sans);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-aire .art{font:700 11px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.apagada{border:1px dashed var(--border);border-radius:12px;padding:12px 14px;color:var(--muted);
+  font:700 11.5px/1.5 var(--sans);text-align:center}
+.lista{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.fila-tema{display:flex;gap:10px;align-items:center;background:var(--secondary);border:1px solid var(--border);
+  border-radius:11px;padding:9px 12px}
+.fila-tema.es-pedido{border-color:rgba(245,157,61,.45);background:rgba(245,157,61,.07)}
+.pos{font:800 10px var(--mono);color:var(--muted);flex:0 0 30px;text-align:center}
+.fila-tema .tt{flex:1;min-width:0}
+.fila-tema .t1{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fila-tema .t2{font:700 10.5px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{flex:0 0 auto;font:800 8.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--primary);
+  border:1px solid rgba(245,157,61,.4);border-radius:999px;padding:3px 7px}
+.borrar{flex:0 0 auto;background:none;border:1px solid rgba(255,59,48,.4);color:var(--err);border-radius:8px;
+  padding:5px 10px;font:800 12px var(--sans);cursor:pointer}
+#listaProx.sin-sesion .borrar{display:none}
+
+.caja-especial{margin-top:4px;border:1px dashed rgba(125,240,154,.4);border-radius:13px;padding:12px}
+.caja-especial .head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase}
+.nota{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin-top:8px}
+.acciones{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.sesion{font:800 10px var(--mono);color:var(--ok)}
+.msj{font:700 12px/1.55 var(--sans);margin-top:12px;min-height:16px;word-break:break-word}
+.msj.ok{color:var(--ok)}.msj.err{color:var(--err)}
+.msj .lista-temas{font-weight:400;opacity:.92;margin-top:4px}
+
+.buscador{position:relative}
+.sugs{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#14161d;border:1px solid var(--border);
+  border-radius:12px;z-index:30;display:none;max-height:280px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.sugs.show{display:block}
+.sug{display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer;border-bottom:1px solid #1d2029}
+.sug:last-child{border-bottom:none}
+.sug:hover{background:rgba(245,157,61,.08)}
+.sug .st{font:800 12px var(--sans);color:#eee}
+.sug .sa{font:700 10px var(--sans);color:var(--muted);margin-top:1px}
+.sug-vacio{padding:11px 12px;color:var(--muted);font:700 11.5px var(--sans)}
+
+.preview{margin-top:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0e0f14;
+  display:none;max-height:220px}
+.preview.show{display:block}
+.preview img{width:100%;height:auto;max-height:220px;object-fit:cover;display:block}
+.check-fila{display:flex;align-items:center;gap:9px;margin-top:12px;font:700 12px var(--sans)}
+.check-fila input{width:18px;height:18px;accent-color:var(--primary)}
+.estado-aviso{font:700 10.5px var(--mono);color:var(--muted);margin-top:10px}
+.estado-aviso b{color:var(--ok)}
+.aviso{background:rgba(245,157,61,.07);border:1px solid rgba(245,157,61,.3);border-radius:11px;
+  padding:10px 12px;font:700 10.5px/1.55 var(--sans);color:var(--muted);margin-top:12px}
+.aviso b{color:var(--primary)}
+footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:.06em;padding-top:8px}
 </style>
 </head>
 <body>
-<h1>🎛️ Panel DJ — sikodark radio</h1>
-<div class="sup">
-  <span class="estado" id="estado">Conectando…</span>
-  <button class="mini" onclick="location.reload()">🔄 Actualizar</button>
+
+<header>
+  <div>
+    <h1>Panel del DJ</h1>
+    <div class="sub">sikodark radio · control privado</div>
+  </div>
+  <span id="puntoTorre" class="punto" title="Estado de la torre"></span>
+</header>
+
+<div class="tabs">
+  <button id="tabBtnTorre" class="sel">Torre de control</button>
+  <button id="tabBtnAvisos">Cartel de avisos</button>
 </div>
 
-<div class="cards">
-  <div class="card"><div class="n" id="cOyentes">—</div><div class="l">Oyentes únicos</div></div>
-  <div class="card"><div class="n vivo" id="cVivos">—</div><div class="l">🟢 En vivo ahora</div></div>
-  <div class="card"><div class="n" id="cLikes">—</div><div class="l">Me gusta ❤️</div></div>
+<!-- ==================== TORRE DE CONTROL ==================== -->
+<div id="tabTorre">
+
+  <section class="card">
+    <h2>En vivo — RadioBOSS</h2>
+    <p class="subt">Lo que está sonando y lo que se viene en el playlist</p>
+    <div id="boxAire" class="al-aire oculto">
+      <span class="pulso"></span>
+      <div class="txt">
+        <div class="tag">Al aire ahora</div>
+        <div class="tema" id="aireTema">—</div>
+        <div class="art" id="aireArt"></div>
+      </div>
+    </div>
+    <div id="boxApagada" class="apagada">La torre de la PC del estudio está apagada — abrí <b>arrancar_torre.bat</b> en la PC y recargá acá.</div>
+    <div id="listaProx" class="lista"></div>
+  </section>
+
+  <section class="card" id="cardPin">
+    <div id="pinRow" class="fila">
+      <input type="password" id="inpPin" inputmode="numeric" placeholder="PIN del DJ" maxlength="8" autocomplete="off">
+      <button class="btn" id="btnEntrar">Entrar</button>
+    </div>
+    <div id="filaSesion" class="oculto">
+      <div class="acciones" style="margin-top:0">
+        <span class="sesion" id="txtSesion">DJ conectado</span>
+        <button class="btn neutro" id="btnSalir" style="margin-left:auto">Salir</button>
+      </div>
+    </div>
+    <div id="msjPin" class="msj"></div>
+  </section>
+
+  <section class="card oculto" id="cardHerr">
+    <h2>Herramientas del DJ</h2>
+    <p class="subt">Programar música y manejar el playlist en vivo</p>
+
+    <div class="caja-especial">
+      <div class="head">Especial inteligente</div>
+      <div class="fila" style="margin-top:8px">
+        <input type="text" id="espArtista" placeholder="Artista — ej: Guns N' Roses" maxlength="60" autocomplete="off">
+        <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos temas">
+        <button class="btn verde" id="espIr">Programar</button>
+      </div>
+      <div class="nota">La torre busca lo mejor de ese artista en tu música y lo encola después del tema actual. Lo ves abajo en el playlist en vivo.</div>
+    </div>
+
+    <div class="etiq">Programar un audio puntual</div>
+    <div class="buscador">
+      <input type="text" id="inpBusca" placeholder="Buscar en la música del DJ…" maxlength="80" autocomplete="off">
+      <div id="sugs" class="sugs"></div>
+    </div>
+
+    <div class="acciones">
+      <button class="btn" id="btnSaltar">Saltar tema</button>
+      <button class="btn" id="btnReindex">Actualizar música</button>
+    </div>
+    <div id="msjHerr" class="msj"></div>
+  </section>
+
 </div>
 
-<h2>👥 Oyentes registrados</h2>
-<div id="tUsuarios"></div>
+<!-- ==================== CARTEL DE AVISOS ==================== -->
+<div id="tabAvisos" class="oculto">
 
-<h2>❤️ Me gusta</h2>
-<div class="ordenBtns">
-  <button class="mini activo" id="btnOrdenLikes">♥ Más gustados</button>
-  <button class="mini" id="btnOrdenFecha">🕘 Recientes</button>
+  <section class="card" id="cardAvisoLogin">
+    <h2>Avisos — entrada del DJ</h2>
+    <p class="subt">Con la cuenta dueña de la radio (sikoradio@hotmail.com)</p>
+    <div class="etiq">Email</div>
+    <input type="email" id="avEmail" placeholder="sikoradio@hotmail.com" autocomplete="off">
+    <div class="etiq">Clave</div>
+    <input type="password" id="avClave" placeholder="La clave de Firebase de la radio" autocomplete="off">
+    <div style="margin-top:12px">
+      <button class="btn grande" id="btnAvisoEntrar">Entrar al panel de avisos</button>
+    </div>
+    <div id="msjAvisoLogin" class="msj"></div>
+    <div class="aviso">El cartel de avisos es la imagen que se les muestra a los oyentes al abrir la web. Si nunca creaste la clave de esa cuenta: Firebase Console → Authentication → Users → seleccioná el usuario y ponéle contraseña.</div>
+  </section>
+
+  <section class="card oculto" id="cardAvisoEdit">
+    <div class="acciones" style="margin-top:0;margin-bottom:10px">
+      <span class="sesion" id="txtAvisoSesion">Conectado</span>
+      <button class="btn neutro" id="btnAvisoSalir" style="margin-left:auto">Salir</button>
+    </div>
+
+    <h2>Cartel de avisos</h2>
+    <p class="subt">La imagen que se les muestra a los oyentes al abrir la web</p>
+
+    <div class="etiq">Imagen del aviso (link)</div>
+    <input type="text" id="avImagen" placeholder="https://…/afiche.jpg" autocomplete="off">
+    <div id="avPreview" class="preview"><img id="avPreviewImg" alt=""></div>
+
+    <div class="etiq">Duración en pantalla (segundos)</div>
+    <input type="number" id="avDuracion" min="1" max="600" value="35">
+
+    <div class="check-fila">
+      <input type="checkbox" id="avActivo">
+      <label for="avActivo">Aviso activo (se muestra a los oyentes)</label>
+    </div>
+
+    <div class="acciones">
+      <button class="btn verde" id="btnAvisoGuardar">Guardar</button>
+      <button class="btn" id="btnAvisoPublicar">Publicar ahora</button>
+      <button class="btn rojo" id="btnAvisoOcultar">Ocultar cartel</button>
+    </div>
+    <div id="avEstado" class="estado-aviso"></div>
+    <div id="msjAviso" class="msj"></div>
+    <div class="aviso"><b>Publicar ahora</b> activa el aviso y lo vuelve a mostrar a todos los oyentes (aunque ya lo hubieran visto). <b>Ocultar cartel</b> lo apaga sin borrar la imagen.</div>
+  </section>
+
 </div>
-<div id="tUltimos"></div>
 
+<footer>sikodark · panel privado del DJ</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
+(function(){
+"use strict";
+
+/* ==================== base ==================== */
+firebase.initializeApp({
   apiKey: "AIzaSyC9Q9N1TTqWRUpeh2lo7tGuG8lwTrvbHrA",
   authDomain: "sikodarkradio-26a07.firebaseapp.com",
   projectId: "sikodarkradio-26a07",
   storageBucket: "sikodarkradio-26a07.firebasestorage.app",
   messagingSenderId: "941041207378",
   appId: "1:941041207378:web:994e34372109d30acf778b"
+});
+var db = firebase.firestore();
+firebase.auth().signInAnonymously().catch(function(e){
+  console.log("[Panel] anon falló:", e && e.code);
+});
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function sha256Hex(txt){
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ("0" + b.toString(16)).slice(-2);
+    }).join("");
+  });
+}
+
+/* ==================== tabs ==================== */
+$("tabBtnTorre").onclick = function(){ cambiarTab(true); };
+$("tabBtnAvisos").onclick = function(){ cambiarTab(false); };
+function cambiarTab(torre){
+  $("tabBtnTorre").classList.toggle("sel", torre);
+  $("tabBtnAvisos").classList.toggle("sel", !torre);
+  $("tabTorre").classList.toggle("oculto", !torre);
+  $("tabAvisos").classList.toggle("oculto", torre);
+}
+
+/* ==================== comandos a la torre ==================== */
+function mandarComando(datos){
+  var campos = Object.assign({ estado: "nuevo", fecha: Date.now() }, datos);
+  return db.collection("comandos_radioboss").add(campos).then(function(ref){
+    return new Promise(function(res){
+      var un = ref.onSnapshot(function(s){
+        var f = s.data();
+        if (f && f.estado === "hecho"){ un(); clearTimeout(t); res(f); }
+      }, function(){ un(); clearTimeout(t); res(null); });
+      var t = setTimeout(function(){ un(); res(null); }, 45000);
+    });
+  });
+}
+
+/* ==================== estado en vivo ==================== */
+var salTorre = null;
+$("puntoTorre").classList.remove("on");
+
+db.collection("estado_radioboss").doc("actual").onSnapshot(function(snap){
+  if (!snap.exists) return;
+  var e = snap.data() || {};
+  salTorre = e.sal || salTorre;
+
+  var recien = Date.now() - (e.actualizado || 0) < 3 * 60 * 1000;
+  $("puntoTorre").classList.toggle("on", recien);
+  $("boxApagada").classList.toggle("oculto", recien);
+
+  if (e.al_aire && (e.al_aire.titulo || e.al_aire.artista)){
+    $("boxAire").classList.remove("oculto");
+    $("aireTema").textContent = e.al_aire.titulo || "—";
+    $("aireArt").textContent = e.al_aire.artista || "";
+  } else {
+    $("boxAire").classList.add("oculto");
+  }
+
+  var prox = (e.proximos || []).slice(0, 12);
+  if (!prox.length){
+    $("listaProx").innerHTML = '<p class="subt" style="margin:10px 0 0">No hay temas programados después del actual.</p>';
+  } else {
+    $("listaProx").innerHTML = prox.map(function(t){
+      return '<div class="fila-tema' + (t.pedido ? " es-pedido" : "") + '">'
+        + '<span class="pos">#' + esc(t.pos) + '</span>'
+        + '<div class="tt"><div class="t1">' + esc(t.titulo || t.artista || "—") + '</div>'
+        + '<div class="t2">' + esc(t.artista || "") + '</div></div>'
+        + (t.pedido ? '<span class="badge">pedido</span>' : "")
+        + '<button class="borrar" data-pos="' + esc(t.pos) + '" title="Sacar del playlist">×</button>'
+        + '</div>';
+    }).join("");
+  }
+}, function(err){
+  console.log("[Panel] sin estado:", err && err.code);
+  $("boxApagada").classList.remove("oculto");
+});
+
+/* ==================== PIN del DJ ==================== */
+var token = null;
+try{ token = localStorage.getItem("sikodark-panel-token"); }catch(e){}
+
+function pintarBorradores(){
+  $("listaProx").classList.toggle("sin-sesion", !token);
+}
+
+function msjPin(txt, ok){ pintarMsj($("msjPin"), txt, ok); }
+function msjHerr(txt, ok){ pintarMsj($("msjHerr"), txt, ok); }
+function pintarMsj(el, txt, ok){
+  el.className = "msj " + (ok ? "ok" : "err");
+  el.innerHTML = txt;
+}
+
+function mostrarSesion(){
+  $("pinRow").classList.add("oculto");
+  $("filaSesion").classList.remove("oculto");
+  $("cardHerr").classList.remove("oculto");
+  pintarBorradores();
+}
+function mostrarPin(){
+  $("pinRow").classList.remove("oculto");
+  $("filaSesion").classList.add("oculto");
+  $("cardHerr").classList.add("oculto");
+  pintarBorradores();
+}
+pintarBorradores();
+if (token) mostrarSesion();
+
+$("btnEntrar").onclick = function(){
+  var pin = $("inpPin").value.trim();
+  if (!pin) return;
+  if (!salTorre){ msjPin("La torre de la PC del estudio está apagada — abrí <b>arrancar_torre.bat</b> primero.", false); return; }
+  if (!window.crypto || !crypto.subtle){ msjPin("Tu navegador no soporta el ingreso seguro.", false); return; }
+  $("btnEntrar").disabled = true;
+  $("btnEntrar").textContent = "…";
+  sha256Hex(pin + ":" + salTorre).then(function(hash){
+    return mandarComando({ tipo: "auth", hash: hash });
+  }).then(function(rta){
+    $("btnEntrar").disabled = false;
+    $("btnEntrar").textContent = "Entrar";
+    if (rta && rta.resultado === "ok" && rta.respuesta && rta.respuesta.token){
+      token = rta.respuesta.token;
+      try{ localStorage.setItem("sikodark-panel-token", token); }catch(e){}
+      $("inpPin").value = "";
+      mostrarSesion();
+      msjPin("¡Hola DJ! Sesión abierta por 12 horas.", true);
+    } else {
+      msjPin("PIN incorrecto" + (rta && rta.resultado ? " — " + esc(rta.resultado) : " — ¿la torre está encendida?"), false);
+    }
+  });
+};
+$("inpPin").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnEntrar").click(); });
+
+$("btnSalir").onclick = function(){
+  token = null;
+  try{ localStorage.removeItem("sikodark-panel-token"); }catch(e){}
+  mostrarPin();
+  msjPin("Sesión cerrada.", true);
 };
 
-function esc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;"}[c]))}
-
-function aMs(v){
-  try{
-    if (!v) return 0;
-    if (v.toMillis) return v.toMillis();
-    if (typeof v === "number") return v;
-    const t = Date.parse(v);
-    return isNaN(t) ? 0 : t;
-  }catch(e){ return 0; }
-}
-
-function horaConexion(ms){
-  if (!ms) return "";
-  const f = new Date(ms), hoy = new Date();
-  const hora = f.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-  if (f.toDateString() === hoy.toDateString()) return hora;
-  return f.toLocaleDateString([], {day:"2-digit", month:"2-digit"}) + " " + hora;
-}
-
-/* ⭐ Cuánto tiempo lleva conectado */
-function duracion(msInicio){
-  if (!msInicio) return "";
-  const seg = Math.floor((Date.now() - msInicio)/1000);
-  if (seg < 60) return "menos de 1 min";
-  const min = Math.floor(seg/60);
-  if (min < 60) return min + " min";
-  const h = Math.floor(min/60), m = min%60;
-  if (h < 24) return h + " h" + (m ? " " + m + " min" : "");
-  const d = Math.floor(h/24);
-  return d + (d>1 ? " días" : " día");
-}
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-/* ===== 🗄️ DATOS EN MEMORIA ===== */
-const usuariosRaw = {}, presencia = {}, ultimaVisita = {};
-let megustas = [];
-
-let USERS = [];
-const UID2USER = {};
-
-const VENTANA_SENAL = 90000;       /* señal vieja de "presencia" < 1.5 min = vivo */
-const VENTANA_ONLINE = 3*60*1000;  /* latido (heartbeat) < 3 min = vivo */
-
-function reconstruir(){
-  const byHuella = {};
-  Object.entries(usuariosRaw).forEach(([docId, d]) => {
-    const clave = d.huella || docId;
-    let u = byHuella[clave];
-    if (!u) u = byHuella[clave] = { huella:clave, docId:docId, nombre:"", bloqueado:false, lastMs:0, sesionMs:0, dispositivo:"?", online:true, uids:new Set() };
-    const ms = aMs(d.ultimaConexion) || aMs(d.fechaRegistro);
-    if (ms >= u.lastMs){
-      u.lastMs = ms; u.docId = docId;
-      if (d.nombre) u.nombre = d.nombre;
-      if (d.dispositivo) u.dispositivo = d.dispositivo;
-    } else if (!u.nombre && d.nombre){ u.nombre = d.nombre; }
-    if (d.bloqueado) u.bloqueado = true;
-    if (d.online === false) u.online = false;
-    const sMs = aMs(d.sesionInicio);
-    if (sMs && (!u.sesionMs || sMs < u.sesionMs)) u.sesionMs = sMs;
-    if (d.uid) u.uids.add(d.uid);
-    if (!d.huella) u.uids.add(docId);
-  });
-  USERS = Object.values(byHuella);
-  for (const k in UID2USER) delete UID2USER[k];
-  USERS.forEach(u => u.uids.forEach(uid => UID2USER[uid] = u));
-}
-
-function dispositivoDe(u){
-  if (u.dispositivo && u.dispositivo !== "?") return u.dispositivo;
-  for (const uid of u.uids){
-    const p = presencia[uid];
-    if (p && p.dispositivo) return p.dispositivo;
-    const v = ultimaVisita[uid];
-    if (v && v.dispositivo) return v.dispositivo;
+function siSesionVencida(r){
+  var t = (r && r.resultado) || "";
+  if (t.indexOf("vencido") !== -1 || t.indexOf("PIN incorrecto") !== -1){
+    token = null;
+    try{ localStorage.removeItem("sikodark-panel-token"); }catch(e){}
+    mostrarPin();
+    return true;
   }
-  return "?";
-}
-const icono = d => d === "celular" ? "📱" : d === "PC" ? "💻" : d === "TV" ? "📺" : "❔";
-const ORDEN = { celular: 0, PC: 1, TV: 2 };
-
-/* ⭐ ¿Está en vivo AHORA? Latido reciente (o señal vieja de presencia) */
-function estaVivo(u){
-  for (const uid of u.uids){
-    const p = presencia[uid];
-    if (p && p.escuchando !== false && Date.now() - (p.ultimaSenal || 0) < VENTANA_SENAL) return true;
-  }
-  if (u.online !== false && u.lastMs && (Date.now() - u.lastMs) < VENTANA_ONLINE) return true;
   return false;
 }
 
-function inicioSesion(u, uid){
-  if (u.sesionMs) return u.sesionMs;
-  const p = presencia[uid];
-  if (p && p.primeraSenal) return aMs(p.primeraSenal) || aMs(p.ultimaSenal);
-  return u.lastMs;
-}
+/* ==================== acciones del DJ ==================== */
+$("btnSaltar").onclick = function(){
+  if (!token) return;
+  if (!confirm("¿Saltar el tema que está sonando ahora?")) return;
+  msjHerr("Saltando…", true);
+  mandarComando({ tipo: "saltar", token: token }).then(function(r){
+    if (siSesionVencida(r)) return;
+    msjHerr(r && r.resultado === "ok" ? "Tema saltado." : "× " + esc((r && r.resultado) || "la torre no respondió"),
+            r && r.resultado === "ok");
+  });
+};
 
-function nombreDeUid(uid){
-  return (UID2USER[uid] && UID2USER[uid].nombre) ||
-         (presencia[uid] && presencia[uid].nombre) || "Anónimo";
-}
+$("btnReindex").onclick = function(){
+  if (!token) return;
+  msjHerr("Actualizando la música…", true);
+  mandarComando({ tipo: "reindexar", token: token }).then(function(r){
+    if (siSesionVencida(r)) return;
+    if (r && r.resultado === "ok"){
+      msjHerr("Música actualizada (" + ((r.respuesta && r.respuesta.total) || "?") + " temas).", true);
+      biblioteca = null;
+      cargarBiblioteca();
+    } else {
+      msjHerr("× " + esc((r && r.resultado) || "la torre no respondió"), false);
+    }
+  });
+};
 
-/* ===== 🔴 ESCUCHA EN VIVO ===== */
-db.collection("usuarios").onSnapshot(s => {
-  s.forEach(d => usuariosRaw[d.id] = d.data());
-  reconstruir(); render();
+$("listaProx").addEventListener("click", function(e){
+  var btn = e.target.closest ? e.target.closest(".borrar") : null;
+  if (!btn || !token) return;
+  var pos = Number(btn.getAttribute("data-pos"));
+  if (!pos || !confirm("¿Sacar la posición #" + pos + " del playlist?")) return;
+  mandarComando({ tipo: "borrar", pos: pos, token: token }).then(function(r){
+    if (siSesionVencida(r)) return;
+    msjHerr(r && r.resultado === "ok" ? "Posición #" + pos + " sacada." :
+            "× " + esc((r && r.resultado) || "la torre no respondió"), r && r.resultado === "ok");
+  });
 });
-db.collection("presencia").onSnapshot(s => { s.forEach(d => presencia[d.id] = d.data()); render(); });
-db.collection("megustas").onSnapshot(s => { megustas = s.docs.map(d => d.data()); render(); });
 
-db.collection("visitas").orderBy("fecha","desc").limit(300).get().then(s => {
-  s.forEach(d => {
-    const v = d.data(); if (!v.uid) return;
-    const prev = ultimaVisita[v.uid];
-    if (!prev || String(v.fecha || "") > String(prev.fecha || "")) ultimaVisita[v.uid] = v;
+/* ==================== especial inteligente ==================== */
+$("espIr").onclick = function(){
+  if (!token){ msjHerr("Poné el PIN primero.", false); return; }
+  var art = $("espArtista").value.trim();
+  var cant = parseInt($("espCant").value, 10);
+  if (!(cant >= 2 && cant <= 10)) cant = 4;
+  if (art.length < 2){ msjHerr("Escribí el artista del especial (ej: Guns N' Roses).", false); return; }
+  $("espIr").disabled = true;
+  msjHerr("Buscando lo mejor de <b>" + esc(art) + "</b> en la música del DJ…", true);
+  mandarComando({ tipo: "especial", artista: art, cantidad: cant, token: token }).then(function(rta){
+    $("espIr").disabled = false;
+    if (siSesionVencida(rta)) return;
+    if (rta && rta.resultado === "ok"){
+      var rep = rta.respuesta || {};
+      var lista = (rep.temas || []).map(function(t, i){
+        return (i + 1) + ". " + esc(t.titulo || "?");
+      }).join("<br>");
+      msjHerr("Especial <b>" + esc(art) + "</b>: " + (rep.total || 0) +
+        " tema(s) encolados desde la posición " + (rep.pos || "?") +
+        '<br><span class="lista-temas">' + lista + "</span>", true);
+      $("espArtista").value = "";
+    } else {
+      msjHerr("× " + esc((rta && rta.resultado) || "la torre no respondió — ¿está encendida?"), false);
+    }
   });
-  render();
-}).catch(function(){});
+};
+$("espArtista").addEventListener("keydown", function(e){ if (e.key === "Enter") $("espIr").click(); });
 
-/* Refresca los tiempos cada 15s aunque no haya cambios en Firebase */
-setInterval(render, 15000);
-
-/* ===== 🎨 RENDER ===== */
-function render(){
-  document.getElementById("estado").textContent =
-    "✅ Datos actualizados: " + new Date().toLocaleTimeString() + " · en vivo";
-
-  document.getElementById("cOyentes").textContent = USERS.length;
-  const vivos = USERS.filter(estaVivo).length;
-  document.getElementById("cVivos").textContent = vivos;
-  document.getElementById("cLikes").textContent = megustas.length;
-
-  const ordenados = USERS.slice().sort((a,b) => {
-    const va = estaVivo(a) ? 0 : 1, vb = estaVivo(b) ? 0 : 1;
-    if (va !== vb) return va - vb;
-    if (b.lastMs !== a.lastMs) return b.lastMs - a.lastMs;
-    const da = ORDEN[dispositivoDe(a)] ?? 9, dbo = ORDEN[dispositivoDe(b)] ?? 9;
-    if (da !== dbo) return da - dbo;
-    return (a.nombre||"Anónimo").localeCompare(b.nombre||"Anónimo");
-  });
-
-  document.getElementById("tUsuarios").innerHTML = ordenados.length
-    ? '<table><tr><th>Estado</th><th></th><th>Oyente</th><th>Conexión</th><th>Control</th></tr>' +
-      ordenados.map(u => {
-        const vivo = estaVivo(u);
-        const disp = dispositivoDe(u);
-        const hora = horaConexion(u.lastMs);
-        const tiempo = duracion(inicioSesion(u, u.docId));
-        const estado = vivo
-          ? '<span class="onlineBadge"><span class="pt"></span>EN LÍNEA</span>' +
-            (tiempo ? '<span class="tiempoLinea">⏱ ' + tiempo + '</span>' : '')
-          : '<span class="offlineBadge">○ ' + (hora ? "Visto " + hora : "desconectado") + '</span>';
-        return '<tr>' +
-          '<td>' + estado + '</td>' +
-          '<td class="ico" title="' + esc(disp) + '">' + icono(disp) + '</td>' +
-          '<td><span class="nombreUser">' + esc(u.nombre || "Anónimo") + '</span>' +
-            (u.bloqueado ? ' <span class="bloqueadoTxt">🚫 bloqueado</span>' : '') + '</td>' +
-          '<td class="conexion">' + (vivo
-            ? 'Conectado <b>' + (hora || "ahora") + '</b>'
-            : (hora ? '<span style="color:var(--muted)">' + hora + '</span>' : "—")) + '</td>' +
-          '<td>' +
-            '<button class="mini ' + (u.bloqueado ? "ok" : "peligro") + '" onclick="bloquearUsuario(\'' + u.docId + '\', ' + !!u.bloqueado + ')">' + (u.bloqueado ? "✅" : "🚫") + '</button>' +
-            '<button class="mini" onclick="renombrarUsuario(\'' + u.docId + '\')">✏️</button>' +
-          '</td></tr>';
-      }).join("") + '</table>'
-    : '<div class="vacio">Aún no hay oyentes registrados.</div>';
-
-  /* --- ❤️ Me gusta ordenable (deduplicado por usuario+tema) --- */
-  const porTema = {};
-  megustas.forEach(m => {
-    const art = (m.artista || "Desconocido").trim();
-    const tema = (m.tema || "").trim();
-    if (!tema) return;
-    const k = art + "||" + tema;
-    if (!porTema[k]) porTema[k] = { artista: art, tema: tema, n: 0, uids: new Set(), fecha: 0 };
-    porTema[k].n++;
-    if (m.uid) porTema[k].uids.add(m.uid);
-    const f = aMs(m.fecha);
-    if (f > porTema[k].fecha) porTema[k].fecha = f;
-  });
-  const temas = Object.values(porTema).sort((a,b) =>
-    ordenTemas === "likes"
-      ? (b.n - a.n) || (b.fecha - a.fecha)   /* ⭐ más gustados primero */
-      : (b.fecha - a.fecha) || (b.n - a.n)   /* ⭐ recientes primero */
-  );
-  document.getElementById("tUltimos").innerHTML = temas.length
-    ? '<table><tr><th>#</th><th>Tema</th><th>Oyentes</th><th>❤️</th><th>Fecha</th></tr>' + temas.map((t,i) => {
-        let f = "—"; if (t.fecha) f = horaConexion(t.fecha) + " h";
-        const chips = [...t.uids].map(u => '<span class="chip">' + esc(nombreDeUid(u)) + '</span>').join("");
-        return '<tr><td class="pos">' + (i+1) + '</td>' +
-          '<td>❤️ ' + esc(t.tema) + '<span class="sub2">' + esc(t.artista) + '</span></td>' +
-          '<td>' + (chips ? '<div class="chips">' + chips + '</div>' : '—') + '</td>' +
-          '<td class="num">' + t.n + '</td>' +
-          '<td class="pos">' + f + '</td></tr>';
-      }).join("") + '</table>'
-    : '<div class="vacio">Todavía no hay me gusta.</div>';
+/* ==================== biblioteca del DJ + buscador ==================== */
+function normTxt(s){
+  s = String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return s.replace(/[^a-z0-9]+/g, " ").trim();
+}
+function parsearPista(ruta){
+  var base = String(ruta || "").split(/[\\/]/).pop().replace(/\.[a-z0-9]+$/i, "");
+  var g = base.indexOf(" - ");
+  var artista = g > 0 ? base.slice(0, g) : base;
+  var titulo = g > 0 ? base.slice(g + 3) : "";
+  return { ruta: ruta, base: base, artista: artista, titulo: titulo };
 }
 
-/* ===== 🔀 ORDEN DE "ME GUSTA" ===== */
-let ordenTemas = "likes";
-document.getElementById("btnOrdenLikes").onclick = function(){
-  ordenTemas = "likes";
-  this.classList.add("activo");
-  document.getElementById("btnOrdenFecha").classList.remove("activo");
-  render();
-};
-document.getElementById("btnOrdenFecha").onclick = function(){
-  ordenTemas = "fecha";
-  this.classList.add("activo");
-  document.getElementById("btnOrdenLikes").classList.remove("activo");
-  render();
-};
+var biblioteca = null, bibliotecaCargando = false;
+function cargarBiblioteca(ok){
+  if (biblioteca) return ok(biblioteca);
+  if (bibliotecaCargando) return;
+  bibliotecaCargando = true;
+  db.collection("biblioteca_piezas").get().then(function(snap){
+    var archivos = [];
+    snap.forEach(function(d){
+      var f = d.data();
+      if (f && f.archivos && f.archivos.length) archivos = archivos.concat(f.archivos);
+    });
+    biblioteca = archivos.map(function(r){
+      var it = parsearPista(r);
+      it._n = normTxt(it.artista + " " + it.titulo + " " + it.base);
+      it._nb = normTxt(it.base);
+      return it;
+    });
+    bibliotecaCargando = false;
+    if (ok) ok(biblioteca);
+  }).catch(function(){ bibliotecaCargando = false; });
+}
 
-/* ===== 🛠️ CONTROLES ===== */
-window.bloquearUsuario = async function(id, estaBloqueado){
-  try{
-    if (estaBloqueado){
-      await db.collection("usuarios").doc(id).set({ bloqueado: false }, { merge:true });
-      return;
-    }
-    if (confirm("¿Bloquear a este oyente? No podrá usar la radio.")){
-      await db.collection("usuarios").doc(id).set({ bloqueado: true }, { merge:true });
-    }
-  }catch(e){ alert("Error: " + e.message); }
-};
-
-window.renombrarUsuario = async function(id){
-  const u = USERS.find(x => x.docId === id);
-  const actual = (u && u.nombre) || "Anónimo";
-  const nuevo = prompt("Nombre del oyente:", actual);
-  if (nuevo && nuevo.trim().length >= 2){
-    await db.collection("usuarios").doc(id).set({ nombre: nuevo.trim().slice(0,20) }, { merge:true });
+function posPalabra(texto, tok){
+  var i = texto.indexOf(tok);
+  while (i !== -1){
+    if (i === 0 || texto.charAt(i - 1) === " ") return i;
+    i = texto.indexOf(tok, i + 1);
   }
-};
-
-firebase.auth().signInAnonymously()
-  .catch(e => { document.getElementById("estado").textContent = "❌ Error: " + e.message; });
-</script>
-
-<!-- ===== ⇩ INSTALAR PANEL COMO APP ===== -->
-<button id="btnInstalarPanel" style="display:none;position:fixed;bottom:18px;right:18px;z-index:100000;background:var(--pri);color:#191919;border:0;border-radius:999px;padding:12px 20px;font-weight:700;box-shadow:0 8px 25px rgba(0,0,0,.4)">⇩ Instalar panel</button>
-<script>
-(function(){
-  let dpPanel = null;
-  window.addEventListener("beforeinstallprompt", function(e){
-    e.preventDefault();
-    dpPanel = e;
-    var b = document.getElementById("btnInstalarPanel");
-    if (b) b.style.display = "block";
-  });
-  var b = document.getElementById("btnInstalarPanel");
-  if (b) b.onclick = function(){
-    if (dpPanel){ dpPanel.prompt(); b.style.display = "none"; }
-  };
-})();
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  return -1;
 }
+function buscarEnBiblio(banda, q){
+  if (!biblioteca || !biblioteca.length) return [];
+  var texto = normTxt((banda || "") + " " + (q || ""));
+  if (texto.length < 2) return [];
+  var PARADA = { the:1, and:1, de:1, del:1, los:1, las:1, el:1 };
+  var toks = texto.split(" ").filter(function(t){ return t.length >= 3; });
+  var utiles = toks.filter(function(t){ return !PARADA[t]; });
+  if (utiles.length) toks = utiles;
+  if (!toks.length) return [];
+  var nb = normTxt(banda || ""), nt = normTxt(q || "");
+  var salida = [];
+  for (var i = 0; i < biblioteca.length && salida.length < 500; i++){
+    var it = biblioteca[i], pts = 0;
+    for (var j = 0; j < toks.length; j++){
+      var p = posPalabra(it._n, toks[j]);
+      if (p === -1){ pts = -1; break; }
+      pts += (p === 0 ? 3 : 1);
+    }
+    if (pts < 0) continue;
+    var ti = normTxt(it.titulo);
+    if (nt && ti){
+      if (ti === nt) pts += 6;
+      else if (ti.indexOf(nt) === 0) pts += 3;
+    }
+    if (nb){
+      var ar = normTxt(it.artista);
+      if (ar.indexOf(nb) === 0) pts += 4;
+      else if (it._nb.indexOf(nb) === 0) pts += 3;
+    }
+    salida.push([pts, it]);
+  }
+  salida.sort(function(a, b){ return b[0] - a[0]; });
+  return salida.slice(0, 6).map(function(x){ return x[1]; });
+}
+
+var tBusca = null;
+$("inpBusca").addEventListener("input", function(){
+  var v = $("inpBusca").value.trim();
+  clearTimeout(tBusca);
+  if (v.length < 2){ $("sugs").classList.remove("show"); return; }
+  tBusca = setTimeout(function(){
+    cargarBiblioteca(function(){
+      var res = buscarEnBiblio("", v);
+      if (!res.length){
+        $("sugs").innerHTML = '<div class="sug-vacio">Nada con "' + esc(v) + '" en la música del DJ</div>';
+        $("sugs").classList.add("show");
+        return;
+      }
+      $("sugs").innerHTML = res.map(function(it, i){
+        return '<div class="sug" data-i="' + i + '">'
+          + '<div><div class="st">' + esc(it.titulo || it.base) + '</div>'
+          + '<div class="sa">' + esc(it.artista) + '</div></div></div>';
+      }).join("");
+      $("sugs").classList.add("show");
+      Array.prototype.forEach.call($("sugs").querySelectorAll(".sug"), function(el){
+        el.onmousedown = function(ev){
+          ev.preventDefault();
+          var it = res[Number(el.dataset.i)];
+          if (!token){ msjHerr("Poné el PIN primero.", false); return; }
+          msjHerr("Programando <b>" + esc(it.titulo || it.base) + "</b>…", true);
+          mandarComando({ tipo: "insertar", archivo: it.ruta, donde: "siguiente", token: token }).then(function(r){
+            if (siSesionVencida(r)) return;
+            if (r && r.resultado === "ok"){
+              msjHerr("Programado — entra al terminar el tema actual.", true);
+              $("sugs").classList.remove("show");
+              $("inpBusca").value = "";
+            } else {
+              msjHerr("× " + esc((r && r.resultado) || "la torre no respondió"), false);
+            }
+          });
+        };
+      });
+    });
+  }, 300);
+});
+document.addEventListener("click", function(e){
+  if (!$("sugs").contains(e.target) && e.target !== $("inpBusca")) $("sugs").classList.remove("show");
+});
+
+/* ==================== cartel de avisos ==================== */
+var avisoDoc = null;   /* última copia de config/avisos */
+
+firebase.auth().onAuthStateChanged(function(u){
+  var logueado = !!(u && u.email);
+  $("cardAvisoLogin").classList.toggle("oculto", logueado);
+  $("cardAvisoEdit").classList.toggle("oculto", !logueado);
+  if (logueado){
+    $("txtAvisoSesion").textContent = "Conectado: " + u.email;
+    escucharAviso();
+  }
+});
+
+$("btnAvisoEntrar").onclick = function(){
+  var em = $("avEmail").value.trim(), cl = $("avClave").value;
+  if (!em || !cl){ pintarMsj($("msjAvisoLogin"), "Completá el email y la clave.", false); return; }
+  $("btnAvisoEntrar").disabled = true;
+  $("btnAvisoEntrar").textContent = "…";
+  firebase.auth().signInWithEmailAndPassword(em, cl).then(function(){
+    $("btnAvisoEntrar").disabled = false;
+    $("btnAvisoEntrar").textContent = "Entrar al panel de avisos";
+    $("avClave").value = "";
+  }).catch(function(e){
+    $("btnAvisoEntrar").disabled = false;
+    $("btnAvisoEntrar").textContent = "Entrar al panel de avisos";
+    var m = "No se pudo entrar";
+    if (e && e.code === "auth/user-not-found") m = "Esa cuenta no existe como usuario de Firebase Authentication — creala en Firebase Console → Authentication → Users.";
+    else if (e && e.code === "auth/wrong-password") m = "Clave incorrecta.";
+    else if (e && e.code === "auth/too-many-requests") m = "Demasiados intentos — esperá un rato.";
+    else if (e && e.message) m = e.message;
+    pintarMsj($("msjAvisoLogin"), esc(m), false);
+  });
+};
+$("avClave").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnAvisoEntrar").click(); });
+$("btnAvisoSalir").onclick = function(){ firebase.auth().signOut(); };
+
+function escucharAviso(){
+  db.collection("config").doc("avisos").onSnapshot(function(snap){
+    avisoDoc = snap.exists ? (snap.data().anuncio || {}) : {};
+    $("avImagen").value = avisoDoc.imagen || "";
+    $("avDuracion").value = Number(avisoDoc.duracionSegundos) || 35;
+    $("avActivo").checked = avisoDoc.activo !== false;
+    previsualizar();
+    var pub = Number(avisoDoc.publicadoEn) || 0;
+    var f = pub ? new Date(pub).toLocaleString("es-AR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : "—";
+    $("avEstado").innerHTML = "Última publicación: <b>" + esc(f) + "</b> · estado: <b>" +
+      (avisoDoc.activo === false ? "oculto" : "activo") + "</b>";
+  }, function(e){
+    pintarMsj($("msjAviso"), "No se pudo leer el aviso: " + esc(e && e.code || ""), false);
+  });
+}
+
+function previsualizar(){
+  var url = $("avImagen").value.trim();
+  $("avPreview").classList.toggle("show", !!url);
+  $("avPreviewImg").src = url || "";
+}
+$("avImagen").addEventListener("change", previsualizar);
+
+function guardarAviso(publicar, ocultar){
+  var a = Object.assign({}, avisoDoc || {});
+  a.imagen = $("avImagen").value.trim();
+  var seg = parseInt($("avDuracion").value, 10);
+  a.duracionSegundos = (seg >= 1 && seg <= 600) ? seg : 35;
+  if (ocultar) a.activo = false;
+  else if (publicar){ a.activo = true; a.publicadoEn = Date.now(); }
+  else a.activo = $("avActivo").checked;
+  $("btnAvisoGuardar").disabled = true;
+  $("btnAvisoPublicar").disabled = true;
+  $("btnAvisoOcultar").disabled = true;
+  db.collection("config").doc("avisos").set({ anuncio: a }, { merge: true }).then(function(){
+    $("btnAvisoGuardar").disabled = false;
+    $("btnAvisoPublicar").disabled = false;
+    $("btnAvisoOcultar").disabled = false;
+    if (publicar) pintarMsj($("msjAviso"), "Publicado — los oyentes lo ven al abrir la web.", true);
+    else if (ocultar) pintarMsj($("msjAviso"), "Cartel ocultado.", true);
+    else pintarMsj($("msjAviso"), "Cambios guardados.", true);
+  }).catch(function(e){
+    $("btnAvisoGuardar").disabled = false;
+    $("btnAvisoPublicar").disabled = false;
+    $("btnAvisoOcultar").disabled = false;
+    var m = "No se pudo guardar";
+    if (e && (e.code === "permission-denied" || String(e.message||"").indexOf("permission") !== -1))
+      m = "Permisos insuficientes — solo la cuenta sikoradio@hotmail.com puede cambiar los avisos.";
+    else if (e && e.message) m = e.message;
+    pintarMsj($("msjAviso"), esc(m), false);
+  });
+}
+$("btnAvisoGuardar").onclick = function(){ guardarAviso(false, false); };
+$("btnAvisoPublicar").onclick = function(){ guardarAviso(true, false); };
+$("btnAvisoOcultar").onclick = function(){ guardarAviso(false, true); };
+
+console.log("[Panel] listo — torre + avisos");
+})();
 </script>
 </body>
 </html>

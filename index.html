@@ -470,45 +470,6 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
 .cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:30px 18px;text-align:center;color:var(--muted);font:700 12.5px/1.6 var(--sans);margin:2px 0 4px}
 .cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:16px 0 6px;opacity:.8}
-
-/* ===== 🗼 v36: TORRE DE CONTROL — playlist de RadioBOSS en vivo ===== */
-.torre-al-aire{display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,rgba(245,157,61,.14),rgba(245,157,61,.05));border:1px solid rgba(245,157,61,.4);border-radius:14px;padding:14px;margin-top:16px}
-.torre-al-aire .ta-pulso{width:11px;height:11px;border-radius:50%;background:var(--primary);flex:0 0 11px;animation:taPulso 1.7s infinite}
-@keyframes taPulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
-.torre-al-aire .ta-txt{flex:1;min-width:0}
-.torre-al-aire .ta-tag{font:800 9px var(--mono);letter-spacing:.09em;color:var(--primary);text-transform:uppercase}
-.torre-al-aire .ta-t{font:800 15px var(--sans);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.torre-al-aire .ta-a{font:700 11px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.torre-off{border:1px dashed var(--border);border-radius:12px;padding:12px 14px;text-align:center;color:var(--muted);font:700 11.5px/1.5 var(--sans);margin-top:14px}
-.torre-lista{margin-top:14px;display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
-.torre-row{display:flex;gap:10px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:11px;padding:9px 12px}
-.torre-row.pedido{border-color:rgba(245,157,61,.45);background:rgba(245,157,61,.07)}
-.torre-pos{font:800 10px var(--mono);color:var(--muted);flex:0 0 28px;text-align:center}
-.torre-row .tr-txt{flex:1;min-width:0}
-.torre-row .tr-t{font:800 12px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.torre-row .tr-a{font:700 10px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.torre-badge{flex:0 0 auto;font:800 8.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--primary);border:1px solid rgba(245,157,61,.4);border-radius:999px;padding:3px 7px}
-.torre-del{flex:0 0 auto;display:none;background:none;border:1px solid rgba(255,59,48,.4);color:#ff9d96;border-radius:8px;padding:4px 9px;font:800 11px var(--sans);cursor:pointer}
-.torre-del.show{display:inline-block}
-.torre-dj{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
-.torre-pin-row{display:flex;gap:8px}
-.torre-pin-row input{flex:1;min-width:0;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:800 14px var(--sans);padding:10px 12px;letter-spacing:.25em;outline:none}
-.torre-btn-accion{background:var(--secondary);border:1px solid rgba(245,157,61,.4);color:var(--primary);border-radius:10px;padding:10px 14px;font:800 11.5px var(--sans);cursor:pointer}
-.torre-btn-accion:disabled{opacity:.5;cursor:default}
-.torre-herr .torre-busca{position:relative}
-.torre-herr .torre-busca input{width:100%;box-sizing:border-box;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:700 12.5px var(--sans);padding:10px 12px;outline:none}
-.torre-acciones{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
-.torre-sesion{font:800 10px var(--mono);color:#7df09a;margin-left:auto}
-.torre-msj{font:700 11.5px/1.5 var(--sans);margin-top:10px;min-height:15px}
-.torre-msj.ok{color:#7df09a}.torre-msj.err{color:#ff9d96}
-.torre-msj .torre-alfinal{color:var(--muted);font-weight:700;font-size:10.5px;text-decoration:underline;cursor:pointer;margin-left:8px}
-/* ⭐ v37: ESPECIAL INTELIGENTE */
-.torre-especial{margin-top:12px;border:1px dashed rgba(125,240,154,.35);border-radius:12px;padding:11px 12px}
-.torre-especial .te-head{font:800 9px var(--mono);letter-spacing:.09em;color:#7df09a;text-transform:uppercase}
-.torre-especial .te-fila{display:flex;gap:8px;margin-top:8px}
-.torre-especial input[type=text]{flex:1;min-width:0;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:700 12px var(--sans);padding:9px 11px;outline:none}
-.torre-especial input[type=number]{width:58px;flex:0 0 58px;background:#0e0f14;border:1px solid #333;border-radius:10px;color:var(--text);font:800 12px var(--sans);padding:9px 6px;text-align:center;outline:none}
-.torre-especial .te-nota{font:700 10px/1.45 var(--sans);color:var(--muted);margin-top:7px}
 </style>
 </head>
 <body>
@@ -547,7 +508,7 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <div class="now"><div class="eyebrow">Sonando ahora</div><p id="title" class="title">Conectando…</p><p id="artist" class="artist"></p></div>
 
 <div id="diagnostico">
-  <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v37 (Torre de Control + Especial)...</span></div>
+  <div class="diag-line info"><span class="prefix">→</span><span class="msg">Iniciando sikodark v38 (panel del DJ en panel.html)...</span></div>
 </div>
 
 <div class="controls">
@@ -605,51 +566,6 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 <section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
   <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Por orden de llegada — se limpia sola cada 5 minutos</p></div><span id="colaCount" class="count">0</span></div>
   <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
-</section>
-
-<!-- ===== 🗼 v36: TORRE DE CONTROL — el playlist de RadioBOSS en vivo ===== -->
-<section id="torreBox" class="card hidden" aria-label="Torre de control de RadioBOSS">
-  <div class="history-head"><div><h2>🎛️ Torre de control</h2><p class="sub">El playlist de la radio en vivo — lo que se viene</p></div><span id="torreVivos" class="count">—</span></div>
-
-  <div id="torreAlAire" class="torre-al-aire hidden">
-    <span class="ta-pulso"></span>
-    <div class="ta-txt">
-      <div class="ta-tag">📻 Al aire ahora</div>
-      <p class="ta-t" id="torreAireTema">—</p>
-      <p class="ta-a" id="torreAireArtista"></p>
-    </div>
-  </div>
-
-  <div id="torreOff" class="torre-off hidden">📴 La torre de la PC del DJ está apagada — cuando la encienda, acá aparece el playlist en vivo.</div>
-  <div id="torreLista" class="torre-lista"></div>
-
-  <div class="torre-dj">
-    <div id="torrePinRow" class="torre-pin-row">
-      <input type="password" inputmode="numeric" id="torrePin" placeholder="PIN del DJ" maxlength="8" autocomplete="off">
-      <button id="torreEntrar" class="torre-btn-accion">🔓 Entrar</button>
-    </div>
-    <div id="torreHerr" class="torre-herr hidden">
-      <div class="torre-busca">
-        <input type="text" id="torreBusca" placeholder="Buscar en la música del DJ para programar…" maxlength="80" autocomplete="off">
-        <div id="torreSug" class="ped-sug"></div>
-      </div>
-      <div class="torre-especial">
-        <div class="te-head">Especial inteligente</div>
-        <div class="te-fila">
-          <input type="text" id="torreEspecArtista" placeholder="Artista — ej: Guns N' Roses" maxlength="60" autocomplete="off">
-          <input type="number" id="torreEspecCant" min="2" max="10" value="4" title="Cuántos temas">
-          <button id="torreEspecIr" class="torre-btn-accion">Programar</button>
-        </div>
-        <div class="te-nota">La torre busca lo mejor de ese artista en tu música y lo encola después del tema actual. Ves los temas acá y en el playlist en vivo.</div>
-      </div>
-      <div class="torre-acciones">
-        <button id="torreSaltar" class="torre-btn-accion">⏭️ Saltar tema</button>
-        <button id="torreReindex" class="torre-btn-accion">🔁 Actualizar música</button>
-        <span id="torreSesion" class="torre-sesion">🟢 DJ conectado</span>
-      </div>
-      <div id="torreMsj" class="torre-msj"></div>
-    </div>
-  </div>
 </section>
 </div>
 <footer>sikodark radio · música en directo</footer>
@@ -1962,7 +1878,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v37 — Torre de Control + Especial inteligente + búsqueda por palabra completa");
+console.log("🧠 Sikodark Radio v38 — panel del DJ en panel.html + búsqueda por palabra completa");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -6004,41 +5920,17 @@ renderFavs();
   });
 })();
 </script>
-<!-- ===== 🗼 v36: TORRE DE CONTROL — playlist de RadioBOSS en vivo + panel DJ ===== -->
+<!-- ===== 🖼 v38: BIBLIOTECA DEL DJ — autocompletado real de los pedidos =====
+     El panel del DJ (playlist en vivo, especial inteligente, avisos) vive ahora en panel.html -->
 <script>
 (function(){
   if (typeof dbFB === "undefined") return;
-  var torreBox = document.getElementById("torreBox");
-  if (!torreBox) return;
-  var torreVivos = document.getElementById("torreVivos");
-  var torreAlAire = document.getElementById("torreAlAire");
-  var torreAireTema = document.getElementById("torreAireTema");
-  var torreAireArtista = document.getElementById("torreAireArtista");
-  var torreOff = document.getElementById("torreOff");
-  var torreLista = document.getElementById("torreLista");
-  var torrePinRow = document.getElementById("torrePinRow");
-  var torrePin = document.getElementById("torrePin");
-  var torreEntrar = document.getElementById("torreEntrar");
-  var torreHerr = document.getElementById("torreHerr");
-  var torreBusca = document.getElementById("torreBusca");
-  var torreSug = document.getElementById("torreSug");
-  var torreSaltar = document.getElementById("torreSaltar");
-  var torreReindex = document.getElementById("torreReindex");
-  var torreMsj = document.getElementById("torreMsj");
-
-  var torreSal = null;          /* la sal pública del PIN (la publica la torre) */
-  var sesionTorre = null;
-  try{ sesionTorre = sessionStorage.getItem("sikodark-torre-token"); }catch(e){}
 
   function normTxt(s){
     s = String(s || "").toLowerCase().normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
     return s.replace(/[^a-z0-9]+/g, " ").trim();
   }
-
-  /* ---------- 🎵 BIBLIOTECA del DJ (índice que publica la torre) ---------- */
-  var biblioteca = null;        /* [{ruta, base, artista, titulo, _n, _nb}] */
-  var bibliotecaCargando = false;
 
   function parsearPista(ruta){
     var base = String(ruta || "").split(/[\\/]/).pop().replace(/\.[a-z0-9]+$/i, "");
@@ -6047,6 +5939,9 @@ renderFavs();
     var titulo = g > 0 ? base.slice(g + 3) : "";
     return { ruta: ruta, base: base, artista: artista, titulo: titulo };
   }
+
+  var biblioteca = null;
+  var bibliotecaCargando = false;
 
   function cargarBiblioteca(ok){
     if (biblioteca) return ok(biblioteca);
@@ -6066,17 +5961,14 @@ renderFavs();
           return it;
         });
         bibliotecaCargando = false;
-        console.log("[Torre] 🎵 biblioteca del DJ cargada:", biblioteca.length, "temas");
+        console.log("[Biblio] \U0001f3b5 biblioteca del DJ cargada:", biblioteca.length, "temas");
         if (ok) ok(biblioteca);
       }).catch(function(){ bibliotecaCargando = false; });
     }catch(e){ bibliotecaCargando = false; }
   }
 
-  /* ⭐ v37: búsqueda por PALABRA COMPLETA + ranking por título exacto.
-     Arregla los desastres reales que vimos en vivo: pedir "Heart" ya no
-     trae a Steelheart (la palabra estaba DENTRO de "steelheart"), y de
-     "True" ahora gana "Spandau Ballet - True" antes que "Madonna -
-     True Blue" (título exacto vale más que título que empieza igual). */
+  /* busqueda por PALABRA COMPLETA + ranking por titulo exacto:
+     pedir "True" trae "Spandau Ballet - True" antes que "Madonna - True Blue" */
   function posPalabra(texto, tok){
     var i = texto.indexOf(tok);
     while (i !== -1){
@@ -6093,7 +5985,7 @@ renderFavs();
     var PARADA = { the:1, and:1, de:1, del:1, los:1, las:1, el:1 };
     var toks = texto.split(" ").filter(function(t){ return t.length >= 3; });
     var utiles = toks.filter(function(t){ return !PARADA[t]; });
-    if (utiles.length) toks = utiles;   /* 'The Beatles' → exige solo 'beatles' */
+    if (utiles.length) toks = utiles;   /* 'The Beatles' exige solo 'beatles' */
     if (!toks.length) return [];
     var nb = normTxt(banda || "");
     var nt = normTxt(q || "");
@@ -6103,11 +5995,11 @@ renderFavs();
       var pts = 0;
       for (var j = 0; j < toks.length; j++){
         var p = posPalabra(it._n, toks[j]);
-        if (p === -1){ pts = -1; break; }        /* la palabra NO está → afuera */
+        if (p === -1){ pts = -1; break; }        /* la palabra NO esta: afuera */
         pts += (p === 0 ? 3 : 1);
       }
       if (pts < 0) continue;
-      /* título exacto: "True" le gana a "True Blue" */
+      /* titulo exacto: "True" le gana a "True Blue" */
       var ti = normTxt(it.titulo);
       if (nt && ti){
         if (ti === nt) pts += 6;
@@ -6125,236 +6017,9 @@ renderFavs();
     return salida.slice(0, 6).map(function(x){ return x[1]; });
   }
 
-  /* le deja las funciones al formulario de pedidos (autocompletado real) */
+  /* funciones para el formulario de pedidos (autocompletado real) */
   window.__sikodarkCargarBiblio = cargarBiblioteca;
   window.__sikodarkBuscarBiblio = buscarEnBiblio;
-
-  /* ---------- 📺 ESTADO EN VIVO (doc estado_radioboss/actual) ---------- */
-  function pintarTorre(e){
-    torreBox.classList.remove("hidden");
-    torreSal = e.sal || torreSal;
-    /* al aire */
-    if (e.al_aire && (e.al_aire.titulo || e.al_aire.artista)){
-      torreAlAire.classList.remove("hidden");
-      torreAireTema.textContent = e.al_aire.titulo || "—";
-      torreAireArtista.textContent = e.al_aire.artista || "";
-    } else {
-      torreAlAire.classList.add("hidden");
-    }
-    /* ¿torre apagada? */
-    var edad = Date.now() - (e.actualizado || 0);
-    if (edad > 3 * 60 * 1000){
-      torreOff.classList.remove("hidden");
-    } else {
-      torreOff.classList.add("hidden");
-    }
-    /* próximos temas */
-    var prox = (e.proximos || []).slice(0, 12);
-    if (!prox.length){
-      torreLista.innerHTML = '<p class="cola-vacio">No hay temas programados después del actual.</p>';
-    } else {
-      torreLista.innerHTML = prox.map(function(t){
-        return '<div class="torre-row' + (t.pedido ? " pedido" : "") + '">'
-          + '<span class="torre-pos">#' + esc(t.pos) + '</span>'
-          + '<div class="tr-txt"><div class="tr-t">' + esc(t.titulo || t.artista || "—") + '</div>'
-          + '<div class="tr-a">' + esc(t.artista || "") + '</div></div>'
-          + (t.pedido ? '<span class="torre-badge">🎧 pedido</span>' : "")
-          + '<button class="torre-del' + (sesionTorre ? " show" : "") + '" data-pos="' + esc(t.pos) + '" title="Sacar del playlist">🗑️</button>'
-          + '</div>';
-      }).join("");
-    }
-    torreVivos.textContent = (e.pedidos_en_cola || 0) + " en cola";
-  }
-
-  try{
-    dbFB.collection("estado_radioboss").doc("actual").onSnapshot(function(snap){
-      if (snap.exists) pintarTorre(snap.data() || {});
-    }, function(err){
-      /* reglas viejas o la torre nunca publicó: la sección queda oculta */
-      console.log("[Torre] sin estado todavía (¿reglas v6 publicadas?):", err && err.code);
-    });
-  }catch(e){}
-
-  /* ---------- 🔐 PIN DEL DJ ---------- */
-  function msj(txt, ok){
-    torreMsj.className = "torre-msj " + (ok ? "ok" : "err");
-    torreMsj.innerHTML = txt;
-  }
-
-  function sha256Hex(txt){
-    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt)).then(function(buf){
-      return Array.prototype.map.call(new Uint8Array(buf), function(b){
-        return ("0" + b.toString(16)).slice(-2);
-      }).join("");
-    });
-  }
-
-  function mandarComando(datos){
-    var campos = Object.assign({ estado: "nuevo", fecha: Date.now() }, datos);
-    return dbFB.collection("comandos_radioboss").add(campos).then(function(ref){
-      return new Promise(function(res){
-        var un = ref.onSnapshot(function(s){
-          var f = s.data();
-          if (f && f.estado === "hecho"){ un(); clearTimeout(t); res(f); }
-        }, function(){ un(); clearTimeout(t); res(null); });
-        var t = setTimeout(function(){ un(); res(null); }, 30000);
-      });
-    });
-  }
-
-  function entrarDJ(token){
-    sesionTorre = token;
-    torrePinRow.classList.add("hidden");
-    torreHerr.classList.remove("hidden");
-    var botones = torreLista.querySelectorAll(".torre-del");
-    for (var i = 0; i < botones.length; i++) botones[i].classList.add("show");
-  }
-
-  torreEntrar.onclick = function(){
-    var pin = torrePin.value.trim();
-    if (!pin) return;
-    if (!torreSal){ msj("La torre de la PC del DJ está apagada — encendela primero.", false); return; }
-    if (!window.crypto || !crypto.subtle){ msj("Tu navegador no soporta el ingreso seguro.", false); return; }
-    torreEntrar.disabled = true;
-    torreEntrar.textContent = "…";
-    sha256Hex(pin + ":" + torreSal).then(function(hash){
-      return mandarComando({ tipo: "auth", hash: hash });
-    }).then(function(rta){
-      torreEntrar.disabled = false;
-      torreEntrar.textContent = "🔓 Entrar";
-      if (rta && rta.resultado === "ok" && rta.respuesta && rta.respuesta.token){
-        try{ sessionStorage.setItem("sikodark-torre-token", rta.respuesta.token); }catch(e){}
-        torrePin.value = "";
-        entrarDJ(rta.respuesta.token);
-        msj("✅ ¡Hola DJ! Ya podés programar y manejar el playlist.", true);
-      } else {
-        msj("❌ " + (rta && rta.resultado ? rta.resultado : "La torre no respondió — ¿está encendida?"), false);
-      }
-    });
-  };
-  torrePin.addEventListener("keydown", function(e){ if (e.key === "Enter") torreEntrar.click(); });
-
-  /* si ya había sesión (mismo navegador), mostrar las herramientas */
-  if (sesionTorre && torreSal !== null){ /* la sal llega con el primer estado */ }
-
-  /* ---------- 🎛️ ACCIONES DEL DJ ---------- */
-  torreSaltar.onclick = function(){
-    if (!sesionTorre) return;
-    if (!confirm("¿Saltar el tema que está sonando ahora?")) return;
-    msj("⏭️ saltando…", true);
-    mandarComando({ tipo: "saltar", token: sesionTorre }).then(function(r){
-      msj(r && r.resultado === "ok" ? "✅ Tema saltado." :
-          "❌ " + (r && r.resultado || "la torre no respondió"), r && r.resultado === "ok");
-    });
-  };
-
-  torreReindex.onclick = function(){
-    if (!sesionTorre) return;
-    msj("🔁 actualizando la música…", true);
-    mandarComando({ tipo: "reindexar", token: sesionTorre }).then(function(r){
-      if (r && r.resultado === "ok"){
-        msj("✅ Música actualizada (" + ((r.respuesta && r.respuesta.total) || "?") + " temas).", true);
-        biblioteca = null;
-        cargarBiblioteca();
-      } else {
-        msj("❌ " + (r && r.resultado || "la torre no respondió"), false);
-      }
-    });
-  };
-
-  /* ---------- ⭐ v37: ESPECIAL INTELIGENTE ("poné lo mejor de Guns") ---------- */
-  var torreEspecArtista = document.getElementById("torreEspecArtista");
-  var torreEspecCant = document.getElementById("torreEspecCant");
-  var torreEspecIr = document.getElementById("torreEspecIr");
-  if (torreEspecIr){
-    torreEspecIr.onclick = function(){
-      if (!sesionTorre){ msj("Poné el PIN primero.", false); return; }
-      var art = torreEspecArtista.value.trim();
-      var cant = parseInt(torreEspecCant.value, 10);
-      if (!(cant >= 2 && cant <= 10)) cant = 4;
-      if (art.length < 2){ msj("Escribí el artista del especial (ej: Guns N' Roses).", false); return; }
-      torreEspecIr.disabled = true;
-      msj("🤖 buscando lo mejor de " + esc(art) + " en la música del DJ…", true);
-      mandarComando({ tipo: "especial", artista: art, cantidad: cant,
-                      token: sesionTorre }).then(function(rta){
-        torreEspecIr.disabled = false;
-        if (rta && rta.resultado === "ok"){
-          var rep = rta.respuesta || {};
-          var lista = (rep.temas || []).map(function(t, i){
-            return (i + 1) + ". " + esc(t.titulo || "?");
-          }).join("<br>");
-          msj("✅ Especial " + esc(art) + ": " + (rep.total || 0) +
-              " tema(s) encolados desde la posición " + (rep.pos || "?") +
-              "<br><span style=\"font-weight:400;opacity:.9\">" + lista + "</span>", true);
-          torreEspecArtista.value = "";
-        } else {
-          msj("❌ " + (rta && rta.resultado || "la torre no respondió — ¿está encendida?"), false);
-        }
-      });
-    };
-    torreEspecArtista.addEventListener("keydown", function(e){
-      if (e.key === "Enter") torreEspecIr.click();
-    });
-  }
-
-  /* borrar una pista del playlist (botón 🗑️ de cada fila) */
-  torreLista.addEventListener("click", function(e){
-    var btn = e.target.closest ? e.target.closest(".torre-del") : null;
-    if (!btn || !sesionTorre) return;
-    var pos = Number(btn.getAttribute("data-pos"));
-    if (!pos || !confirm("¿Sacar la posición #" + pos + " del playlist?")) return;
-    mandarComando({ tipo: "borrar", pos: pos, token: sesionTorre }).then(function(r){
-      msj(r && r.resultado === "ok" ? "✅ Posición #" + pos + " sacada." :
-          "❌ " + (r && r.resultado || "la torre no respondió"), r && r.resultado === "ok");
-    });
-  });
-
-  /* buscador: programar audio de la biblioteca del DJ */
-  var tBusca = null;
-  torreBusca.addEventListener("input", function(){
-    var v = torreBusca.value.trim();
-    clearTimeout(tBusca);
-    if (v.length < 2){ torreSug.classList.remove("show"); return; }
-    tBusca = setTimeout(function(){
-      cargarBiblioteca(function(){
-        var res = buscarEnBiblio("", v);
-        if (!res.length){
-          torreSug.innerHTML = '<div class="sug-vacio">Nada con “' + esc(v) + '” en la música del DJ</div>';
-          torreSug.classList.add("show");
-          return;
-        }
-        torreSug.innerHTML = res.map(function(it, i){
-          return '<div class="sug" data-i="' + i + '"><img src="apple-icon.png" alt="">'
-            + '<div><div class="st">' + esc(it.titulo || it.base) + '</div>'
-            + '<div class="sa">🎵 ' + esc(it.artista) + '</div></div></div>';
-        }).join("");
-        torreSug.classList.add("show");
-        Array.prototype.forEach.call(torreSug.querySelectorAll(".sug"), function(el){
-          el.onmousedown = function(ev){
-            ev.preventDefault();
-            var it = res[Number(el.dataset.i)];
-            if (!sesionTorre){ msj("Poné el PIN primero.", false); return; }
-            msj("⏳ programando “' + esc(it.titulo || it.base) + '”…", true);
-            mandarComando({ tipo: "insertar", archivo: it.ruta,
-                            donde: "siguiente", token: sesionTorre }).then(function(r){
-              if (r && r.resultado === "ok"){
-                msj("✅ Programado — entra al terminar el tema actual 🎧", true);
-                torreSug.classList.remove("show");
-                torreBusca.value = "";
-              } else {
-                msj("❌ " + (r && r.resultado || "la torre no respondió"), false);
-              }
-            });
-          };
-        });
-      });
-    }, 300);
-  });
-  document.addEventListener("click", function(e){
-    if (!torreSug.contains(e.target) && e.target !== torreBusca) torreSug.classList.remove("show");
-  });
-
-  console.log("[Torre] 🗼 panel v37 listo (especial inteligente incluido)");
 })();
 </script>
 </body>
