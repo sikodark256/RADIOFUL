@@ -75,6 +75,16 @@ button.btn.neutro{border-color:var(--border);color:var(--muted)}
 .caja-especial{margin-top:4px;border:1px dashed rgba(125,240,154,.4);border-radius:13px;padding:12px}
 .caja-especial .head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase}
 
+/* ⭐ v6.2: carátulas de la banda mientras escribís (iTunes) — cero errores de tipeo */
+.band-covers{display:none;margin-top:10px}
+.band-covers.show{display:block}
+.bc-busca{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin-bottom:7px}
+.bc-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.band-cover{flex:0 0 62px;width:62px;background:none;border:none;padding:0;cursor:pointer;color:var(--muted);text-align:center}
+.band-cover img{width:62px;height:62px;border-radius:10px;border:1px solid var(--border);display:block;background:#0e0f14}
+.band-cover .bn{display:block;font:700 8.5px/1.3 var(--sans);margin-top:3px;max-width:62px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.band-cover:active img{border-color:var(--ok)}
+
 /* ⭐ v6.1: propuesta de especial — el DJ elige cuáles salen al aire */
 .cand-head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase;margin-top:12px}
 .cand-fila{display:flex;gap:9px;align-items:center;background:var(--secondary);border:1px solid var(--border);
@@ -181,6 +191,7 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
         <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos vienen marcados">
         <button class="btn verde" id="espIr">Buscar</button>
       </div>
+      <div id="bandCovers" class="band-covers"></div>
       <div class="nota">La torre busca lo mejor del artista en tu música y te lo propone acá con las carátulas de iTunes. Marcás cuáles salen al aire y en qué orden — nada entra al playlist hasta que aprietes Poner al aire.</div>
       <div id="candidatos" class="oculto">
         <div class="cand-head" id="candTitulo">Propuesta</div>
@@ -471,7 +482,10 @@ $("listaProx").addEventListener("click", function(e){
   });
 });
 
-/* ==================== ⭐ v6.1: CARÁTULAS DE iTUNES ==================== */
+/* ==================== ⭐ v6.2: CARÁTULAS DE iTUNES ====================
+   Vía JSONP (script tag): iTunes devuelve los datos con callback y NO
+   hay problema de CORS — funciona igual desde la web, el celular o
+   donde sea. Si el JSONP no llega, respaldo con fetch + proxies. */
 var PROXIES = [
   function(u){ return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); },
   function(u){ return "https://corsproxy.io/?" + encodeURIComponent(u); },
@@ -497,18 +511,48 @@ function fetchConProxy(url){
 }
 
 var cacheCaratulas = {};
+var itunesN = 0;
+
+function itunesJsonp(params, cb){
+  var nombre = "skkItunes" + (++itunesN) + "_" + (Date.now() % 1000000);
+  var s = document.createElement("script");
+  var listo = false;
+  function fin(d){
+    if (listo) return;
+    listo = true;
+    try{ delete window[nombre]; }catch(e){ window[nombre] = undefined; }
+    if (s.parentNode) s.parentNode.removeChild(s);
+    cb(d || null);
+  }
+  window[nombre] = fin;
+  s.src = "https://itunes.apple.com/search?" + params + "&callback=" + nombre;
+  s.onerror = function(){ fin(null); };
+  document.head.appendChild(s);
+  setTimeout(function(){ fin(null); }, 8000);
+}
+
+function itunesBuscar(params, cb){
+  itunesJsonp(params, function(d){
+    if (d) return cb(d);
+    /* respaldo: fetch directo + proxies públicos */
+    fetchConProxy("https://itunes.apple.com/search?" + params)
+      .then(function(r){ return r.json(); })
+      .then(function(d2){ cb(d2 || null); })
+      .catch(function(){ cb(null); });
+  });
+}
+
 function buscarCaratula(termino, cb){
   var clave = String(termino || "").toLowerCase();
   if (cacheCaratulas[clave] !== undefined) return cb(cacheCaratulas[clave]);
-  var url = "https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(termino);
-  fetchConProxy(url).then(function(r){ return r.json(); }).then(function(d){
+  itunesBuscar("media=music&entity=song&limit=1&term=" + encodeURIComponent(termino), function(d){
     var img = null;
     if (d && d.results && d.results.length && d.results[0].artworkUrl100){
       img = d.results[0].artworkUrl100.replace("100x100", "200x200");
     }
     cacheCaratulas[clave] = img;
     cb(img);
-  }).catch(function(){ cacheCaratulas[clave] = null; cb(null); });
+  });
 }
 
 function cargarCaratula(el){
@@ -520,8 +564,78 @@ function cargarCaratula(el){
   });
 }
 
+/* ==================== ⭐ v6.2: CARÁTULAS DE LA BANDA MIENTRAS ESCRIBÍS ====================
+   Evita el error de tipeo: escribís "spandu" y iTunes te muestra las
+   carátulas de Spandau Ballet — tocás la correcta y el nombre se corrige
+   solo. También aparece en el buscador cuando no hay resultados. */
+var cacheBandas = {};
+var tBanda = null;
+
+function buscarBandas(termino, cb){
+  var clave = String(termino || "").toLowerCase().trim();
+  if (cacheBandas[clave]) return cb(cacheBandas[clave]);
+  itunesBuscar("media=music&entity=album&limit=6&term=" + encodeURIComponent(termino), function(d){
+    var lista = ((d && d.results) || []).map(function(r){
+      return {
+        img: String(r.artworkUrl100 || "").replace("100x100", "200x200"),
+        artista: r.artistName || "",
+        album: r.collectionName || ""
+      };
+    }).filter(function(x){ return x.img && x.artista; }).slice(0, 6);
+    cacheBandas[clave] = lista;
+    cb(lista);
+  });
+}
+
+function pintarFilaBandas(caja, lista, alElegir){
+  caja.insertAdjacentHTML("beforeend", '<div class="bc-fila">' + lista.map(function(b, i){
+    return '<button class="band-cover" data-i="' + i + '" type="button" title="' + esc(b.album || b.artista) + '">'
+      + '<img src="' + esc(b.img) + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'">'
+      + '<span class="bn">' + esc(b.artista) + '</span></button>';
+  }).join("") + '</div>');
+  Array.prototype.forEach.call(caja.querySelectorAll(".band-cover"), function(el){
+    el.onmousedown = function(ev){ ev.preventDefault(); };
+    el.onclick = function(){
+      var b = lista[Number(el.getAttribute("data-i"))];
+      if (b) alElegir(b);
+    };
+  });
+}
+
+function pintarBandas(){
+  var caja = $("bandCovers");
+  var v = $("espArtista").value.trim();
+  clearTimeout(tBanda);
+  if (v.length < 3){ caja.classList.remove("show"); caja.innerHTML = ""; return; }
+  caja.classList.add("show");
+  caja.innerHTML = '<div class="bc-busca">Buscando carátulas de la banda…</div>';
+  tBanda = setTimeout(function(){
+    buscarBandas(v, function(lista){
+      if ($("espArtista").value.trim() !== v) return;   /* siguió escribiendo */
+      if (!lista.length){
+        caja.innerHTML = '<div class="bc-busca">iTunes no tiene carátulas para "' + esc(v) + '" — podés buscar igual.</div>';
+        return;
+      }
+      caja.innerHTML = '<div class="bc-busca">¿Es esta la banda? Tocá la carátula y corrijo el nombre:</div>';
+      pintarFilaBandas(caja, lista, function(b){
+        $("espArtista").value = b.artista;
+        msjHerr("Nombre corregido a <b>" + esc(b.artista) + "</b> — ahora poné BUSCAR.", true);
+        pintarBandas();
+      });
+    });
+  }, 600);
+}
+
+function limpiarBandas(){
+  clearTimeout(tBanda);
+  $("bandCovers").classList.remove("show");
+  $("bandCovers").innerHTML = "";
+}
+$("espArtista").addEventListener("input", pintarBandas);
+
 /* ==================== ⭐ v6.1: ESPECIAL CON CONTROL TOTAL ====================
-   1) Buscar: la torre PROPONE hasta 15 candidatos (no encola nada)
+   1) Buscar: la torre PROPONE hasta 24 candidatos, minuciosa (todos los
+      formatos, toda la carpeta, el playlist vivo y hasta con typos)
    2) El DJ marca cuáles salen al aire y los ordena con flechas
    3) Poner al aire: la torre encola SOLO lo elegido, en ese orden */
 var cand = null;   /* {artista, items:[{archivo, titulo, artista, checked}]} */
@@ -547,6 +661,7 @@ function renderCandidatos(){
       + '<span class="caratula" data-term="' + esc((c.artista || "") + " " + (c.titulo || "")) + '">♪</span>'
       + '<div class="cand-txt"><div class="cand-t">' + esc(nombre) + '</div>'
       + '<div class="cand-a">' + esc(c.artista || "") + '</div></div>'
+      + (c.ext ? '<span class="badge">' + esc(c.ext) + '</span>' : "")
       + '<button class="cand-mover" data-dir="-1"' + (i === 0 ? " disabled" : "") + ' title="Subir">↑</button>'
       + '<button class="cand-mover" data-dir="1"' + (i === cand.items.length - 1 ? " disabled" : "") + ' title="Bajar">↓</button>'
       + '</div>';
@@ -597,7 +712,7 @@ $("espIr").onclick = function(){
       var cands = (rta.respuesta && rta.respuesta.candidatos) || [];
       if (!cands.length){ msjHerr("La torre no encontró candidatos.", false); return; }
       cand = { artista: art, items: cands.map(function(c, i){
-        return { archivo: c.archivo || "", titulo: c.titulo || "", artista: c.artista || "", checked: i < cant };
+        return { archivo: c.archivo || "", titulo: c.titulo || "", artista: c.artista || "", ext: c.ext || "", checked: i < cant };
       })};
       msjHerr("Propuesta lista — marcá y ordená, después «Poner al aire».", true);
       renderCandidatos();
@@ -612,7 +727,7 @@ $("candAire").onclick = function(){
   if (!token || !cand) return;
   var elegidos = cand.items.filter(function(c){ return c.checked; });
   if (!elegidos.length){ msjHerr("No marcaste ningún tema.", false); return; }
-  if (elegidos.length > 10) elegidos = elegidos.slice(0, 10);
+  if (elegidos.length > 15) elegidos = elegidos.slice(0, 15);
   if (!confirm("¿Poner " + elegidos.length + " tema(s) al aire, después del tema actual?")) return;
   $("candAire").disabled = true;
   msjHerr("Encolando el especial…", true);
@@ -631,6 +746,7 @@ $("candAire").onclick = function(){
       $("candidatos").classList.add("oculto");
       $("candLista").innerHTML = "";
       $("espArtista").value = "";
+      limpiarBandas();
     } else {
       msjHerr("× " + esc((r && r.resultado) || "la torre no respondió"), false);
     }
@@ -641,6 +757,7 @@ $("candCancelar").onclick = function(){
   cand = null;
   $("candidatos").classList.add("oculto");
   $("candLista").innerHTML = "";
+  limpiarBandas();
   msjHerr("Propuesta descartada — nada entró al playlist.", true);
 };
 
@@ -731,8 +848,21 @@ $("inpBusca").addEventListener("input", function(){
     cargarBiblioteca(function(){
       var res = buscarEnBiblio("", v);
       if (!res.length){
+        /* ⭐ v6.2: nada en la música del DJ → carátulas de iTunes para
+           confirmar el nombre de la banda antes de reintentar */
         $("sugs").innerHTML = '<div class="sug-vacio">Nada con "' + esc(v) + '" en la música del DJ</div>';
         $("sugs").classList.add("show");
+        buscarBandas(v, function(lista){
+          if (!lista.length) return;
+          if ($("inpBusca").value.trim() !== v) return;   /* ya escribió otra cosa */
+          var caja = $("sugs");
+          caja.innerHTML = '<div class="sug-vacio">Nada en tu música — ¿es esta la banda? Tocá la carátula:</div>';
+          pintarFilaBandas(caja, lista, function(b){
+            $("inpBusca").value = b.artista;
+            $("inpBusca").dispatchEvent(new Event("input"));
+          });
+          caja.classList.add("show");
+        });
         return;
       }
       $("sugs").innerHTML = res.map(function(it, i){
@@ -862,7 +992,7 @@ $("btnAvisoGuardar").onclick = function(){ guardarAviso(false, false); };
 $("btnAvisoPublicar").onclick = function(){ guardarAviso(true, false); };
 $("btnAvisoOcultar").onclick = function(){ guardarAviso(false, true); };
 
-console.log("[Panel] listo — torre + avisos");
+console.log("[Panel] listo — torre v6.2 (especial minucioso + carátulas) + avisos");
 })();
 </script>
 </body>
