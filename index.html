@@ -69,15 +69,15 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radiu
 .history h2{font-family:var(--sans);font-weight:900;text-transform:uppercase;font-size:15px;margin:0;letter-spacing:.02em}
 .history p.sub{font-family:var(--sans);font-weight:800;font-size:12px;color:var(--primary);margin:4px 0 0}
 .count{padding:6px 11px;border-radius:999px;background:#141419;border:1px solid var(--border);color:#cfcfd6;font:10px var(--mono);white-space:nowrap}
-.history-grid{margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}
+/* ⭐ v42: historial en fila de TRES, carátulas más chicas, 12 temas */
+.history-grid{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.empty{grid-column:1/-1;border:1px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;color:var(--muted);font-size:13px}
 /* ⭐ Mini-carátulas con fallback TV */
-.track{overflow:hidden;border-radius:14px;background:var(--secondary)}.track-art{position:relative}.track-art::before{content:"";display:block;padding-top:100%}.track-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:8px;top:8px;border-radius:999px;background:rgba(0,0,0,.65);padding:4px 7px;font:10px var(--mono);font-weight:700}
-.track-info{padding:9px}
+.track{overflow:hidden;border-radius:11px;background:var(--secondary)}.track-art{position:relative}.track-art::before{content:"";display:block;padding-top:100%}.track-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.rank{position:absolute;left:6px;top:6px;border-radius:999px;background:rgba(0,0,0,.65);padding:3px 6px;font:9px var(--mono);font-weight:700}
+.track-info{padding:7px 8px 8px}
 .track-title,.track-artist{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:11px}
-.track-artist{font-family:var(--sans);font-weight:700;font-size:10.5px;color:var(--muted);margin-top:2px}
+.track-title{font-family:var(--sans);font-weight:800;text-transform:uppercase;font-size:10px}
+.track-artist{font-family:var(--sans);font-weight:700;font-size:9.5px;color:var(--muted);margin-top:2px}
 footer{color:var(--muted);text-align:center;font:11px var(--mono);margin:28px auto 18px}
-#colaBox{margin-top:24px}
 .hidden{display:none}
 
 /* ===== ❤️🟠 BOTONES CIRCULARES ===== */
@@ -127,7 +127,7 @@ body::before{
   content:"";position:fixed;inset:0;z-index:-2;
   background:var(--bg);background-size:cover;background-position:center;
   transition:background-image .8s ease,filter .8s ease;
-  filter:blur(40px) brightness(.22) saturate(1.1);
+  filter:blur(40px) brightness(.30) saturate(1.3);
   transform:scale(1.1);
 }
 body::after{
@@ -361,61 +361,6 @@ body::after{
   border-top:1px solid rgba(255,255,255,.08);margin-top:4px}
 .tick-mag-encuesta .voto-estado.votado{color:var(--primary)}
 
-/* ===== 🎸 MODAL "PEDÍ TU TEMA" ===== */
-#modalPedido{position:fixed;inset:0;z-index:99998;display:none;
-  align-items:center;justify-content:center;background:rgba(0,0,0,.75);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-#modalPedido.show{display:flex}
-#modalPedido .modal-card{
-  width:calc(100% - 32px);max-width:380px;
-  background:#1c1d24;border:1px solid var(--border);border-radius:18px;
-  padding:22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.7)}
-#modalPedido h3{font-family:var(--sans);font-weight:900;font-size:18px;margin:0 0 4px;
-  text-transform:uppercase;color:var(--primary)}
-#modalPedido p.sub{color:var(--muted);font-size:12px;margin:0 0 16px;line-height:1.4}
-#modalPedido label{display:block;font:800 10px var(--mono);color:var(--muted);
-  text-transform:uppercase;letter-spacing:.08em;margin:10px 0 4px}
-#modalPedido input,#modalPedido textarea{
-  width:100%;padding:11px;border:1px solid #333;border-radius:10px;
-  background:#0e0f14;color:#eee;font-size:14px;font-family:inherit;resize:vertical}
-#modalPedido textarea{min-height:60px}
-#modalPedido .modal-btns{display:flex;gap:8px;margin-top:14px}
-#modalPedido .modal-btns button{flex:1;padding:12px;border:0;border-radius:10px;
-  font-family:var(--sans);font-weight:800;font-size:13px;cursor:pointer;text-transform:uppercase}
-#modalPedido .btn-enviar{background:var(--primary);color:#161616}
-#modalPedido .btn-cancel{background:#2a2b33;color:#ccc}
-#modalPedido .ok-msg{display:none;background:rgba(52,199,89,.12);
-  border:1px solid rgba(52,199,89,.4);border-radius:10px;padding:14px;
-  text-align:center;color:#7df09a;font:700 13px var(--sans);margin-top:14px}
-
-/* ===== 🎸 BOTÓN FLOTANTE "PEDÍ TU TEMA" ===== */
-#btnPedidoTema{position:fixed;bottom:18px;left:16px;z-index:99997;
-  border:0;border-radius:999px;background:#1c1d24;color:var(--primary);
-  cursor:pointer;display:flex;align-items:center;gap:7px;
-  padding:11px 18px;font:800 11px var(--sans);text-transform:uppercase;
-  letter-spacing:.06em;box-shadow:0 6px 20px rgba(0,0,0,.55);
-  border:1px solid rgba(255,138,36,.5);
-  opacity:0;pointer-events:none;transform:translateY(14px);transition:.3s}
-#btnPedidoTema.show{opacity:1;pointer-events:auto;transform:translateY(0)}
-#btnPedidoTema:active{transform:scale(.92)}
-#btnPedidoTema svg{width:16px;height:16px;fill:currentColor}
-
-/* ===== 🔴 BADGE del botón: cuántos temas hay en la cola ===== */
-#btnPedidoTema .ped-badge{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;
-  border-radius:999px;background:#ff3b30;color:#fff;display:none;align-items:center;
-  justify-content:center;font:800 10px var(--sans);padding:0 5px;
-  box-shadow:0 3px 10px rgba(255,59,48,.65);border:2px solid #12131a}
-#btnPedidoTema .ped-badge.show{display:flex}
-
-/* ===== 🔔 AVISO "alguien programó un tema" ===== */
-#avisoPedido{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);
-  z-index:99998;background:#1c1d24;color:#eee;border:1px solid rgba(245,157,61,.45);
-  border-radius:999px;padding:10px 18px;font:800 12px var(--sans);display:flex;gap:8px;
-  align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.6);opacity:0;pointer-events:none;
-  transition:transform .35s ease,opacity .35s ease;max-width:88vw}
-#avisoPedido.show{transform:translateX(-50%) translateY(0);opacity:1}
-#avisoPedido .ap-ico{font-size:15px}
-#avisoPedido .ap-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ===== ⭐⬆️ BOTÓN VOLVER ARRIBA ===== */
 #btnTop{position:fixed;bottom:18px;right:16px;z-index:99997;width:46px;height:46px;
@@ -440,36 +385,6 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 .tema-bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;opacity:0;transition:opacity .9s ease;pointer-events:none}
 .tema-bg.on{opacity:1}
 
-/* ===== 🎸 AUTOCOMPLETADO "PROGRAMÁ TU TEMA" + 🎧 COLA DE PEDIDOS ===== */
-#modalPedido .modal-card{max-height:calc(100vh - 40px);overflow-y:auto;scrollbar-width:thin}
-.ped-sug{position:relative;margin-top:5px;display:none;max-height:228px;overflow-y:auto;border:1px solid #333;border-radius:10px;background:#0e0f14;scrollbar-width:thin}
-.ped-sug.show{display:block}
-.ped-sug .sug{display:flex;gap:10px;align-items:center;padding:7px 9px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
-.ped-sug .sug:last-child{border-bottom:0}
-.ped-sug .sug:hover,.ped-sug .sug.sel{background:#1c1d24}
-.ped-sug .sug img{width:38px;height:38px;border-radius:7px;object-fit:cover;flex:0 0 38px;background:#141419}
-.ped-sug .sug .st{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
-.ped-sug .sug .sa{font:700 10.5px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
-.ped-sug .sug-vacio{padding:10px;font:700 11px var(--sans);color:var(--muted);text-align:center}
-.ped-preview{display:none;gap:10px;align-items:center;margin-top:12px;background:rgba(245,157,61,.08);border:1px solid rgba(245,157,61,.35);border-radius:10px;padding:8px 10px}
-.ped-preview.show{display:flex}
-.ped-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:0 0 44px;background:#141419}
-.ped-preview .pt-b{display:block;font:800 12.5px var(--sans);color:#f5f5f7;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ped-preview .pt-a{font:700 10.5px var(--sans);color:var(--primary)}
-.cola-lista{margin-top:22px;display:flex;flex-direction:column;gap:13px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
-.cola-item{display:flex;gap:12px;align-items:center;background:var(--secondary);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
-.cola-item.mio{border-color:rgba(245,157,61,.45)}
-.cola-item img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:0 0 44px;background:#141419}
-.cola-item .ci-txt{flex:1;min-width:0}
-.cola-item .ci-t{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cola-item .ci-a{font:700 10.5px var(--sans);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.estado{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.estado.pendiente{background:rgba(255,255,255,.08);color:#cfcfd6;border:1px solid rgba(255,255,255,.15)}
-.estado.en_cola{background:rgba(245,157,61,.16);color:var(--primary);border:1px solid rgba(245,157,61,.4)}
-.estado.sonado{background:rgba(52,199,89,.14);color:#7df09a;border:1px solid rgba(52,199,89,.4)}
-.estado.no_encontrado{background:rgba(255,59,48,.13);color:#ff9d96;border:1px solid rgba(255,59,48,.4)}
-.cola-vacio{border:1px dashed var(--border);border-radius:14px;padding:30px 18px;text-align:center;color:var(--muted);font:700 12.5px/1.6 var(--sans);margin:2px 0 4px}
-.cola-sep{text-align:center;font:800 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:16px 0 6px;opacity:.8}
 </style>
 </head>
 <body>
@@ -559,47 +474,12 @@ section.card[aria-label="Reproductor de radio"]{position:relative;isolation:isol
 </section>
 
 <section class="card history" aria-labelledby="history-title">
-<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/10 temas</span></div>
+<div class="history-head"><div><h2 id="history-title">◉ &nbsp;Reproducidos recientemente</h2><p class="sub">Tus preferidos</p></div><span id="count" class="count">0/12 temas</span></div>
 <div id="history" class="history-grid"><p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p></div>
 </section>
 
-<section id="colaBox" class="card" aria-label="Cola de pedidos de los oyentes">
-  <div class="history-head"><div><h2>🎧 Cola de pedidos</h2><p class="sub">Por orden de llegada — se limpia sola cada 5 minutos</p></div><span id="colaCount" class="count">0</span></div>
-  <div id="colaLista" class="cola-lista"><p class="cola-vacio">Todavía no hay pedidos — tocá "Programá tu tema" 🤘</p></div>
-</section>
 </div>
 <footer>sikodark radio · música en directo</footer>
-
-<!-- ===== 🎸 BOTÓN FLOTANTE "PROGRAMÁ TU TEMA" ===== -->
-<button id="btnPedidoTema" aria-label="Programá tu tema musical">
-  <svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM5 16l.7 2.1L8 19l-2.3.9L5 22l-.7-2.1L2 19l2.3-.9L5 16z"/></svg>
-  Programá tu tema
-</button>
-
-<!-- ===== 🎸 MODAL "PROGRAMÁ TU TEMA MUSICAL" ===== -->
-<div id="modalPedido" role="dialog" aria-modal="true">
-  <div class="modal-card">
-    <h3>🎸 Programá tu tema musical</h3>
-    <p class="sub">Escribí una banda o tema — si está en la música de la radio, entra en la cola al toque.</p>
-    <label>Tu nombre (opcional)</label>
-    <input type="text" id="pedNombre" placeholder="Ej: Juanchi" maxlength="20">
-    <label>Banda / Artista</label>
-    <input type="text" id="pedBanda" placeholder="Ej: Guns N' Roses" maxlength="60" autocomplete="off">
-    <div id="pedSugBanda" class="ped-sug"></div>
-    <label>Tema (opcional)</label>
-    <input type="text" id="pedTema" placeholder="Ej: Sweet Child O' Mine" maxlength="60" autocomplete="off">
-    <div id="pedSugTema" class="ped-sug"></div>
-    <div id="pedPreview" class="ped-preview">
-      <img id="pedPreviewImg" src="apple-icon.png" alt="">
-      <div><b class="pt-b" id="pedPreviewTema"></b><span class="pt-a" id="pedPreviewBanda"></span></div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" id="pedCancelar">Cancelar</button>
-      <button class="btn-enviar" id="pedEnviar">Programar tema</button>
-    </div>
-    <div class="ok-msg" id="pedOk">✅ ¡Programado! Va a entrar en la cola de la radio 🤘</div>
-  </div>
-</div>
 
 <div id="smartNotify" role="alert" aria-live="polite">
   <div class="notify-art"><img id="notifyArt" src="apple-icon.png" alt=""></div>
@@ -624,7 +504,8 @@ function streamFresca(){
 }
 const MOUNT_ID = "xdkqr4btptutv";
 const LOGO = "icon-512.png";
-const MAX_HISTORY = 10;
+/* v42: 12 temas en el historial */
+const MAX_HISTORY = 12;
 
 const ZENO_SSE_URL = `https://api.zeno.fm/mounts/metadata/subscribe/${MOUNT_ID}`;
 const ZENO_REST_URL = `https://api.zeno.fm/mounts/${MOUNT_ID}`;
@@ -823,8 +704,12 @@ function actualizarMediaSession(track, urlCaratula) {
 }
 
 /* =========================================================
-   🎨 TEMA DINÁMICO — la tarjeta del player toma los colores
-   de la carátula (como hace Android en la notificación)
+   🎨 TEMA DINÁMICO v42 — INTELIGENTE
+   Extrae la PALETA REAL de la carátula (no solo el color más
+   repetido): el tono vivo, el dominante y un acento de OTRO
+   color de la tapa (como el verde+naranja de una tapa con
+   vario color). Pinta la card Y el fondo de toda la página
+   con esa paleta — como hace Android con la notificación.
    ========================================================= */
 const playerCard = document.querySelector('section.card[aria-label="Reproductor de radio"]');
 let capaTema = null;
@@ -834,6 +719,19 @@ let temaToken = 0;
 function quitarTemaCaratula(){
   if (capaTema) capaTema.classList.remove("on");
   urlTemaActual = null;
+  /* ⭐ v42: el fondo de la página también vuelve a su color original */
+  try {
+    for (let hoja of document.styleSheets) {
+      try {
+        for (let regla of hoja.cssRules) {
+          if (regla.selectorText === "body::after") {
+            regla.style.backgroundImage = "linear-gradient(135deg,rgba(0,0,0,.92),rgba(0,0,0,.82))";
+            return;
+          }
+        }
+      } catch(e) { continue; }
+    }
+  } catch(e) {}
 }
 
 function oscurecer(rgb, factor, tope){
@@ -841,6 +739,11 @@ function oscurecer(rgb, factor, tope){
   if (!n || n.length < 3) return "rgb(22,22,28)";
   const c = (i) => Math.min(Math.round(Number(n[i]) * (1 - factor)), tope);
   return "rgb(" + c(0) + ", " + c(1) + ", " + c(2) + ")";
+}
+
+function rgbAVector(rgb){
+  const n = String(rgb || "").match(/\d+/g);
+  return (n && n.length >= 3) ? [Number(n[0]), Number(n[1]), Number(n[2])] : [28, 28, 34];
 }
 
 async function cargarImagenTema(url){
@@ -860,31 +763,125 @@ async function cargarImagenTema(url){
   return null;
 }
 
+/* ⭐⭐ v42 — PALETA INTELIGENTE de la carátula.
+   Antes: contaba pixeles crudos y agarraba los 2 más repetidos
+   (una tapa con mucho blanco/gris daba colores lavados).
+   Ahora: analiza la TONALIDAD (hue) de cada pixel, arma 24
+   familias de color y elige:
+     · dominante → la familia con más peso (la esencia de la tapa)
+     · vibrante  → la más SATURADA y bien iluminada (el color que
+                   se ve, no el lavado) — prioridad para el fondo
+     · acento    → una familia de OTRO tono (a 50°+ de distancia),
+                   el contraste que hace que el fondo "viva"
+   Si la tapa es gris/blanca/negra, usa el gris como base y listo. */
 function extraerPaleta(img){
   try {
-    const size = 48;
+    const size = 64;
     const cv = document.createElement("canvas");
     cv.width = size; cv.height = size;
     const ctx = cv.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     ctx.drawImage(img, 0, 0, size, size);
     const data = ctx.getImageData(0, 0, size, size).data;
-    /* Histograma de colores agrupados — ignora pixeles casi negros/blancos */
-    const buckets = new Map();
+
+    const BINOS = 24;                       /* familias de tono (15° cada una) */
+    const familias = [];
+    for (let i = 0; i < BINOS; i++) familias.push({ peso: 0, cuenta: 0, r: 0, g: 0, b: 0, sat: 0, lum: 0 });
+    let total = 0, sr = 0, sg = 0, sb = 0;  /* promedio general (para tapas grises) */
+
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i], g = data[i+1], b = data[i+2];
-      const lum = .299 * r + .587 * g + .114 * b;
-      if (lum < 24 || lum > 232) continue;
-      const key = ((r >> 5) << 10) | ((g >> 5) << 5) | (b >> 5);
-      const bk = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
-      bk.count++; bk.r += r; bk.g += g; bk.b += b;
-      buckets.set(key, bk);
+      if (data[i+3] < 128) continue;
+      const lum = (.299 * r + .587 * g + .114 * b) / 255;
+      total++; sr += r; sg += g; sb += b;
+      if (lum < .10 || lum > .92) continue;          /* negro/blanco puro: fuera */
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      const d = mx - mn;
+      const sat = mx === 0 ? 0 : d / mx;
+      if (sat < .12) continue;                       /* gris: no aporta tono */
+      /* hue 0..360 */
+      let h = 0;
+      if (mx === r) h = 60 * (((g - b) / d) % 6);
+      else if (mx === g) h = 60 * ((b - r) / d + 2);
+      else h = 60 * ((r - g) / d + 4);
+      if (h < 0) h += 360;
+      const bin = Math.min(BINOS - 1, Math.floor(h / 360 * BINOS));
+      const F = familias[bin];
+      /* el peso premia colores saturados y bien iluminados */
+      const w = (0.25 + sat) * (1 - Math.abs(lum - 0.5));
+      F.peso += w; F.cuenta++;
+      F.r += r * w; F.g += g * w; F.b += b * w;
+      F.sat += sat; F.lum += lum;
     }
-    if (!buckets.size) return null;
-    const lista = [...buckets.values()].sort((a, b) => b.count - a.count);
-    const promedio = (x) => "rgb(" + Math.round(x.r / x.count) + ", " + Math.round(x.g / x.count) + ", " + Math.round(x.b / x.count) + ")";
-    return { dominante: promedio(lista[0]), secundario: promedio(lista[1] || lista[0]) };
+
+    const colorDe = (F) => F.cuenta
+      ? "rgb(" + Math.round(F.r / F.peso) + ", " + Math.round(F.g / F.peso) + ", " + Math.round(F.b / F.peso) + ")"
+      : null;
+    const hueDe = (F) => { const c = colorDe(F); const v = rgbAVector(c);
+      const mx = Math.max(...v), mn = Math.min(...v), dd = mx - mn;
+      if (!dd) return -1;
+      let h = mx === v[0] ? 60 * (((v[1] - v[2]) / dd) % 6) : (mx === v[1] ? 60 * ((v[2] - v[0]) / dd + 2) : 60 * ((v[0] - v[1]) / dd + 4));
+      if (h < 0) h += 360; return h; };
+    const distHue = (a, b2) => { const d = Math.abs(a - b2); return Math.min(d, 360 - d); };
+
+    /* ¿tapas grises / blancas / negras? → paleta neutra pero bien tintada */
+    const conColor = familias.filter(F => F.cuenta >= 3);
+    if (!conColor.length) {
+      const gris = "rgb(" + Math.round(sr / Math.max(1, total)) + ", " + Math.round(sg / Math.max(1, total)) + ", " + Math.round(sb / Math.max(1, total)) + ")";
+      return { dominante: gris, vibrante: gris, acento: null, gris: true };
+    }
+
+    /* dominante = la que más pixeles juntó */
+    let dominante = conColor[0];
+    for (const F of conColor) if (F.cuenta > dominante.cuenta) dominante = F;
+    /* vibrante = mejor puntaje de saturación+luz (el color QUE SE VE) */
+    let vibrante = conColor[0];
+    let mejor = -1;
+    for (const F of conColor) {
+      const puntaje = F.peso * (0.5 + (F.sat / F.cuenta));
+      if (puntaje > mejor) { mejor = puntaje; vibrante = F; }
+    }
+    /* acento = otro tono distinto (50°+) con buen peso — el contraste */
+    const hv = hueDe(vibrante), hd = hueDe(dominante);
+    let acento = null, mejorA = -1;
+    for (const F of conColor) {
+      const hf = hueDe(F);
+      if (hv >= 0 && distHue(hf, hv) < 50) continue;
+      if (hd >= 0 && distHue(hf, hd) < 50) continue;
+      if (F.peso > mejorA) { mejorA = F.peso; acento = F; }
+    }
+
+    const pal = { dominante: colorDe(dominante), vibrante: colorDe(vibrante) || colorDe(dominante), acento: acento ? colorDe(acento) : null, gris: false };
+    console.log("[Tema] 🎨 Paleta: dominante=" + pal.dominante + " vibrante=" + pal.vibrante + " acento=" + (pal.acento || "(no hay)"));
+    return pal;
   } catch(e) { return null; } /* canvas taint u otro error */
+}
+
+/* ⭐ v42: el FONDO DE LA PÁGINA se tinta con los colores de la tapa.
+   El fondo sigue siendo oscuro (la web es oscura y el texto se tiene
+   que leer), pero con el CASTE de color de la carátula — ese brillo
+   verde/naranja que se ve cuando suena una tapa colorida. */
+function tintarFondo(paleta){
+  try {
+    const vr = rgbAVector(paleta.vibrante);
+    const dm = rgbAVector(paleta.dominante);
+    const ac = rgbAVector(paleta.acento || paleta.vibrante);
+    const osc = (v, f) => Math.max(0, Math.round(v * f));
+    const de = (v) => osc(v[0], .55) + "," + osc(v[1], .55) + "," + osc(v[2], .55);
+    const grad = "linear-gradient(150deg, rgba(" + de(vr) + ",.40) 0%, rgba(" + de(dm) + ",.34) 45%, rgba(" + de(ac) + ",.30) 72%, rgba(10,10,12,.58) 100%)"
+               + ", linear-gradient(135deg, rgba(0,0,0,.62), rgba(0,0,0,.56))";
+    for (let hoja of document.styleSheets) {
+      try {
+        for (let regla of hoja.cssRules) {
+          if (regla.selectorText === "body::after") {
+            regla.style.backgroundImage = grad;
+            return true;
+          }
+        }
+      } catch(e) { continue; }
+    }
+  } catch(e) {}
+  return false;
 }
 
 async function aplicarTemaCaratula(url){
@@ -903,12 +900,16 @@ async function aplicarTemaCaratula(url){
     capaTema.className = "tema-bg";
     playerCard.appendChild(capaTema);
   }
-  const c1 = oscurecer(paleta.dominante, .15, 165);
-  const c2 = oscurecer(paleta.dominante, .5, 95);
-  const c3 = oscurecer(paleta.secundario, .68, 75);
+  /* ⭐ v42: la card usa el color VIVO como techo, el dominante al medio
+     y el acento (otro tono de la tapa) abajo — el degradado se ve como
+     la tapa, no como un color cualquiera */
+  const c1 = oscurecer(paleta.vibrante || paleta.dominante, .12, 172);
+  const c2 = oscurecer(paleta.dominante, .5, 96);
+  const c3 = oscurecer(paleta.acento || paleta.vibrante || paleta.dominante, .66, 78);
   capaTema.style.background = "linear-gradient(150deg, " + c1 + " 0%, " + c2 + " 48%, " + c3 + " 100%)";
   capaTema.classList.add("on");
-  console.log("[Tema] 🎨 Card pintada:", c1, "→", c3);
+  const fondoOk = tintarFondo(paleta);
+  console.log("[Tema] 🎨 Card pintada:", c1, "→", c3, "| fondo página:", fondoOk ? "tintado" : "sin cambio");
 }
 
 /* =========================================================
@@ -1032,7 +1033,7 @@ async function repararHistorial(){
 
 function renderHistory(){
   try {
-    countEl.textContent = history.length + "/10 temas";
+    countEl.textContent = history.length + "/12 temas";
     if (!history.length) {
       historyEl.innerHTML = '<p class="empty">Las canciones aparecerán aquí cuando empieces a escuchar la radio.</p>';
       return;
@@ -1925,7 +1926,7 @@ ultimoTitulo = "";
 /* ⭐ Safety net: si después de 8s no llegó metadata, no pasa nada
    (simplemente no hay info, el player sigue funcionando) */
 
-console.log("🧠 Sikodark Radio v41 — player sin cortes: no se reconecta si el audio suena, pausas del sistema se reanudan solas");
+console.log("🧠 Sikodark Radio v42 — sin 'Programá tu tema', historial 12 en fila de 3, fondo que toma los colores de cada tapa");
 </script>
 
 <!-- ===== 📊 SEGUIMIENTO + 🔔 PUSH — Firebase ===== -->
@@ -5318,696 +5319,7 @@ renderFavs();
 })();
 </script>
 
-<!-- ===== 🎸 PROGRAMÁ TU TEMA — modal con autocompletado iTunes + cola en vivo ===== -->
-<script>
-(function(){
-  var btn = document.getElementById("btnPedidoTema");
-  var modal = document.getElementById("modalPedido");
-  if (!btn || !modal) return;
 
-  var inpNombre = document.getElementById("pedNombre");
-  var inpBanda = document.getElementById("pedBanda");
-  var inpTema = document.getElementById("pedTema");
-  var btnEnviar = document.getElementById("pedEnviar");
-  var btnCancelar = document.getElementById("pedCancelar");
-  var okMsg = document.getElementById("pedOk");
-  var sugBanda = document.getElementById("pedSugBanda");
-  var sugTema = document.getElementById("pedSugTema");
-  var preview = document.getElementById("pedPreview");
-  var previewImg = document.getElementById("pedPreviewImg");
-  var previewTema = document.getElementById("pedPreviewTema");
-  var previewBanda = document.getElementById("pedPreviewBanda");
-
-  /* Carátula del tema confirmado contra iTunes + ⭐v36: archivo EXACTO
-     de la música del DJ (si la oyente eligió una sugerencia "🎵 en la radio") */
-  var seleccion = { cover: null, archivo: null };
-
-  /* Mostrar el botón flotante después de 3s (para que cargue primero la app) */
-  setTimeout(function(){ btn.classList.add("show"); }, 3000);
-
-  function ocultarSug(){
-    sugBanda.classList.remove("show"); sugTema.classList.remove("show");
-    sugBanda.innerHTML = ""; sugTema.innerHTML = "";
-  }
-  function ocultarPreview(){ preview.classList.remove("show"); seleccion.cover = null; }
-
-  function abrir(){
-    modal.classList.add("show");
-    okMsg.style.display = "none";
-    okMsg.textContent = "";
-    inpNombre.value = "";
-    inpBanda.value = "";
-    inpTema.value = "";
-    seleccion = { cover: null, archivo: null };
-    ocultarSug(); ocultarPreview();
-    /* ⭐ v36: cargar la biblioteca del DJ (una vez por sesión) para las
-       sugerencias "🎵 está en la radio" — si la torre nunca publicó el
-       índice, esto no hace nada y seguimos con las de iTunes */
-    if (window.__sikodarkCargarBiblio) window.__sikodarkCargarBiblio();
-    setTimeout(function(){ inpBanda.focus(); }, 100);
-  }
-  function cerrar(){ modal.classList.remove("show"); ocultarSug(); }
-
-  /* Cerrar mensaje de error visual si existe */
-  function limpiarError(){
-    var errBox = document.getElementById("pedError");
-    if (errBox) errBox.remove();
-  }
-  function mostrarError(msg){
-    limpiarError();
-    var div = document.createElement("div");
-    div.id = "pedError";
-    /* v34: si el mensaje tiene varias líneas (ej. los pasos de las reglas), se alinea a la izquierda */
-    var multilinea = msg.indexOf("\n") >= 0;
-    div.style.cssText = "background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:11px;text-align:" + (multilinea ? "left" : "center") + ";white-space:pre-line;color:#ff9d96;font:700 12px var(--sans);margin-top:10px;line-height:1.45";
-    div.textContent = msg;
-    /* v34: el cartel va ANTES de la fila de botones (no adentro de la fila flex,
-       si no el mensaje largo empuja los botones y queda roto) */
-    var filaBtns = btnCancelar.parentNode;
-    filaBtns.parentNode.insertBefore(div, filaBtns);
-  }
-
-  btn.onclick = abrir;
-  btnCancelar.onclick = cerrar;
-  modal.onclick = function(e){ if (e.target === modal) cerrar(); };
-
-  /* Cargar nombre guardado */
-  try{
-    var n = localStorage.getItem("sikodark-ped-nombre");
-    if (n) inpNombre.value = n;
-  }catch(e){}
-
-  /* =====================================================
-     🔍 AUTOCOMPLETADO con iTunes — valida que la banda
-     y el tema existan de verdad antes de mandar el pedido
-     ===================================================== */
-  var tBusqueda = null;
-
-  function itunesBuscar(termino, ok){
-    var url = "https://itunes.apple.com/search?media=music&entity=song&limit=12&term=" + encodeURIComponent(termino);
-    fetchConProxy(url)
-      .then(function(r){ return r.json(); })
-      .then(function(d){ ok(d && d.results ? d.results : []); })
-      .catch(function(){ ok([]); });
-  }
-
-  function mostrarSugBanda(resultados){
-    var vistos = {}, items = [];
-    resultados.forEach(function(r){
-      if (!r.artistName) return;
-      var k = r.artistName.toLowerCase();
-      if (vistos[k]) return;
-      vistos[k] = 1;
-      items.push({ nombre: r.artistName, cover: r.artworkUrl100 || null, detalle: r.primaryGenreName || "Artista" });
-    });
-    if (!items.length){
-      sugBanda.innerHTML = '<div class="sug-vacio">Sin sugerencias — igual podés enviarlo</div>';
-      sugBanda.classList.add("show");
-      return;
-    }
-    sugBanda.innerHTML = items.map(function(it, i){
-      return '<div class="sug" data-i="' + i + '"><img src="' + esc(it.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'"><div><div class="st">' + esc(it.nombre) + '</div><div class="sa">' + esc(it.detalle) + '</div></div></div>';
-    }).join("");
-    sugBanda.classList.add("show");
-    Array.prototype.forEach.call(sugBanda.querySelectorAll(".sug"), function(el){
-      el.onmousedown = function(e){
-        e.preventDefault();
-        var it = items[Number(el.dataset.i)];
-        inpBanda.value = it.nombre;
-        ocultarSug();
-        if (!inpTema.value) inpTema.focus();
-      };
-    });
-  }
-
-  function mostrarPreview(it){
-    previewImg.src = it.cover || "apple-icon.png";
-    previewTema.textContent = it.nombre || "";
-    previewBanda.textContent = it.banda || "";
-    preview.classList.add("show");
-  }
-
-  function mostrarSugTema(resultados, deLaRadio){
-    var items = resultados.slice(0, 8).map(function(r){
-      return { nombre: r.trackName, banda: r.artistName, cover: r.artworkUrl100 || null };
-    }).filter(function(it){ return it.nombre; });
-    /* ⭐ v36: primero lo que ESTÁ en la música de la radio (archivo exacto) */
-    var radio = (deLaRadio || []).slice(0, 5).map(function(it){
-      return { nombre: it.titulo || it.base, banda: it.artista, cover: null,
-               radio: true, ruta: it.ruta };
-    }).filter(function(it){ return it.nombre; });
-    if (!items.length && !radio.length){
-      sugTema.innerHTML = '<div class="sug-vacio">Sin sugerencias — igual podés enviarlo</div>';
-      sugTema.classList.add("show");
-      return;
-    }
-    var filaRadio = radio.map(function(it, i){
-      return '<div class="sug" data-i="' + i + '"><img src="apple-icon.png" alt=""><div><div class="st">' + esc(it.nombre) + '</div><div class="sa">🎵 ESTÁ EN LA RADIO — tocá y sale seguro</div></div></div>';
-    }).join("");
-    var filaItunes = items.slice(0, 6).map(function(it, i){
-      return '<div class="sug" data-r="' + i + '"><img src="' + esc(it.cover || "apple-icon.png") + '" alt="" onerror="this.src=\'apple-icon.png\'"><div><div class="st">' + esc(it.nombre) + '</div><div class="sa">' + esc(it.banda || "") + '</div></div></div>';
-    }).join("");
-    sugTema.innerHTML = filaRadio + filaItunes;
-    sugTema.classList.add("show");
-    Array.prototype.forEach.call(sugTema.querySelectorAll(".sug"), function(el){
-      el.onmousedown = function(e){
-        e.preventDefault();
-        if (el.dataset.i !== undefined){
-          /* algo de la música del DJ → pedido con archivo EXACTO */
-          var it = radio[Number(el.dataset.i)];
-          inpTema.value = it.nombre;
-          inpBanda.value = it.banda || inpBanda.value;
-          seleccion.archivo = it.ruta;
-          seleccion.cover = null;
-          mostrarPreview({ nombre: it.nombre, banda: it.banda + " · 🎵 sale seguro" });
-        } else {
-          var it2 = items[Number(el.dataset.r)];
-          inpTema.value = it2.nombre;
-          if (!inpBanda.value && it2.banda) inpBanda.value = it2.banda;
-          seleccion.archivo = null;
-          seleccion.cover = it2.cover || null;
-          mostrarPreview(it2);
-        }
-        ocultarSug();
-      };
-    });
-  }
-
-  inpBanda.addEventListener("input", function(){
-    ocultarPreview();
-    seleccion.archivo = null;      /* cambió la banda → ya no vale la selección exacta */
-    var v = inpBanda.value.trim();
-    clearTimeout(tBusqueda);
-    if (v.length < 2){ sugBanda.classList.remove("show"); return; }
-    tBusqueda = setTimeout(function(){ itunesBuscar(v, mostrarSugBanda); }, 380);
-  });
-
-  inpTema.addEventListener("input", function(){
-    var v = inpTema.value.trim();
-    seleccion.archivo = null;      /* volvió a escribir → se re-elige de la lista */
-    clearTimeout(tBusqueda);
-    if (v.length < 2){ sugTema.classList.remove("show"); return; }
-    var b = inpBanda.value.trim();
-    tBusqueda = setTimeout(function(){
-      /* ⭐ v36: sugerencias de la MÚSICA DEL DJ primero (archivo exacto) */
-      var deLaRadio = [];
-      if (window.__sikodarkBuscarBiblio){
-        try{ deLaRadio = window.__sikodarkBuscarBiblio(b, v); }catch(e){}
-      }
-      itunesBuscar(b ? b + " " + v : v, function(res){ mostrarSugTema(res, deLaRadio); });
-    }, 380);
-  });
-
-  /* Click afuera / Escape cierran las sugerencias */
-  document.addEventListener("click", function(e){
-    if (!sugBanda.contains(e.target) && e.target !== inpBanda) sugBanda.classList.remove("show");
-    if (!sugTema.contains(e.target) && e.target !== inpTema) sugTema.classList.remove("show");
-  });
-  [inpBanda, inpTema].forEach(function(inp){
-    inp.addEventListener("keydown", function(e){ if (e.key === "Escape") ocultarSug(); });
-  });
-
-  /* Esperar a que Firebase Auth esté listo (hasta 8 segundos) */
-  function esperarAuth(){
-    return new Promise(function(resolve){
-      if (usuarioUID){ resolve(usuarioUID); return; }
-      var intentos = 0;
-      var iv = setInterval(function(){
-        intentos++;
-        if (usuarioUID || intentos > 30){   /* v29: espera hasta 15s */
-          clearInterval(iv);
-          resolve(usuarioUID);
-        }
-      }, 500);
-    });
-  }
-
-  btnEnviar.onclick = async function(){
-    limpiarError();
-    var banda = inpBanda.value.trim();
-    var tema = inpTema.value.trim();
-    var nombre = inpNombre.value.trim();
-    if (!banda && !tema){
-      inpBanda.focus();
-      mostrarError("Escribí una banda o un tema");
-      return;
-    }
-
-    btnEnviar.disabled = true;
-    btnEnviar.textContent = "Conectando…";
-
-    /* Esperar a que se resuelva el auth anónimo */
-    var uid = usuarioUID;
-    if (!uid){
-      mostrarError("Esperando conexión con el servidor…");
-      uid = await esperarAuth();
-    }
-
-    if (!uid){
-      mostrarError("No hay conexión con Firebase. Recargá la página e intentá de nuevo.");
-      btnEnviar.disabled = false;
-      btnEnviar.textContent = "Programar tema";
-      return;
-    }
-
-    btnEnviar.textContent = "Programando…";
-
-    try{
-      console.log("[Pedido] Programando:", { banda: banda, tema: tema, nombre: nombre, uid: uid });
-      await dbFB.collection("temas_pedidos").add({
-        banda: banda.slice(0, 60),
-        tema: tema.slice(0, 60),
-        nombre: nombre.slice(0, 20),
-        uid: uid,
-        fecha: Date.now(),
-        estado: "pendiente",            /* ⭐ la TORRE de la PC del DJ lo toma de acá */
-        cover: seleccion.cover || null, /* ⭐ carátula confirmada para la cola */
-        archivo: seleccion.archivo || null  /* ⭐ v36: archivo EXACTO de la radio */
-      });
-      console.log("[Pedido] ✅ Enviado OK");
-      /* Guardar nombre para la próxima */
-      if (nombre) try{ localStorage.setItem("sikodark-ped-nombre", nombre); }catch(e){}
-      okMsg.textContent = "✅ ¡Programado! Va a entrar en la cola de la radio 🤘";
-      okMsg.style.display = "block";
-      setTimeout(cerrar, 2200);
-    }catch(e){
-      console.error("[Pedido] ❌ Error:", e);
-      var msg = e.message || "Error desconocido";
-      /* Mensaje más amigable para errores comunes */
-      if (/permission|denied|PERMISSION/i.test(msg)){
-        /* v35 (verificado en vivo el 20/11): las reglas del proyecto son correctas y
-           los pedidos funcionan. Cuando esto aparece es casi siempre porque la regla
-           se editó pero quedó SIN PUBLICAR, o el create quedó más estricto que lo
-           que manda la web. Le mostramos al DJ los pasos correctos. */
-        msg = "❌ Permiso denegado: las reglas de Firestore no dejan guardar el pedido.\n"
-            + "Lo más común: la regla se editó pero quedó SIN PUBLICAR, o el create de temas_pedidos quedó más estricto que lo que manda la web.\n"
-            + "1) Firebase Console → Firestore Database → pestaña «Reglas».\n"
-            + "2) El create de temas_pedidos necesita: request.auth != null, banda string de hasta 60 y fecha int — la web manda exactamente eso (fecha se guarda como int, verificado).\n"
-            + "3) Tocá «Publicar», esperá la confirmación y recargá esta página.";
-      } else if (/network|offline|fetch/i.test(msg)){
-        msg = "❌ Sin conexión. Revisá tu internet e intentá de nuevo.";
-      }
-      mostrarError(msg);
-    }
-    btnEnviar.disabled = false;
-    btnEnviar.textContent = "Programar tema";
-  };
-
-  /* =====================================================
-     🎧 COLA EN VIVO — todos los oyentes ven los pedidos
-     y su estado (pendiente → en cola → sonó)
-     ===================================================== */
-  var colaBox = document.getElementById("colaBox");
-  var colaLista = document.getElementById("colaLista");
-  var colaCount = document.getElementById("colaCount");
-
-  var ESTADOS = {
-    pendiente:     { txt: "⏳ Pendiente",  cls: "pendiente",     sub: "esperando a la PC del DJ" },
-    en_cola:       { txt: "🎧 En cola",    cls: "en_cola",       sub: "programado en RadioBOSS" },
-    sonado:        { txt: "✅ Sonó",       cls: "sonado",        sub: "ya pasó al aire" },
-    no_encontrado: { txt: "❌ No estaba",  cls: "no_encontrado", sub: "no está en la música de la radio" }
-  };
-
-  /* =====================================================
-     🔴 BADGE en el botón flotante: cuántos temas esperan
-     en la cola (pendientes + en cola)
-     ===================================================== */
-  var badge = null;
-  function crearBadge(){
-    try{
-      badge = document.createElement("span");
-      badge.className = "ped-badge";
-      badge.textContent = "0";
-      btn.appendChild(badge);
-    }catch(e){}
-  }
-  crearBadge();
-
-  function actualizarBadge(items){
-    if (!badge) return;
-    var n = items.filter(function(f){ return f.estado === "pendiente" || f.estado === "en_cola"; }).length;
-    badge.textContent = String(n);
-    badge.classList.toggle("show", n > 0);
-    btn.setAttribute("aria-label", n > 0 ? "Programá tu tema musical — " + n + " temas en la cola" : "Programá tu tema musical");
-  }
-
-  /* =====================================================
-     🔔 AVISO flotante cuando alguien programa un tema
-     (solo para pedidos NUEVOS, no los viejos al abrir)
-     ===================================================== */
-  var avisoEl = document.getElementById("avisoPedido");
-  var avisoTxt = document.getElementById("avisoPedidoTxt");
-  var avisoTimer = null;
-  function mostrarAvisoPedido(artista, tema, nombre){
-    if (!avisoEl || !avisoTxt) return;
-    var que = tema || artista || "un tema";
-    var quien = nombre ? (nombre + " programó ") : "Alguien programó ";
-    avisoTxt.textContent = quien + que + " — está en la cola 🤘";
-    avisoEl.classList.add("show");
-    clearTimeout(avisoTimer);
-    avisoTimer = setTimeout(function(){ avisoEl.classList.remove("show"); }, 4500);
-  }
-
-  var primerSnapshot = true;
-  var pedidosVistos = {};   /* ids ya notificados — evita avisos repetidos */
-
-  /* =====================================================
-     🖼️ CARÁTULAS de la cola — los pedidos escritos a mano
-     (sin usar el autocompletado) llegan sin imagen: la
-     buscamos en iTunes y la guardamos en localStorage
-     para no volver a pedirla en cada recarga
-     ===================================================== */
-  var COVERS_KEY = "sikodark-cola-covers";
-  var colaCovers = {};
-  try { colaCovers = JSON.parse(localStorage.getItem(COVERS_KEY) || "{}") || {}; } catch(e){ colaCovers = {}; }
-  var colaCoverFallo = {};    /* iTunes no la tenía (esta sesión) — no reintentar */
-  var colaCoverBuscando = {}; /* búsqueda en curso — no duplicar */
-
-  function claveCola(f){
-    return String((f.tema || "") + " " + (f.banda || "")).toLowerCase().normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-  }
-
-  function pintarCoverEnDom(ck, url){
-    if (!colaLista) return;
-    try{
-      colaLista.querySelectorAll('img[data-ck="' + ck + '"]').forEach(function(im){
-        im.removeAttribute("data-f");
-        im.src = url;
-      });
-    }catch(e){}
-  }
-
-  function buscarCoverCola(f, ck){
-    if (colaCoverBuscando[ck] || colaCoverFallo[ck]) return;
-    var q = [f.tema, f.banda].filter(Boolean).join(" ").trim();
-    if (!q) return;
-    colaCoverBuscando[ck] = 1;
-    fetchConProxy("https://itunes.apple.com/search?media=music&entity=song&limit=1&term=" + encodeURIComponent(q))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var r0 = d && d.results && d.results[0];
-        if (r0 && r0.artworkUrl100){
-          var url = String(r0.artworkUrl100).replace("100x100", "200x200");  /* más nítida */
-          colaCovers[ck] = url;
-          try{ localStorage.setItem(COVERS_KEY, JSON.stringify(colaCovers)); }catch(e){}
-          pintarCoverEnDom(ck, url);
-        } else {
-          colaCoverFallo[ck] = 1;
-        }
-      })
-      .catch(function(){})
-      .then(function(){ delete colaCoverBuscando[ck]; });
-  }
-
-  /* ⭐ v29 FIX: fechas en número — los pedidos viejos podían
-     guardar "fecha" como texto ISO en vez de número */
-  function fechaDoc(f){
-    if (typeof f.fecha === "number") return f.fecha;
-    var p = Date.parse(f.fecha);
-    return isNaN(p) ? 0 : p;
-  }
-
-  /* ⭐ v31.1 ANTI-PARPADEO: la cola solo se re-dibuja cuando los datos
-     cambiaron DE VERDAD. Antes el refresco de los "lleva X min esperando"
-     rearmaba todo el HTML cada 30 segundos y las carátulas reparpadeaban.
-     Ahora: si nada cambió, solo se actualizan esos textos en su lugar. */
-  var firmaColaUltima = null;
-
-  function firmaCola(items){
-    var partes = [];
-    items.forEach(function(f){
-      try{
-        partes.push((f.__id || "") + "|" + (f.estado || "") + "|" + (f.fecha_estado || fechaDoc(f))
-          + "|" + (f.nombre || "") + "|" + (f.uid || "") + "|" + (f.cover || "")
-          + "|" + (f.pos_radioboss || ""));   /* ⭐ v33: la posición en RadioBOSS también es parte de la foto */
-      }catch(e){}
-    });
-    return partes.join(";;");
-  }
-
-  function refrescarEsperas(){
-    if (!colaLista) return;
-    var ahora = Date.now();
-    try{
-      colaLista.querySelectorAll("span.ci-esp[data-fd]").forEach(function(sp){
-        var fd = Number(sp.getAttribute("data-fd"));
-        if (!fd) return;
-        var esp = Math.max(0, Math.round((ahora - fd) / 60000));
-        var txt = "";
-        if (esp >= 1) txt = " · lleva " + esp + " min esperando";
-        if (esp >= 15) txt += " — quizá no esté en la música de la radio";
-        if (sp.textContent !== txt) sp.textContent = txt;   /* sin tocar el resto */
-      });
-    }catch(e){}
-  }
-
-  function pintarCola(docs){
-    var ahora = Date.now();
-    var items = [];
-    docs.forEach(function(d){
-      var f = d.data();
-      if (!f || (!f.banda && !f.tema)) return;
-      var est = f.estado;
-      if (est === "sonado" || est === "no_encontrado"){
-        /* ⭐ v32 ANTI-PING-PONG: el puente de la PC del DJ vuelve a escribir
-           pedidos ya sonados (con fecha de hace horas) después de que la web
-           los borró. Cada re-creación disparaba un snapshot → la caja se
-           re-dibujaba cientos de veces → "Cola limpia" parpadeaba.
-           Los finis VIEJOS (>5 min) no se pintan ni cuentan: invisibles. */
-        var fd = (typeof f.fecha_estado === "number" && f.fecha_estado > 0)
-          ? f.fecha_estado : fechaDoc(f);
-        if (fd > 0 && (ahora - fd) > VENTANA_LIMPIEZA) return;
-      }
-      f.__id = d.id;
-      items.push(f);
-    });
-    /* ⭐ v31.1: si la foto de la cola es idéntica a la última dibujada,
-       no rearmar el HTML (eso era lo que hacía parpadear la parte de
-       abajo) — solo refrescar los minutos de espera.
-       ⭐ v32: la firma se calcula sobre los docs FILTRADOS, así los
-       muertos vivos que re-crea el puente ni siquiera se notan. */
-    var firma = firmaCola(items);
-    if (firma === firmaColaUltima){ refrescarEsperas(); return; }
-    firmaColaUltima = firma;
-    /* ⭐ v29 FIX: la consulta ahora trae los 25 pedidos MÁS NUEVOS
-       (orderBy fecha desc — antes limit(30) sin orden devolvía
-       los primeros 30 docs por ID aleatorio y los pedidos nuevos
-       casi nunca entraban: la cola se veía vacía/vieja aunque
-       Firebase los guardaba bien). Reordenamos acá por si algún
-       doc viejo llegó sin "fecha" o con fecha en formato texto. */
-    /* ⭐ v31 COLA FIFO: arriba los pedidos VIVOS por ORDEN DE LLEGADA
-       (el más viejo primero = el próximo en sonar, igual que los toma
-       el puente en la PC del DJ). Abajo, solo como recuerdo, los que ya
-       terminaron (✅ sonó / ❌ no estaba) hasta que la limpieza de los
-       5 minutos los borre. */
-    var vivos = [], finis = [];
-    items.forEach(function(f){
-      if (f.estado === "sonado" || f.estado === "no_encontrado") finis.push(f);
-      else vivos.push(f);
-    });
-    vivos.sort(function(a,b){ return fechaDoc(a) - fechaDoc(b); });
-    finis.sort(function(a,b){ return fechaDoc(b) - fechaDoc(a); });
-    var visibles = vivos.slice(0, 12).concat(finis.slice(0, 4));
-    if (colaCount) colaCount.textContent = vivos.length
-      ? vivos.length + " en cola"
-      : (finis.length ? "cola limpia" : "0 pedidos");
-
-    /* ⭐ índice de pedidos — lo usa el fix de metadata para recuperar
-       la banda real cuando un archivo del DJ está mal tagueado */
-    try{
-      var idx = {};
-      items.forEach(function(f){
-        if (!f.tema || !f.banda) return;
-        var k = String(f.tema).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                  .replace(/[^a-z0-9]+/g, " ").trim();
-        if (k && !idx[k]) idx[k] = { banda: f.banda, cover: f.cover || null };
-      });
-      window.__sikoPedidosIdx = idx;
-    }catch(e){}
-    if (!items.length){
-      colaLista.innerHTML = '<p class="cola-vacio">Cola limpia — tocá "Programá tu tema" 🤘</p>';
-      actualizarBadge(items);   /* cola vacía → el badge se apaga */
-      return;
-    }
-    function filaCola(f){
-      var est = ESTADOS[f.estado] || ESTADOS.pendiente;
-      var estTxt = est.txt, estSub = est.sub;
-      /* ⭐ v33: si el puente v4 ya lo metió en RadioBOSS, mostrar la posición
-         REAL del playlist — así "en cola" deja de ser un misterio y se
-         entiende que suena terminando el tema que está al aire */
-      if (f.estado === "en_cola" && typeof f.pos_radioboss === "number" && f.pos_radioboss > 0){
-        estTxt = "🎧 En cola · #" + f.pos_radioboss;
-        estSub = "posición " + f.pos_radioboss + " del playlist de RadioBOSS"
-          + (f.pos_radioboss <= 3 ? " — suena al terminar el tema actual" : "");
-      }
-      var mio = (usuarioUID && f.uid === usuarioUID);
-      var de = f.nombre ? " · de " + esc(f.nombre) : (mio ? " · vos" : "");
-      var titulo = f.tema || f.banda;
-      var sub = (f.tema && f.banda) ? f.banda : "pedido de los oyentes";
-      var ck = claveCola(f);
-      var cov = f.cover || colaCovers[ck] || "";
-      /* ⏱ v31: cuánto lleva esperando — si espera mucho rato es casi
-         seguro que no está en la música de la radio (el puente tarda
-         menos de ~10 min en tomar los pedidos que sí tiene).
-         v31.1: se mete en un span vacío y lo rellena refrescarEsperas(),
-         así el minutero corre SIN rearmar el HTML (no parpadea). */
-      var espHTML = "";
-      if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
-        var fd = fechaDoc(f);
-        if (fd > 0) espHTML = '<span class="ci-esp" data-fd="' + fd + '"></span>';
-      }
-      return '<div class="cola-item' + (mio ? " mio" : "") + '">'
-        + '<img src="' + esc(cov || "apple-icon.png") + '" alt="" data-ck="' + esc(ck) + '"'
-        + ' onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\'apple-icon.png\';}">'
-        + '<div class="ci-txt"><div class="ci-t">' + esc(titulo) + '</div>'
-        + '<div class="ci-a">' + esc(sub) + esc(de) + espHTML + '</div></div>'
-        + '<span class="estado ' + est.cls + '" title="' + esc(estSub) + '">' + esc(estTxt) + '</span>'
-        + '</div>';
-    }
-    colaLista.innerHTML = vivos.slice(0, 12).map(filaCola).join("")
-      + (finis.length
-          ? '<div class="cola-sep">🧹 ya sonaron o no estaban — se borran a los 5 min</div>'
-            + finis.slice(0, 4).map(filaCola).join("")
-          : "");
-    /* 🖼️ buscar en iTunes las carátulas que falten (una sola vez cada una) */
-    visibles.forEach(function(f){
-      var ck = claveCola(f);
-      if (!ck || f.cover || colaCovers[ck]) return;
-      buscarCoverCola(f, ck);
-    });
-    refrescarEsperas();   /* ⏱ rellenar los "lleva X min" recién creados */
-    actualizarBadge(items);
-  }
-
-  /* 🧹 v30: LIMPIEZA AUTOMÁTICA CONTINUA — la cola queda solo con lo
-     vivo (pendiente / en cola). Los "sonado" y "no_encontrado" se
-     BORRAN A LOS 5 MINUTOS de entrar en ese estado:
-     - Si al abrir la app ya había viejos (sonaron hace horas) → fuera al toque.
-     - Un timer cada 30s revisa, así los 5 min corren aunque no llegue
-       ningún cambio nuevo por snapshot.
-     Así la colección nunca crece de más y queda siempre lista para
-     los pedidos nuevos. Si las reglas de Firebase no permiten borrar,
-     falla en silencio (y de refuerzo está el script limpieza_cola.py
-     en la PC del DJ, que borra con permiso total). */
-  var VENTANA_LIMPIEZA = 5 * 60 * 1000;   /* 5 minutos */
-  var sonadoVisto = {};       /* docId -> momento local en que lo vi sonado */
-  var docsColaActuales = [];  /* última foto de la cola, para el timer */
-
-  function borrarPedido(d){
-    d.ref.delete().catch(function(){ /* sin permiso de borrado: no molesta */ });
-  }
-
-  function procesarLimpieza(docs){
-    if (!docs || !docs.length) return;
-    var ahora = Date.now();
-    var vivos = {};
-    docs.forEach(function(d){
-      try{
-        var f = d.data();
-        if (!f) return;
-        vivos[d.id] = 1;
-        var est = f.estado;
-        if (est !== "sonado" && est !== "no_encontrado") return;
-        if (sonadoVisto[d.id] === undefined){
-          sonadoVisto[d.id] = ahora;
-          /* si ya era viejo al cargar (sonó hace horas), no espera los 5 min */
-          var fdoc = fechaDoc(f);
-          if (fdoc > 0 && ahora - fdoc >= VENTANA_LIMPIEZA){ borrarPedido(d); }
-          return;
-        }
-        if (ahora - sonadoVisto[d.id] >= VENTANA_LIMPIEZA){ borrarPedido(d); }
-      }catch(e){}
-    });
-    /* liberar memoria de docs que ya no existen */
-    for (var k in sonadoVisto){ if (!vivos[k]) delete sonadoVisto[k]; }
-  }
-
-  function escucharCola(){
-    try{
-      /* ⭐ v29 FIX: orderBy("fecha","desc") + limit(25) — trae SIEMPRE
-         los 25 pedidos más recientes, así tu pedido entra seguro
-         (el tuyo tiene fecha = ahora, es el más nuevo de todos). */
-      var pintarTimer = null;
-      dbFB.collection("temas_pedidos").orderBy("fecha","desc").limit(25).onSnapshot(function(snap){
-        if (colaBox) colaBox.classList.remove("hidden");
-        docsColaActuales = snap.docs;      /* 🧹 foto actual para el timer de limpieza */
-        if (primerSnapshot){
-          primerSnapshot = false;
-          snap.docs.forEach(function(d){ pedidosVistos[d.id] = 1; });
-          pintarCola(snap.docs);           /* primer pantallazo: al toque */
-          procesarLimpieza(snap.docs);
-        } else {
-          /* ⭐ v32 ANTI-PING-PONG: los snapshots llegan en RÁFAGAS (el puente
-             re-crea un pedido viejo → la web lo borra → otro snapshot).
-             Pintar cada paso de la ráfaga era el parpadeo. Esperamos 250ms
-             y dibujamos SOLO el estado final de la ráfaga. */
-          if (pintarTimer) clearTimeout(pintarTimer);
-          pintarTimer = setTimeout(function(){
-            pintarTimer = null;
-            pintarCola(docsColaActuales);
-            procesarLimpieza(docsColaActuales);   /* 🧹 borra lo sonado a los 5 min */
-          }, 250);
-          snap.docChanges().forEach(function(ch){
-            if (ch.type === "added" && ch.doc && !pedidosVistos[ch.doc.id]){
-              pedidosVistos[ch.doc.id] = 1;
-              var f = ch.doc.data();
-              if (f && (f.banda || f.tema)){
-                /* ⭐ v32: si el doc "nuevo" ya llega sonado/no_encontrado es
-                   un muerto vivo re-creado por el puente — NO avisar. */
-                if (f.estado !== "sonado" && f.estado !== "no_encontrado"){
-                  if (f.uid !== usuarioUID) mostrarAvisoPedido(f.banda, f.tema, f.nombre);
-                  if (window.sikodarkMostrarPedido) window.sikodarkMostrarPedido(f);
-                }
-              }
-            }
-          });
-        }
-      }, function(err){
-        console.warn("[Cola] Sin permiso de lectura en 'temas_pedidos':", err && err.code);
-        if (err && err.code === "permission-denied"){
-          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">🔒 La cola de pedidos está deshabilitada — falta habilitar la lectura de "temas_pedidos" en las reglas de Firebase</p>';
-        } else {
-          if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo leer la cola de pedidos — recargá la página en un rato</p>';
-        }
-      });
-
-      /* 🧹 revisión cada 30s — la ventana de 5 minutos sigue corriendo y
-         los "lleva X min" se actualizan tocando SOLO esos textos
-         (v31.1: ya no se redibuja la cola acá — eso la hacía parpadear) */
-      setInterval(function(){
-        procesarLimpieza(docsColaActuales);
-        refrescarEsperas();
-      }, 30000);
-    }catch(e){
-      console.warn("[Cola] No se pudo escuchar la cola:", e.message);
-    }
-  }
-
-  /* ⭐ FIX: dbFB se declara con "const" (línea ~1804) y por eso NO existe
-     como window.dbFB — el viejo "if (window.dbFB)" daba siempre falso y
-     el listener de la cola NUNCA arrancaba: la cola quedaba siempre
-     vacía aunque los pedidos se guardaban bien en Firebase */
-  if (typeof dbFB !== "undefined"){
-    if (usuarioUID){
-      escucharCola();
-    } else {
-      var intentos = 0;
-      var iv = setInterval(function(){
-        intentos++;
-        if (usuarioUID || intentos > 30){   /* v29: espera hasta 15s */
-          clearInterval(iv);
-          if (usuarioUID) escucharCola();
-          else if (colaLista) colaLista.innerHTML = '<p class="cola-vacio">⚠️ No se pudo conectar con Firebase — la cola de pedidos no está disponible ahora</p>';
-        }
-      }, 500);
-    }
-  }
-})();
-</script>
-
-<!-- ===== 🔔 AVISO flotante: alguien programó un tema ===== -->
-<div id="avisoPedido" aria-live="polite"><span class="ap-ico">🎸</span><span class="ap-txt" id="avisoPedidoTxt"></span></div>
 
 <!-- ===== ⭐⬆️ Volver arriba ===== -->
 <button id="btnTop" aria-label="Volver arriba">
@@ -6026,108 +5338,6 @@ renderFavs();
   b.addEventListener("click", function(){
     window.scrollTo({top:0, behavior:"smooth"});
   });
-})();
-</script>
-<!-- ===== 🖼 v38: BIBLIOTECA DEL DJ — autocompletado real de los pedidos =====
-     El panel del DJ (playlist en vivo, especial inteligente, avisos) vive ahora en panel.html -->
-<script>
-(function(){
-  if (typeof dbFB === "undefined") return;
-
-  function normTxt(s){
-    s = String(s || "").toLowerCase().normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    return s.replace(/[^a-z0-9]+/g, " ").trim();
-  }
-
-  function parsearPista(ruta){
-    var base = String(ruta || "").split(/[\\/]/).pop().replace(/\.[a-z0-9]+$/i, "");
-    var g = base.indexOf(" - ");
-    var artista = g > 0 ? base.slice(0, g) : base;
-    var titulo = g > 0 ? base.slice(g + 3) : "";
-    return { ruta: ruta, base: base, artista: artista, titulo: titulo };
-  }
-
-  var biblioteca = null;
-  var bibliotecaCargando = false;
-
-  function cargarBiblioteca(ok){
-    if (biblioteca) return ok(biblioteca);
-    if (bibliotecaCargando) return;
-    bibliotecaCargando = true;
-    try{
-      dbFB.collection("biblioteca_piezas").get().then(function(snap){
-        var archivos = [];
-        snap.forEach(function(d){
-          var f = d.data();
-          if (f && f.archivos && f.archivos.length) archivos = archivos.concat(f.archivos);
-        });
-        biblioteca = archivos.map(function(r){
-          var it = parsearPista(r);
-          it._n = normTxt(it.artista + " " + it.titulo + " " + it.base);
-          it._nb = normTxt(it.base);
-          return it;
-        });
-        bibliotecaCargando = false;
-        console.log("[Biblio] \U0001f3b5 biblioteca del DJ cargada:", biblioteca.length, "temas");
-        if (ok) ok(biblioteca);
-      }).catch(function(){ bibliotecaCargando = false; });
-    }catch(e){ bibliotecaCargando = false; }
-  }
-
-  /* busqueda por PALABRA COMPLETA + ranking por titulo exacto:
-     pedir "True" trae "Spandau Ballet - True" antes que "Madonna - True Blue" */
-  function posPalabra(texto, tok){
-    var i = texto.indexOf(tok);
-    while (i !== -1){
-      if (i === 0 || texto.charAt(i - 1) === " ") return i;
-      i = texto.indexOf(tok, i + 1);
-    }
-    return -1;
-  }
-
-  function buscarEnBiblio(banda, q){
-    if (!biblioteca || !biblioteca.length) return [];
-    var texto = normTxt((banda || "") + " " + (q || ""));
-    if (texto.length < 2) return [];
-    var PARADA = { the:1, and:1, de:1, del:1, los:1, las:1, el:1 };
-    var toks = texto.split(" ").filter(function(t){ return t.length >= 3; });
-    var utiles = toks.filter(function(t){ return !PARADA[t]; });
-    if (utiles.length) toks = utiles;   /* 'The Beatles' exige solo 'beatles' */
-    if (!toks.length) return [];
-    var nb = normTxt(banda || "");
-    var nt = normTxt(q || "");
-    var salida = [];
-    for (var i = 0; i < biblioteca.length && salida.length < 500; i++){
-      var it = biblioteca[i];
-      var pts = 0;
-      for (var j = 0; j < toks.length; j++){
-        var p = posPalabra(it._n, toks[j]);
-        if (p === -1){ pts = -1; break; }        /* la palabra NO esta: afuera */
-        pts += (p === 0 ? 3 : 1);
-      }
-      if (pts < 0) continue;
-      /* titulo exacto: "True" le gana a "True Blue" */
-      var ti = normTxt(it.titulo);
-      if (nt && ti){
-        if (ti === nt) pts += 6;
-        else if (ti.indexOf(nt) === 0) pts += 3;
-      }
-      /* el artista del archivo arranca con la banda pedida */
-      if (nb){
-        var ar = normTxt(it.artista);
-        if (ar.indexOf(nb) === 0) pts += 4;
-        else if (it._nb.indexOf(nb) === 0) pts += 3;
-      }
-      salida.push([pts, it]);
-    }
-    salida.sort(function(a, b){ return b[0] - a[0]; });
-    return salida.slice(0, 6).map(function(x){ return x[1]; });
-  }
-
-  /* funciones para el formulario de pedidos (autocompletado real) */
-  window.__sikodarkCargarBiblio = cargarBiblioteca;
-  window.__sikodarkBuscarBiblio = buscarEnBiblio;
 })();
 </script>
 </body>
