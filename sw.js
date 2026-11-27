@@ -1,5 +1,5 @@
 /* =========================================================
-   📻 Sikodark Radio — Service Worker  (sikodark-v44)
+   📻 Sikodark Radio — Service Worker  (sikodark-v45)
    - Navegación: red primero (cada versión nueva entra al toque)
      con caché de respaldo para offline.
    - Stream, Firestore y carátulas: directo a la red, SIN caché
@@ -10,7 +10,7 @@
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
 
-const CACHE = "sikodark-v44";
+const CACHE = "sikodark-v45";
 const NUCLEO = ["./", "./index.html", "./panel.html"];
 
 firebase.initializeApp({
