@@ -47,6 +47,10 @@ button.btn.grande{width:100%;padding:13px}
 button.btn.verde{border-color:rgba(125,240,154,.45);color:var(--ok)}
 button.btn.rojo{border-color:rgba(255,90,90,.45);color:var(--err)}
 button.btn.neutro{border-color:var(--border);color:var(--muted)}
+button.btn.voz{border-color:rgba(120,180,255,.45);color:#8ab8ff}
+button.btn.voz.grabando{background:rgba(255,90,90,.16);border-color:var(--err);color:#ffb3b3;animation:pulso 1.2s infinite}
+.directo{display:flex;gap:8px;align-items:center;margin-top:9px;font:700 11.5px var(--sans);color:var(--muted);cursor:pointer}
+.directo input{accent-color:var(--primary)}
 
 .al-aire{display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,rgba(245,157,61,.14),rgba(245,157,61,.05));
   border:1px solid rgba(245,157,61,.4);border-radius:14px;padding:13px}
@@ -162,7 +166,18 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
         <div class="art" id="aireArt"></div>
       </div>
     </div>
-    <div id="boxApagada" class="apagada">La torre de la PC del estudio está apagada — abrí <b>arrancar_torre.bat</b> en la PC y recargá acá.</div>
+    <div id="boxApagada" class="apagada">
+      <div id="txtApagada">La torre de la PC del estudio no da señal — abrí <b>arrancar_torre.bat</b> en la PC o llamala acá abajo.</div>
+      <button class="btn neutro" id="btnLlamarTorre" style="margin-top:10px;width:100%">Llamar a la torre</button>
+      <div id="guiaTorre" class="oculto" style="margin-top:10px;font-size:13px;line-height:1.7">
+        <b>La torre no contestó.</b> En la PC del estudio:<br>
+        1. Fijate si la PC está prendida. Si está apagada, prendela — con el autoarranque instalado la torre abre sola.<br>
+        2. Doble clic en <b>arrancar_torre.bat</b> (dejá la ventanita abierta; si se cierra sola, se reabre en 5 segundos).<br>
+        3. Esperá 10 segundos y tocá "Llamar a la torre" de nuevo.<br>
+        Si contesta pero RadioBOSS no anda: abrí RadioBOSS en la PC.<br>
+        Tip: una sola vez, doble clic en <b>instalar_autoarranque.bat</b> y nunca más vas a tener que abrirla a mano.
+      </div>
+    </div>
     <div id="listaProx" class="lista"></div>
   </section>
 
@@ -187,12 +202,14 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
     <div class="caja-especial">
       <div class="head">Especial inteligente</div>
       <div class="fila" style="margin-top:8px">
-        <input type="text" id="espArtista" placeholder="Artista — ej: Guns N' Roses" maxlength="60" autocomplete="off">
-        <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos vienen marcados">
+        <input type="text" id="espArtista" placeholder="Banda o bandas — ej: Guns N' Roses, Def Leppard y Bon Jovi" maxlength="120" autocomplete="off">
+        <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos vienen marcados por banda">
+        <button class="btn voz" id="espVoz" title="Pedir el especial hablando">Voz</button>
         <button class="btn verde" id="espIr">Buscar</button>
       </div>
+      <label class="directo"><input type="checkbox" id="espDirecto"> Programar directo al aire (sin revisar)</label>
       <div id="bandCovers" class="band-covers"></div>
-      <div class="nota">La torre busca lo mejor del artista en tu música y te lo propone acá con las carátulas de iTunes. Marcás cuáles salen al aire y en qué orden — nada entra al playlist hasta que aprietes Poner al aire.</div>
+      <div class="nota">Podés pedir UNA o VARIAS bandas (separadas por «y» o «con») — la torre las intercala en el playlist. Con «Voz» lo pedís hablando y con «Programar directo» sale al aire sin revisión. Si no, marcás y ordenás vos — nada entra hasta que aprietes Poner al aire.</div>
       <div id="candidatos" class="oculto">
         <div class="cand-head" id="candTitulo">Propuesta</div>
         <div id="candLista"></div>
@@ -317,7 +334,7 @@ function cambiarTab(torre){
 }
 
 /* ==================== comandos a la torre ==================== */
-function mandarComando(datos){
+function mandarComando(datos, msEspera){
   var campos = Object.assign({ estado: "nuevo", fecha: Date.now() }, datos);
   return db.collection("comandos_radioboss").add(campos).then(function(ref){
     return new Promise(function(res){
@@ -325,23 +342,56 @@ function mandarComando(datos){
         var f = s.data();
         if (f && f.estado === "hecho"){ un(); clearTimeout(t); res(f); }
       }, function(){ un(); clearTimeout(t); res(null); });
-      var t = setTimeout(function(){ un(); res(null); }, 45000);
+      var t = setTimeout(function(){ un(); res(null); }, msEspera || 45000);
     });
   });
 }
 
 /* ==================== estado en vivo ==================== */
-var salTorre = null;
+var salTorre = null, ultimoEstado = null, ultimaEscritura = 0, primeraLectura = true;
 $("puntoTorre").classList.remove("on");
+
+/* v6.3: la torre está VIVA si acaba de escribir en Firestore. Los cambios
+   que llegan MIENTRAS la página abierta valen sin importar el reloj (fix
+   del "torre apagada" fantasma por relojes desparejos PC/celular). El
+   primer snapshot se acepta solo si el documento se ve fresco. */
+function actualizarEstadoTorre(){
+  var e = ultimoEstado || {};
+  var viva = ultimaEscritura > 0 && Date.now() - ultimaEscritura < 45000;
+  $("puntoTorre").classList.toggle("on", viva);
+  $("puntoTorre").title = viva
+    ? "Torre encendida · señal hace " + Math.max(0, Math.round((Date.now() - ultimaEscritura) / 1000)) + "s"
+    : "Torre sin señal";
+
+  if (viva && e.radioboss_ok === false){
+    /* torre viva pero RadioBOSS cerrado */
+    $("txtApagada").innerHTML = "La torre de la PC está <b>encendida</b>, pero RadioBOSS no responde — abrí RadioBOSS en la PC del estudio.";
+    $("btnLlamarTorre").classList.add("oculto");
+    $("guiaTorre").classList.add("oculto");
+    $("boxApagada").classList.remove("oculto");
+  } else {
+    $("txtApagada").innerHTML = "La torre de la PC del estudio no da señal — abrí <b>arrancar_torre.bat</b> en la PC o llamala acá abajo.";
+    $("btnLlamarTorre").classList.remove("oculto");
+    $("guiaTorre").classList.add("oculto");
+    $("boxApagada").classList.toggle("oculto", viva);
+  }
+}
 
 db.collection("estado_radioboss").doc("actual").onSnapshot(function(snap){
   if (!snap.exists) return;
   var e = snap.data() || {};
+  ultimoEstado = e;
   salTorre = e.sal || salTorre;
 
-  var recien = Date.now() - (e.actualizado || 0) < 3 * 60 * 1000;
-  $("puntoTorre").classList.toggle("on", recien);
-  $("boxApagada").classList.toggle("oculto", recien);
+  if (primeraLectura){
+    primeraLectura = false;
+    var senal = Math.max(e.actualizado || 0, e.torre_viva || 0);
+    if (senal && Date.now() - senal < 3 * 60 * 1000) ultimaEscritura = Date.now();
+  } else {
+    /* el documento cambió DE VERDAD ahora = la torre acaba de escribir */
+    ultimaEscritura = Date.now();
+  }
+  actualizarEstadoTorre();
 
   if (e.al_aire && (e.al_aire.titulo || e.al_aire.artista)){
     $("boxAire").classList.remove("oculto");
@@ -367,8 +417,45 @@ db.collection("estado_radioboss").doc("actual").onSnapshot(function(snap){
   }
 }, function(err){
   console.log("[Panel] sin estado:", err && err.code);
-  $("boxApagada").classList.remove("oculto");
+  ultimaEscritura = 0;
+  actualizarEstadoTorre();
 });
+
+/* v6.3: re-chequeo cada 20s — si la torre deja de escribir, en menos de
+   1 minuto el panel la muestra apagada sin depender de la hora del doc */
+setInterval(actualizarEstadoTorre, 20000);
+
+/* ==================== v6.3: llamar a la torre ==================== */
+$("btnLlamarTorre").onclick = function(){
+  var b = $("btnLlamarTorre");
+  b.disabled = true; b.textContent = "Llamando…";
+  mandarComando({ tipo: "hola" }, 12000).then(function(r){
+    b.disabled = false; b.textContent = "Llamar a la torre";
+    if (r){
+      /* cualquier respuesta (ok, PIN vencido, comando desconocido) prueba
+         que la torre está viva — solo el silencio total cuenta como apagada */
+      var rs = String(r.resultado || "");
+      if (rs.indexOf("desconocido") !== -1){
+        /* respondió, pero es la versión vieja (v6.2) que no conoce 'hola' */
+        $("boxApagada").classList.remove("oculto");
+        $("guiaTorre").classList.add("oculto");
+        $("txtApagada").innerHTML = "La torre <b>contestó</b> — está encendida, pero es la versión vieja (v6.2). En la PC reemplazá <b>torre_sikodark.py</b> y <b>arrancar_torre.bat</b> por los v6.3 y volvé a abrirla.";
+        msjHerr("× Torre vieja detectada: actualizá los archivos de la torre en la PC (v6.3).", false);
+      } else {
+        $("boxApagada").classList.add("oculto");
+        $("guiaTorre").classList.add("oculto");
+        msjHerr("La torre contestó — ya está encendida.", true);
+      }
+    } else {
+      $("guiaTorre").classList.remove("oculto");
+      msjHerr("× La torre no contestó a la llamada.", false);
+    }
+  }).catch(function(){
+    b.disabled = false; b.textContent = "Llamar a la torre";
+    $("guiaTorre").classList.remove("oculto");
+    msjHerr("× No pude enviar la llamada (¿internet ok? ¿reglas de Firebase publicadas?).", false);
+  });
+};
 
 /* ==================== PIN del DJ ==================== */
 var token = null;
@@ -605,6 +692,10 @@ function pintarFilaBandas(caja, lista, alElegir){
 function pintarBandas(){
   var caja = $("bandCovers");
   var v = $("espArtista").value.trim();
+  if (v.length >= 3){
+    var p = parsearPedido(v);
+    if (p.artistas.length) v = p.artistas[0];   /* con varias bandas, la primera */
+  }
   clearTimeout(tBanda);
   if (v.length < 3){ caja.classList.remove("show"); caja.innerHTML = ""; return; }
   caja.classList.add("show");
@@ -633,12 +724,97 @@ function limpiarBandas(){
 }
 $("espArtista").addEventListener("input", pintarBandas);
 
-/* ==================== ⭐ v6.1: ESPECIAL CON CONTROL TOTAL ====================
-   1) Buscar: la torre PROPONE hasta 24 candidatos, minuciosa (todos los
-      formatos, toda la carpeta, el playlist vivo y hasta con typos)
-   2) El DJ marca cuáles salen al aire y los ordena con flechas
-   3) Poner al aire: la torre encola SOLO lo elegido, en ese orden */
-var cand = null;   /* {artista, items:[{archivo, titulo, artista, checked}]} */
+/* ==================== ⭐ v6.4: ESPECIAL MULTIBANDA + PEDIDO POR VOZ =====
+   1) Escribi o DECÍ una o varias bandas (hasta 4): la torre busca lo mejor
+      de cada una y el panel las intercala (A1 B1 C1 A2 B2…).
+   2) Modo normal: marcás/ordenás vos. Modo directo: sale al aire ya.
+   3) «Voz»: reconocimiento del navegador → mismo camino que escribir. */
+var cand = null;   /* {artista, items:[{archivo, titulo, artista, ext, checked}]} */
+
+function parsearPedido(texto){
+  var s = String(texto || "").trim();
+  if (!s) return { artistas: [], cantidad: null };
+  /* sin acentos pero conservando mayúsculas (reemplazo 1 a 1, los recortes coinciden) */
+  s = s.replace(/[áàä]/g, "a").replace(/[éèë]/g, "e").replace(/[íìï]/g, "i")
+       .replace(/[óòö]/g, "o").replace(/[úùü]/g, "u");
+  /* cantidad hablada: «de 4 temas», «cuatro canciones», «5 temas» */
+  var PAL = { uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6,
+              siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12 };
+  var cantidad = null, recorte = "";
+  var mNum = s.match(/(?:\bde\b|\bcon\b)?\s*(\d{1,2})\s*(?:temas?|canciones?|temitas?)/i);
+  var mPal = s.match(/\b(uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\s+(?:temas?|canciones?|temitas?)/i);
+  if (mNum){ cantidad = parseInt(mNum[1], 10); recorte = mNum[0]; }
+  else if (mPal){ cantidad = PAL[mPal[1].toLowerCase()]; recorte = mPal[0]; }
+  if (cantidad && !(cantidad >= 1 && cantidad <= 12)) cantidad = null;
+  var base = s.replace(recorte, " ");
+  /* separar bandas: «con», «y», «e», «más», coma, «&», «+» */
+  var frags = base.split(/(?:\bcon\b|\by\b|\be\b|\bmas\b|&|\+|,|;|\/)+/i);
+  var RE = /\b(quiero|quisiera|dame|dale|arma|armame|armar|programame|programa|programar|pone|poneme|hace|meteme|especial|inteligente|de|del|un|una|unos|unas|para|por|favor|cada|temas?|canciones?|temitas?)\b/gi;
+  var artistas = [];
+  frags.forEach(function(fr){
+    var a = fr.replace(RE, " ")
+              .replace(/[^\w'’\.\-ñÑ\s]/g, " ")
+              .replace(/\s+/g, " ").trim();
+    if (a.length >= 2 && /[a-zñÑ]/i.test(a) && artistas.indexOf(a) === -1) artistas.push(a);
+  });
+  return { artistas: artistas.slice(0, 4), cantidad: cantidad };
+}
+
+function procesarPedidoVoz(txt){
+  var p = parsearPedido(txt);
+  if (!p.artistas.length){
+    msjHerr('No entendí las bandas — probá de nuevo o escribilo acá (ej: «especial de guns y bon jovi»).', false);
+    return false;
+  }
+  $("espArtista").value = p.artistas.join(", ");
+  if (p.cantidad){
+    var c = Math.max(2, Math.min(10, p.cantidad));
+    $("espCant").value = c;
+  }
+  msjHerr("Entendido: <b>" + esc(p.artistas.join(" + ")) + "</b>" +
+          (p.cantidad ? " · " + Math.max(2, Math.min(10, p.cantidad)) + " por banda" : "") +
+          " — buscando…", true);
+  $("espIr").click();
+  return true;
+}
+window.__sikoVoz = { parsear: parsearPedido, procesar: procesarPedidoVoz };   /* prueba/diagnóstico */
+
+/* ---- botón VOZ (reconocimiento del navegador, gratis y sin nube propia) ---- */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var vozRec = null, vozActiva = false;
+if (!SR){
+  $("espVoz").disabled = true;
+  $("espVoz").title = "Tu navegador no soporta voz — escribí las bandas";
+} else {
+  vozRec = new SR();
+  vozRec.lang = "es-AR";
+  vozRec.interimResults = false;
+  vozRec.maxAlternatives = 3;
+  vozRec.onstart = function(){ vozActiva = true; $("espVoz").classList.add("grabando");
+    msjHerr("Escuchando… decí el especial (ej: «especial de guns y bon jovi»)", true); };
+  vozRec.onend = function(){ vozActiva = false; $("espVoz").classList.remove("grabando"); };
+  vozRec.onerror = function(e){
+    vozActiva = false; $("espVoz").classList.remove("grabando");
+    msjHerr(e.error === "not-allowed" ? "Dale permiso del micrófono al navegador y probá de nuevo."
+          : e.error === "no-speech" ? "No te escuché — probá de nuevo."
+          : e.error === "network" ? "El reconocimiento de voz necesita internet."
+          : "La voz falló (" + e.error + ") — escribilo en el cuadro.", false);
+  };
+  vozRec.onresult = function(e){
+    var txt = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+    if (txt) procesarPedidoVoz(txt);
+  };
+  $("espVoz").onclick = function(){
+    if (vozActiva){ try{ vozRec.stop(); }catch(e){} return; }
+    try{ vozRec.start(); }catch(e){}
+  };
+}
+
+/* ---- modo directo (se guarda aunque cierres el panel) ---- */
+try{ $("espDirecto").checked = localStorage.getItem("sikodark-esp-directo") === "1"; }catch(e){}
+$("espDirecto").addEventListener("change", function(){
+  try{ localStorage.setItem("sikodark-esp-directo", $("espDirecto").checked ? "1" : "0"); }catch(e){}
+});
 
 function contarSel(){
   if (!cand) return 0;
@@ -699,23 +875,53 @@ $("candLista").addEventListener("click", function(e){
 
 $("espIr").onclick = function(){
   if (!token){ msjHerr("Poné el PIN primero.", false); return; }
-  var art = $("espArtista").value.trim();
-  var cant = parseInt($("espCant").value, 10);
+  var p = parsearPedido($("espArtista").value);
+  var artistas = p.artistas;
+  var cant = p.cantidad || parseInt($("espCant").value, 10);
   if (!(cant >= 2 && cant <= 10)) cant = 4;
-  if (art.length < 2){ msjHerr("Escribí el artista del especial (ej: Guns N' Roses).", false); return; }
+  if (!artistas.length){ msjHerr("Escribí la banda o bandas del especial (ej: Guns N' Roses, Def Leppard y Bon Jovi).", false); return; }
   $("espIr").disabled = true;
-  msjHerr("Buscando lo mejor de <b>" + esc(art) + "</b> en la música del DJ…", true);
-  mandarComando({ tipo: "especial_buscar", artista: art, token: token }).then(function(rta){
+  msjHerr("Buscando lo mejor de <b>" + esc(artistas.join(" + ")) + "</b> en la música del DJ…", true);
+  mandarComando({ tipo: "especial_buscar", artista: artistas[0], artistas: artistas,
+                  token: token }).then(function(rta){
     $("espIr").disabled = false;
     if (siSesionVencida(rta)) return;
     if (rta && rta.resultado === "ok"){
-      var cands = (rta.respuesta && rta.respuesta.candidatos) || [];
-      if (!cands.length){ msjHerr("La torre no encontró candidatos.", false); return; }
-      cand = { artista: art, items: cands.map(function(c, i){
-        return { archivo: c.archivo || "", titulo: c.titulo || "", artista: c.artista || "", ext: c.ext || "", checked: i < cant };
-      })};
-      msjHerr("Propuesta lista — marcá y ordená, después «Poner al aire».", true);
-      renderCandidatos();
+      var resp = rta.respuesta || {};
+      var grupos = resp.grupos || (resp.candidatos ? [{ artista: resp.artista || artistas[0], candidatos: resp.candidatos }] : []);
+      if (!grupos.length){ msjHerr("La torre no encontró candidatos.", false); return; }
+      /* v6.4: por banda tomo lo mejor, descarto repetidos e intercalo:
+         A1 B1 C1 A2 B2 C2… así las bandas suenan mezcladas en el aire */
+      var porGrupo = [], vistas = {};
+      grupos.forEach(function(g){
+        var filas = [];
+        (g.candidatos || []).forEach(function(c){
+          if (!c.archivo || vistas[c.archivo]) return;
+          vistas[c.archivo] = true;
+          filas.push({ archivo: c.archivo, titulo: c.titulo || "", artista: c.artista || "", ext: c.ext || "" });
+        });
+        if (filas.length) porGrupo.push(filas);
+      });
+      if (!porGrupo.length){ msjHerr("La torre no encontró candidatos.", false); return; }
+      var maxF = 0;
+      porGrupo.forEach(function(g){ maxF = Math.max(maxF, g.length); });
+      var items = [];
+      for (var i = 0; i < maxF; i++){
+        porGrupo.forEach(function(g){
+          var it = g[i];
+          if (it) items.push({ archivo: it.archivo, titulo: it.titulo, artista: it.artista,
+                               ext: it.ext, checked: i < cant });
+        });
+      }
+      cand = { artista: artistas.join(" + "), items: items };
+      var nSel = contarSel();
+      if ($("espDirecto").checked){
+        msjHerr("Directo: encolando " + nSel + " tema(s) de <b>" + esc(artistas.join(" + ")) + "</b>…", true);
+        ponerAlAire(true);
+      } else {
+        msjHerr("Propuesta lista (" + nSel + " marcados, " + porGrupo.length + " banda(s)) — marcá y ordená, después «Poner al aire».", true);
+        renderCandidatos();
+      }
     } else {
       msjHerr("× " + esc((rta && rta.resultado) || "la torre no respondió — ¿está encendida?"), false);
     }
@@ -723,12 +929,11 @@ $("espIr").onclick = function(){
 };
 $("espArtista").addEventListener("keydown", function(e){ if (e.key === "Enter") $("espIr").click(); });
 
-$("candAire").onclick = function(){
+function ponerAlAire(sinConfirmar){
   if (!token || !cand) return;
   var elegidos = cand.items.filter(function(c){ return c.checked; });
   if (!elegidos.length){ msjHerr("No marcaste ningún tema.", false); return; }
-  if (elegidos.length > 15) elegidos = elegidos.slice(0, 15);
-  if (!confirm("¿Poner " + elegidos.length + " tema(s) al aire, después del tema actual?")) return;
+  if (!sinConfirmar && !confirm("¿Poner " + elegidos.length + " tema(s) al aire, después del tema actual?")) return;
   $("candAire").disabled = true;
   msjHerr("Encolando el especial…", true);
   mandarComando({ tipo: "especial_aplicar", lista: elegidos.map(function(c){ return c.archivo; }),
@@ -751,7 +956,8 @@ $("candAire").onclick = function(){
       msjHerr("× " + esc((r && r.resultado) || "la torre no respondió"), false);
     }
   });
-};
+}
+$("candAire").onclick = function(){ ponerAlAire(false); };
 
 $("candCancelar").onclick = function(){
   cand = null;
