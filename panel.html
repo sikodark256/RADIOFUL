@@ -15,23 +15,27 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
   padding:18px 14px 40px;max-width:560px;margin-left:auto;margin-right:auto}
-header{display:flex;align-items:center;gap:10px;padding:6px 2px 16px}
+header{display:flex;align-items:center;gap:11px;padding:6px 2px 16px}
+.brand{width:40px;height:40px;border-radius:12px;flex:0 0 40px;background:linear-gradient(135deg,#f59d3d,#c96a1f);
+  display:flex;align-items:center;justify-content:center;font:900 19px/1 var(--sans);color:#0b0c10}
 header h1{font:800 17px/1.2 var(--sans);margin:0;letter-spacing:.01em}
 header .sub{font:700 10px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
 .punto{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:#3a3f4b;margin-left:auto}
 .punto.on{background:var(--ok);box-shadow:0 0 8px rgba(125,240,154,.7);animation:pulso 1.7s infinite}
 @keyframes pulso{0%,100%{opacity:1}50%{opacity:.35}}
 
-.tabs{display:flex;gap:8px;margin-bottom:14px}
-.tabs button{flex:1;background:var(--card);border:1px solid var(--border);color:var(--muted);
-  border-radius:12px;padding:11px 8px;font:800 12px var(--sans);cursor:pointer}
-.tabs button.sel{color:var(--primary);border-color:rgba(245,157,61,.5);background:rgba(245,157,61,.08)}
-section.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;background:#101218;border:1px solid var(--border);
+  border-radius:14px;padding:5px}
+.tabs button{flex:1;background:none;border:none;color:var(--muted);
+  border-radius:10px;padding:11px 8px;font:800 12px var(--sans);cursor:pointer}
+.tabs button.sel{color:#0b0c10;background:var(--primary)}
+section.card{background:linear-gradient(180deg,#14161c,#101218);border:1px solid var(--border);
+  border-radius:20px;padding:16px 15px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.35)}
 .oculto{display:none!important}
 
-h2{font:800 13px/1.2 var(--sans);margin:0 0 4px}
-.subt{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin:0 0 12px}
-.etiq{font:800 9px var(--mono);letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin:12px 0 6px}
+h2{font:800 15px/1.25 var(--sans);margin:0 0 4px;letter-spacing:.01em}
+.subt{font:700 11px/1.5 var(--sans);color:var(--muted);margin:0 0 12px}
+.etiq{font:800 9px var(--mono);letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin:14px 0 6px}
 
 input[type=text],input[type=password],input[type=number],input[type=email]{width:100%;background:#0e0f14;
   border:1px solid #33373f;border-radius:11px;color:var(--text);font:700 13px var(--sans);padding:11px 12px;outline:none}
@@ -57,56 +61,66 @@ button.btn.voz.grabando{background:rgba(255,90,90,.16);border-color:var(--err);c
 .al-aire .pulso{width:11px;height:11px;border-radius:50%;background:var(--primary);flex:0 0 11px;animation:pulso 1.7s infinite}
 .al-aire .txt{flex:1;min-width:0}
 .al-aire .tag{font:800 9px var(--mono);letter-spacing:.09em;color:var(--primary);text-transform:uppercase}
-.al-aire .tema{font:800 15px var(--sans);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.al-aire .art{font:700 11px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-aire .tema{font:800 16px/1.3 var(--sans);margin-top:3px;word-break:break-word}
+.al-aire .art{font:700 11.5px/1.4 var(--sans);color:var(--muted);margin-top:2px;word-break:break-word}
 
 .apagada{border:1px dashed var(--border);border-radius:12px;padding:12px 14px;color:var(--muted);
   font:700 11.5px/1.5 var(--sans);text-align:center}
-.lista{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-.fila-tema{display:flex;gap:10px;align-items:center;background:var(--secondary);border:1px solid var(--border);
-  border-radius:11px;padding:9px 12px}
-.fila-tema.es-pedido{border-color:rgba(245,157,61,.45);background:rgba(245,157,61,.07)}
-.pos{font:800 10px var(--mono);color:var(--muted);flex:0 0 30px;text-align:center}
+.lista{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.fila-tema{display:flex;gap:11px;align-items:center;background:var(--secondary);border:1px solid var(--border);
+  border-radius:13px;padding:11px 12px}
+.fila-tema.es-pedido{border-color:rgba(245,157,61,.5);background:rgba(245,157,61,.08)}
+.pos{font:800 10.5px var(--mono);color:var(--muted);flex:0 0 36px;text-align:center;
+  background:rgba(255,255,255,.05);border-radius:9px;padding:7px 0}
+.fila-tema.es-pedido .pos{color:var(--primary);background:rgba(245,157,61,.13)}
 .fila-tema .tt{flex:1;min-width:0}
-.fila-tema .t1{font:800 12.5px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fila-tema .t2{font:700 10.5px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.badge{flex:0 0 auto;font:800 8.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--primary);
-  border:1px solid rgba(245,157,61,.4);border-radius:999px;padding:3px 7px}
-.borrar{flex:0 0 auto;background:none;border:1px solid rgba(255,59,48,.4);color:var(--err);border-radius:8px;
-  padding:5px 10px;font:800 12px var(--sans);cursor:pointer}
+.fila-tema .t1{font:800 13px/1.35 var(--sans);color:#f4f4f2;word-break:break-word}
+.fila-tema .t2{font:700 11px/1.4 var(--sans);color:var(--muted);margin-top:2px;word-break:break-word}
+.badge{flex:0 0 auto;font:800 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--primary);
+  border:1px solid rgba(245,157,61,.45);border-radius:999px;padding:4px 9px;background:rgba(245,157,61,.08)}
+.borrar{flex:0 0 auto;background:none;border:1px solid rgba(255,59,48,.4);color:var(--err);border-radius:10px;
+  padding:8px 12px;font:800 14px var(--sans);cursor:pointer}
 #listaProx.sin-sesion .borrar{display:none}
 
-.caja-especial{margin-top:4px;border:1px dashed rgba(125,240,154,.4);border-radius:13px;padding:12px}
-.caja-especial .head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase}
+.caja-especial{margin-top:14px;border:1px solid rgba(125,240,154,.3);border-radius:16px;padding:14px 13px;
+  background:linear-gradient(160deg,rgba(125,240,154,.08),rgba(125,240,154,.015))}
+.caja-especial .head{display:flex;align-items:center;gap:8px;font:800 10px var(--mono);
+  letter-spacing:.09em;color:var(--ok);text-transform:uppercase}
+.caja-especial .head .ico{width:24px;height:24px;flex:0 0 24px;border-radius:8px;
+  background:rgba(125,240,154,.13);display:flex;align-items:center;justify-content:center}
 
 /* ⭐ v6.2: carátulas de la banda mientras escribís (iTunes) — cero errores de tipeo */
-.band-covers{display:none;margin-top:10px}
+.band-covers{display:none;margin-top:12px}
 .band-covers.show{display:block}
-.bc-busca{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin-bottom:7px}
-.bc-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.band-cover{flex:0 0 62px;width:62px;background:none;border:none;padding:0;cursor:pointer;color:var(--muted);text-align:center}
-.band-cover img{width:62px;height:62px;border-radius:10px;border:1px solid var(--border);display:block;background:#0e0f14}
-.band-cover .bn{display:block;font:700 8.5px/1.3 var(--sans);margin-top:3px;max-width:62px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.band-cover:active img{border-color:var(--ok)}
+.bc-busca{font:700 11px/1.5 var(--sans);color:var(--muted);margin-bottom:8px}
+.bc-fila{display:flex;gap:10px;overflow-x:auto;padding-bottom:5px}
+.band-cover{flex:0 0 84px;width:84px;background:none;border:none;padding:0;cursor:pointer;color:var(--muted);text-align:center}
+.band-cover img{width:84px;height:84px;border-radius:12px;border:1px solid var(--border);display:block;background:#0e0f14}
+.band-cover .bn{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font:700 9.5px/1.3 var(--sans);margin-top:4px;max-width:84px}
+.band-cover:active img{border-color:var(--ok);box-shadow:0 0 0 2px rgba(125,240,154,.35)}
 
 /* ⭐ v6.1: propuesta de especial — el DJ elige cuáles salen al aire */
-.cand-head{font:800 9px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase;margin-top:12px}
+.cand-head{font:800 10px var(--mono);letter-spacing:.09em;color:var(--ok);text-transform:uppercase;margin-top:14px}
 .cand-fila{display:flex;gap:9px;align-items:center;background:var(--secondary);border:1px solid var(--border);
-  border-radius:11px;padding:8px 10px;margin-top:6px}
-.cand-fila input[type=checkbox]{width:17px;height:17px;flex:0 0 17px;accent-color:var(--ok);cursor:pointer}
-.cand-fila.no-sel{opacity:.45}
-.caratula{width:40px;height:40px;flex:0 0 40px;border-radius:8px;background:#0e0f14;border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;color:var(--muted);font:800 15px var(--sans);overflow:hidden}
+  border-radius:14px;padding:10px 11px;margin-top:8px;cursor:pointer}
+.cand-fila.no-sel{opacity:.42}
+.cand-n{flex:0 0 26px;text-align:center;font:800 12px var(--mono);color:var(--ok);
+  background:rgba(125,240,154,.1);border-radius:8px;padding:6px 0}
+.cand-n.si{background:rgba(125,240,154,.92);color:#0b0c10}
+.caratula{width:64px;height:64px;flex:0 0 64px;border-radius:12px;background:#0e0f14;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font:800 18px var(--sans);overflow:hidden}
 .caratula img{width:100%;height:100%;object-fit:cover;display:block}
-.caratula.chica{width:32px;height:32px;flex:0 0 32px;font-size:12px}
+.caratula.chica{width:48px;height:48px;flex:0 0 48px;font-size:16px}
 .cand-txt{flex:1;min-width:0}
-.cand-t{font:800 12px var(--sans);color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cand-a{font:700 10px var(--sans);color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cand-mover{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:none;border:1px solid var(--border);
+.cand-t{font:800 13px/1.35 var(--sans);color:#f4f4f2;word-break:break-word}
+.cand-a{font:700 11px/1.4 var(--sans);color:var(--muted);margin-top:2px;word-break:break-word}
+.cand-mover{flex:0 0 auto;width:28px;height:28px;border-radius:9px;background:none;border:1px solid var(--border);
   color:var(--muted);font:800 13px var(--sans);cursor:pointer}
 .cand-mover:disabled{opacity:.3;cursor:default}
 .nota{font:700 10.5px/1.5 var(--sans);color:var(--muted);margin-top:8px}
 .acciones{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.acciones.mitades .btn{flex:1 1 calc(50% - 4px);text-align:center;padding:13px 10px}
 .sesion{font:800 10px var(--mono);color:var(--ok)}
 .msj{font:700 12px/1.55 var(--sans);margin-top:12px;min-height:16px;word-break:break-word}
 .msj.ok{color:var(--ok)}.msj.err{color:var(--err)}
@@ -116,11 +130,11 @@ button.btn.voz.grabando{background:rgba(255,90,90,.16);border-color:var(--err);c
 .sugs{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#14161d;border:1px solid var(--border);
   border-radius:12px;z-index:30;display:none;max-height:280px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .sugs.show{display:block}
-.sug{display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer;border-bottom:1px solid #1d2029}
+.sug{display:flex;gap:11px;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid #1d2029}
 .sug:last-child{border-bottom:none}
 .sug:hover{background:rgba(245,157,61,.08)}
-.sug .st{font:800 12px var(--sans);color:#eee}
-.sug .sa{font:700 10px var(--sans);color:var(--muted);margin-top:1px}
+.sug .st{font:800 13px/1.35 var(--sans);color:#f4f4f2;word-break:break-word}
+.sug .sa{font:700 10.5px/1.4 var(--sans);color:var(--muted);margin-top:2px;word-break:break-word}
 .sug-vacio{padding:11px 12px;color:var(--muted);font:700 11.5px var(--sans)}
 
 .preview{margin-top:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0e0f14;
@@ -140,6 +154,7 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
 <body>
 
 <header>
+  <div class="brand">S</div>
   <div>
     <h1>Panel del DJ</h1>
     <div class="sub">sikodark radio · control privado</div>
@@ -200,36 +215,37 @@ footer{text-align:center;color:#555b68;font:700 10px var(--mono);letter-spacing:
     <p class="subt">Programar música y manejar el playlist en vivo</p>
 
     <div class="caja-especial">
-      <div class="head">Especial inteligente</div>
-      <div class="fila" style="margin-top:8px">
-        <input type="text" id="espArtista" placeholder="Banda o bandas — ej: Guns N' Roses, Def Leppard y Bon Jovi" maxlength="120" autocomplete="off">
+      <div class="head"><span class="ico"><svg viewBox="0 0 24 24" width="13" height="13" fill="#7df09a"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></span> Especial inteligente</div>
+      <div class="etiq">Bandas — una o varias, separadas por «y» o «con»</div>
+      <input type="text" id="espArtista" placeholder="Ej: Guns N' Roses, Def Leppard y Bon Jovi" maxlength="120" autocomplete="off">
+      <div class="fila" style="margin-top:9px">
         <input type="number" id="espCant" min="2" max="10" value="4" title="Cuántos vienen marcados por banda">
-        <button class="btn voz" id="espVoz" title="Pedir el especial hablando">Voz</button>
-        <button class="btn verde" id="espIr">Buscar</button>
+        <button class="btn voz" id="espVoz" title="Pedir el especial hablando" style="flex:0 0 auto">Voz</button>
+        <button class="btn verde" id="espIr" style="flex:1">Buscar</button>
       </div>
       <label class="directo"><input type="checkbox" id="espDirecto"> Programar directo al aire (sin revisar)</label>
       <div id="bandCovers" class="band-covers"></div>
-      <div class="nota">Podés pedir UNA o VARIAS bandas (separadas por «y» o «con») — la torre las intercala en el playlist. Con «Voz» lo pedís hablando y con «Programar directo» sale al aire sin revisión. Si no, marcás y ordenás vos — nada entra hasta que aprietes Poner al aire.</div>
+      <div class="nota">La torre busca lo mejor de cada banda y las intercala en el playlist (A1 B1 C1 A2 B2…). Con «Voz» lo pedís hablando. Sin «directo», la propuesta queda para que marques y ordenes vos.</div>
       <div id="candidatos" class="oculto">
         <div class="cand-head" id="candTitulo">Propuesta</div>
         <div id="candLista"></div>
         <div class="acciones">
-          <button class="btn verde" id="candAire">Poner al aire</button>
+          <button class="btn verde" id="candAire" style="flex:1">Poner al aire</button>
           <button class="btn neutro" id="candCancelar">Descartar</button>
         </div>
-        <div class="nota">Con las flechas ordenás los temas — el de arriba suena primero.</div>
+        <div class="nota">Tocás una fila para marcarla o desmarcarla · con las flechas ordenás (el de arriba suena primero).</div>
       </div>
     </div>
 
-    <div class="etiq">Programar un audio puntual</div>
+    <div class="etiq">Programar un audio puntual — buscá banda o tema</div>
     <div class="buscador">
       <input type="text" id="inpBusca" placeholder="Buscar en la música del DJ…" maxlength="80" autocomplete="off">
       <div id="sugs" class="sugs"></div>
     </div>
 
-    <div class="acciones">
+    <div class="acciones mitades">
       <button class="btn" id="btnSaltar">Saltar tema</button>
-      <button class="btn" id="btnReindex">Actualizar música</button>
+      <button class="btn neutro" id="btnReindex">Actualizar música</button>
     </div>
     <div id="msjHerr" class="msj"></div>
   </section>
@@ -833,11 +849,10 @@ function renderCandidatos(){
   cont.innerHTML = cand.items.map(function(c, i){
     var nombre = c.titulo || String(c.archivo || "").split(/[\\/]/).pop() || "?";
     return '<div class="cand-fila' + (c.checked ? "" : " no-sel") + '" data-i="' + i + '">'
-      + '<input type="checkbox"' + (c.checked ? " checked" : "") + ' title="¿Sale al aire?">'
+      + '<span class="cand-n' + (c.checked ? " si" : "") + '">' + (c.checked ? "✓" : (i + 1)) + '</span>'
       + '<span class="caratula" data-term="' + esc((c.artista || "") + " " + (c.titulo || "")) + '">♪</span>'
       + '<div class="cand-txt"><div class="cand-t">' + esc(nombre) + '</div>'
-      + '<div class="cand-a">' + esc(c.artista || "") + '</div></div>'
-      + (c.ext ? '<span class="badge">' + esc(c.ext) + '</span>' : "")
+      + '<div class="cand-a">' + esc((c.artista || "") + (c.ext ? " · " + c.ext : "")) + '</div></div>'
       + '<button class="cand-mover" data-dir="-1"' + (i === 0 ? " disabled" : "") + ' title="Subir">↑</button>'
       + '<button class="cand-mover" data-dir="1"' + (i === cand.items.length - 1 ? " disabled" : "") + ' title="Bajar">↓</button>'
       + '</div>';
@@ -861,16 +876,29 @@ $("candLista").addEventListener("change", function(e){
 
 $("candLista").addEventListener("click", function(e){
   var btn = e.target.closest ? e.target.closest(".cand-mover") : null;
-  if (!btn || !cand) return;
-  var fila = btn.closest(".cand-fila");
+  if (btn && cand){
+    var filaM = btn.closest(".cand-fila");
+    if (!filaM) return;
+    var iM = Number(filaM.getAttribute("data-i"));
+    var j = iM + Number(btn.getAttribute("data-dir"));
+    if (!(iM >= 0) || !(j >= 0) || j >= cand.items.length) return;
+    var tmp = cand.items[iM];
+    cand.items[iM] = cand.items[j];
+    cand.items[j] = tmp;
+    renderCandidatos();
+    return;
+  }
+  /* v6.4: tocás la FILA ENTERA para marcar o desmarcar — más fácil de editar */
+  if (!cand || e.target.type === "checkbox") return;
+  var fila = e.target.closest ? e.target.closest(".cand-fila") : null;
   if (!fila) return;
   var i = Number(fila.getAttribute("data-i"));
-  var j = i + Number(btn.getAttribute("data-dir"));
-  if (!(i >= 0) || !(j >= 0) || j >= cand.items.length) return;
-  var tmp = cand.items[i];
-  cand.items[i] = cand.items[j];
-  cand.items[j] = tmp;
-  renderCandidatos();
+  if (!(i >= 0 && i < cand.items.length)) return;
+  cand.items[i].checked = !cand.items[i].checked;
+  fila.classList.toggle("no-sel", !cand.items[i].checked);
+  var chk = fila.querySelector('input[type=checkbox]');
+  if (chk) chk.checked = cand.items[i].checked;
+  $("candAire").textContent = "Poner al aire (" + contarSel() + ")";
 });
 
 $("espIr").onclick = function(){
